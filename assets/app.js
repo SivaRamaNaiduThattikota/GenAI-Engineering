@@ -390,4 +390,126 @@ const COURSE = [
     if (!e.target.dataset.v) return;
     thumb.classList.remove('stretch'); void thumb.offsetWidth; thumb.classList.add('stretch');
   });
+  thumb.addEventListener('animationend', () => thumb.classList.remove('stretch'));
+
+  const isGlass = () => document.documentElement.classList.contains('glass');
+  const calm = matchMedia('(prefers-reduced-motion: reduce)');
+
+  // 5. Materialise: the tab bar grows in as a lens, and its refraction ramps up with it.
+  const tabbar = document.querySelector('.tabbar');
+  if (tabbar && isGlass() && !calm.matches) {
+    tabbar.classList.add('materialise');
+    tabbar.addEventListener('animationend', () => tabbar.classList.remove('materialise'), { once: true });
+    const disp = document.querySelector('#lg-lens feDisplacementMap');
+    const t0 = performance.now(), full = +disp.getAttribute('scale');
+    const ramp = now => {
+      const k = Math.min(1, (now - t0) / 700);
+      disp.setAttribute('scale', (full * (1 - Math.pow(1 - k, 3))).toFixed(1));
+      if (k < 1) requestAnimationFrame(ramp);
+    };
+    disp.setAttribute('scale', '0'); requestAnimationFrame(ramp);
+  }
+
+  // 6. Illuminate from within: a glow starts under the pointer and spreads through the glass.
+  const glowSel = '.tabbar, .navbar .nav-btn, .top-btn, .pager a, .toc, .gl-filter button';
+  document.addEventListener('pointerdown', e => {
+    if (!isGlass() || calm.matches) return;
+    const el = e.target.closest(glowSel);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--gx', (e.clientX - r.left) + 'px');
+    el.style.setProperty('--gy', (e.clientY - r.top) + 'px');
+    el.classList.remove('lg-glow'); void el.offsetWidth; el.classList.add('lg-glow');
+    setTimeout(() => el.classList.remove('lg-glow'), 950);
+  });
+
+  // 7. Adaptive glass: look at what is underneath each floating control. Over text the
+  //    shadow deepens; over dark content (code blocks, the hero) it flips to dark glass.
+  const floating = () => [...document.querySelectorAll('.tabbar, .top-btn.on, .navbar .nav-btn')];
+  function bgUnder(node) {
+    for (let n = node; n && n !== document.documentElement; n = n.parentElement) {
+      const bg = getComputedStyle(n).backgroundColor;
+      const c = bg.match(/[\d.]+/g);
+      // color-mix() resolves to color(srgb r g b / a) with 0-1 channels, rgb() uses 0-255
+      const unit = bg.startsWith('color(') ? 255 : 1;
+      if (c && (bg.startsWith('rgb') || bg.startsWith('color(srgb')) && (c[3] === undefined || +c[3] > 0.5))
+        return c.slice(0, 3).map(v => +v * unit);
+      const img = getComputedStyle(n).backgroundImage;
+      if (img && img.includes('gradient') && n.matches('.hero, .l-hero')) return [70, 70, 160];
+    }
+    return null;
+  }
+  let adaptQueued = false;
+  function adapt() {
+    adaptQueued = false;
+    if (!isGlass()) return;
+    floating().forEach(el => {
+      const r = el.getBoundingClientRect();
+      const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+        .find(n => !el.contains(n) && !n.closest('.tabbar, .navbar, .top-btn, .scrim'));
+      if (!hit) return;
+      el.classList.toggle('over-text', !!hit.closest('p, li, td, th, pre, h1, h2, h3, .code, .point'));
+      const rgb = bgUnder(hit);
+      const lum = rgb ? (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255 : null;
+      el.classList.toggle('on-dark', lum !== null && lum < 0.4);
+      el.classList.toggle('on-light', lum !== null && lum > 0.75);
+    });
+  }
+  const queueAdapt = () => { if (!adaptQueued) { adaptQueued = true; requestAnimationFrame(adapt); } };
+  addEventListener('scroll', queueAdapt, { passive: true });
+  addEventListener('resize', queueAdapt);
+  setTimeout(queueAdapt, 400);
+
+  // 8. Light that follows device tilt on phones, like the highlights on iOS.
+  addEventListener('deviceorientation', e => {
+    if (!isGlass() || e.gamma == null) return;
+    px = innerWidth * (0.5 + Math.max(-45, Math.min(45, e.gamma)) / 90);
+    py = innerHeight * (0.5 + Math.max(-45, Math.min(45, e.beta - 45)) / 90) - innerHeight * 0.6;
+    if (!lightQueued) { lightQueued = true; requestAnimationFrame(moveLight); }
+  });
+
+  // 9. Water-smooth wheel scrolling with a rubber band at the ends (Glass theme only).
+  //    Trackpads already scroll smoothly, so only notched mouse wheels are eased.
+  const content = document.querySelector('.content');
+  let target = scrollY, current = scrollY, gliding = false, overshoot = 0, releaseTimer = 0;
+  const maxY = () => document.documentElement.scrollHeight - innerHeight;
+  let lastSet = 0, lastT = 0;
+  function stopGlide() { gliding = false; document.documentElement.style.scrollBehavior = ''; }
+  function glide(now) {
+    // someone else moved the page (keyboard, scrollbar, a link): let them win
+    if (lastT && Math.abs(scrollY - lastSet) > 3) { stopGlide(); target = current = scrollY; return; }
+    const dt = lastT ? Math.min(64, now - lastT) : 16.7;
+    lastT = now;
+    current += (target - current) * (1 - Math.pow(1 - 0.14, dt / 16.7));   // same feel at any frame rate
+    if (Math.abs(target - current) < 0.5) current = target;
+    scrollTo(0, current);
+    lastSet = scrollY;
+    if (current !== target) requestAnimationFrame(glide); else stopGlide();
+  }
+  addEventListener('wheel', e => {
+    if (!isGlass() || calm.matches || e.ctrlKey || e.defaultPrevented) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    if (e.target.closest('.sidebar, pre, .tbl, textarea, input, select')) return;
+    const step = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? innerHeight : 1);
+    const wheelLike = e.deltaMode !== 0 || Math.abs(e.deltaY) >= 50;
+    const atTop = scrollY <= 0 && step < 0, atBottom = scrollY >= maxY() - 1 && step > 0;
+    if (atTop || atBottom) {
+      // rubber band: pull the content a little past the edge, then spring back
+      overshoot = Math.max(-90, Math.min(90, overshoot - step * 0.18));
+      content.classList.add('pulling');
+      content.style.setProperty('--ob', overshoot.toFixed(1) + 'px');
+      clearTimeout(releaseTimer);
+      releaseTimer = setTimeout(() => {
+        content.classList.remove('pulling'); overshoot = 0; content.style.setProperty('--ob', '0px');
+      }, 120);
+      return;
+    }
+    if (!wheelLike) return;
+    e.preventDefault();
+    if (!gliding) { target = current = scrollY; }
+    target = Math.max(0, Math.min(maxY(), target + step));
+    // CSS smooth scrolling would fight the per-frame scrollTo calls, so pause it while gliding
+    if (!gliding) { gliding = true; lastT = 0; document.documentElement.style.scrollBehavior = 'auto'; requestAnimationFrame(glide); }
+  }, { passive: false });
+  addEventListener('scroll', () => { if (!gliding) target = current = scrollY; }, { passive: true });
 })();
