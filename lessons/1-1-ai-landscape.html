@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.1 · How AI, ML, DL and GenAI fit together</title>
+<meta name="color-scheme" content="light dark">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-id="l1-1" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Stage 1 · Foundations</span></div>
+  <h1>1.1 How AI, ML, deep learning and GenAI fit together</h1>
+  <p>People use these words interchangeably, but they answer different questions. Getting the hierarchy straight makes every later design conversation clearer.</p>
+  <div class="chips"><span class="chip">~20 min</span><span class="chip">Module 1</span><span class="chip">Concepts + industry</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="ai">
+  <h2><span class="n">1</span>Artificial intelligence</h2>
+  <p>The broad field of building systems that perform tasks associated with intelligence: recognising speech, planning routes, understanding language, making decisions. "AI" says nothing about <em>how</em> it is done. Some AI systems simply follow rules a person wrote:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">rules.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">def</span> <span class="tk-f">flag_transaction</span>(amount, foreign_country):
+    <span class="tk-k">if</span> amount &gt; <span class="tk-n">100_000</span> <span class="tk-k">and</span> foreign_country:
+        <span class="tk-k">return</span> <span class="tk-s">"Review required"</span>
+    <span class="tk-k">return</span> <span class="tk-s">"No rule triggered"</span></code></pre></div>
+  <p>All of the behaviour comes from the programmer. Nothing is learned from data.</p>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">SQL / Power BI analogy</div><p>This is a <code>CASE WHEN</code> column or a DAX <code>IF</code>. Precise and auditable, but every rule has to be thought of and maintained by hand.</p></div></div>
+</section>
+
+<section class="sec" id="ml">
+  <h2><span class="n">2</span>Machine learning</h2>
+  <p>An approach inside AI where the system <strong>learns patterns from data</strong>. Instead of writing every fraud rule, you train on labelled legitimate and fraudulent transactions, and an optimiser adjusts the model's parameters to reduce prediction error.</p>
+  <h3>The real difference: where the behaviour comes from</h3>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Rule-based: a person specifies the decision rules</div>
+    <p>In <code>flag_transaction</code> above, someone decided that "over 100,000 and foreign" means review. If fraudsters change tactics, the system will not notice until a person writes a new rule.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Machine learning: a training process learns the patterns from examples</div>
+    <p>You give the model thousands of past transactions with the correct label (fraud or not). Training adjusts its parameters until its predictions match those labels as closely as possible. Nobody writes the rule; the model finds combinations of features that separate the classes, including ones a person might never think of.</p>
+    <p>The trade-off: the learned behaviour is only as good as the data, and it is harder to explain than a written rule.</p></div></div>
+  <p>Summary of the comparison:</p>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Rule-based</th><th>Machine learning</th></tr></thead>
+    <tbody>
+    <tr><td>Where behaviour comes from</td><td>A person writes the rules</td><td>Training learns them from examples</td></tr>
+    <tr><td>Changing behaviour</td><td>Edit the code</td><td>Change data or objective, retrain</td></tr>
+    <tr><td>Unseen patterns</td><td>Only if a rule covers them</td><td>Can generalise, can also fail in new ways</td></tr>
+    <tr><td>Explaining a decision</td><td>Read the rule</td><td>Needs feature importance, SHAP, etc.</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sec" id="dl">
+  <h2><span class="n">3</span>Deep learning</h2>
+  <p>A branch of ML that uses <strong>neural networks with many layers</strong>. Each layer transforms its input; training adjusts the weights by backpropagation so outputs match the objective better. The key practical advantage is that the network <strong>learns its own features</strong> from raw input (pixels, audio, text) instead of relying on hand-engineered ones.</p>
+  <p>Deep learning powers image recognition, speech recognition and text generation. It is <em>not</em> limited to generative AI: most image classifiers are deep but discriminative.</p>
+</section>
+
+<section class="sec" id="genai">
+  <h2><span class="n">4</span>Generative AI</h2>
+  <p>Systems that <strong>produce content</strong>: text, images, audio, video, code.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Task</th><th>Output</th><th>Kind</th></tr></thead>
+    <tbody>
+    <tr><td>Is this review positive?</td><td>A label: "positive"</td><td>Classification</td></tr>
+    <tr><td>Predict next month's sales</td><td>A number</td><td>Regression</td></tr>
+    <tr><td>Write a reply to this review</td><td>New text</td><td>Generation</td></tr>
+    </tbody></table></div>
+  <div class="callout c-key"><div class="ci">i</div><div><p><strong>"Generative" describes what a system does. "Deep learning" describes how it is built.</strong> Most modern generative systems are deep learning models, but the two words answer different questions.</p></div></div>
+</section>
+
+<section class="sec" id="llm">
+  <h2><span class="n">5</span>Large language models</h2>
+  <p>An <strong>LLM</strong> is a deep neural network (today almost always a <strong>transformer</strong>) trained on very large amounts of text to predict the next token. "Large" refers to both the parameter count (billions) and the training data. LLMs are one major type of generative AI; others generate images, audio or video.</p>
+  <div class="nest"><div class="nl">Artificial intelligence</div><div class="nd">Any system doing "intelligent" tasks, including hand-written rules</div>
+    <div class="nest"><div class="nl">Machine learning</div><div class="nd">Learns patterns from data</div>
+      <div class="nest"><div class="nl">Deep learning</div><div class="nd">Multi-layer neural networks that learn their own features</div>
+        <div class="nest"><div class="nl">LLMs</div><div class="nd">Transformer language models trained on huge text corpora</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="muted">Generative AI cuts across this picture: it includes LLMs plus image, audio and video generators.</p>
+  <h3>Related terms you will hear at work</h3>
+  <div class="list plain" style="margin:12px 0">
+    <div class="row"><div><div class="t">Foundation model</div><div class="d">A large model trained on broad data that can be adapted to many tasks. Most LLMs are foundation models.</div></div></div>
+    <div class="row"><div><div class="t">Multimodal model</div><div class="d">Takes or produces more than one kind of data, e.g. text and images in the same request.</div></div></div>
+    <div class="row"><div><div class="t">Hosted (API) vs open-weight</div><div class="d">Hosted: you call a provider's API and never see the weights. Open-weight: the weights are downloadable, so you can run and fine-tune the model on your own hardware. Big tradeoffs in cost, privacy and control (Module 2).</div></div></div>
+  </div>
+</section>
+
+<section class="sec" id="training-inference">
+  <h2><span class="n">6</span>Training vs inference</h2>
+  <p>When you build an LLM application you almost always call a model someone else trained:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">concept.py · not runnable yet</span><button class="copy">Copy</button></div>
+<pre><code>user_question = <span class="tk-s">"Explain this sales trend"</span>
+
+response = existing_model.generate(
+    instructions=<span class="tk-s">"Explain clearly and state any uncertainty."</span>,
+    input=user_question,
+)</code></pre></div>
+  <p>Your Python supplies instructions and data, calls the model, then processes the reply. Useful applications get built this way with no training at all.</p>
+  <h3>This gives us two separate activities</h3>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Training: adjusting a model's parameters using data</div>
+    <p>This is where the model's knowledge and skills come from. It needs large datasets, a loss function, and a lot of compute. After training, the parameters are saved and frozen. For LLMs this is done by model providers, and it is the same idea as calling <code>model.fit()</code> on your own ML models, just at a vastly larger scale.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Inference: using a trained model to produce an output</div>
+    <p>The parameters do not change. You send input (your instructions, the question, any documents) and get output back. It is the equivalent of <code>model.predict()</code>. Every API call you make to an LLM is inference.</p>
+    <p>This is why pasting a Python file into a prompt does not teach the model anything permanent: it is inference, so the file is only context for that one call. Fine-tuning, by contrast, is a form of training and does update the parameters.</p></div></div>
+  <p>The full life of a model, from first training to your API call:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Activity</th><th>What happens</th><th>Who usually does it</th></tr></thead>
+    <tbody>
+    <tr><td>Pretraining</td><td>Parameters learned from huge text corpora; very expensive</td><td>Model labs</td></tr>
+    <tr><td>Post-training</td><td>Tuned to follow instructions and behave safely</td><td>Model labs</td></tr>
+    <tr><td>Fine-tuning</td><td>Parameters adjusted further on your targeted data</td><td>Sometimes your team (Stage 6)</td></tr>
+    <tr><td>Inference</td><td>Frozen model produces an output from your context</td><td>You, on every call</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sec extra" id="app-stack">
+  <h2><span class="n">+</span>The GenAI application stack <span class="tag-extra">Extra</span></h2>
+  <p>A habit to build from day one: separate the <strong>model</strong> (a function from tokens to a next-token distribution) from the <strong>application</strong> around it. Most of the engineering in this course lives in the application layers.</p>
+  <div class="stack">
+    <div style="--c:var(--blue)"><b>Interface</b>Chat UI, API endpoint, Slack bot, batch job</div>
+    <div style="--c:var(--indigo)"><b>Orchestration</b>Prompt assembly, workflows, agent loops, retries</div>
+    <div style="--c:var(--teal)"><b>Context and tools</b>Retrieval (RAG), databases, APIs the model can call</div>
+    <div class="model"><b>Model</b>Hosted API or self-hosted open-weight LLM</div>
+    <div style="--c:var(--orange)"><b>Guardrails</b>Output validation, permissions, PII filtering, injection defence</div>
+    <div style="--c:var(--green)"><b>Evaluation and ops</b>Test sets, tracing, cost and latency monitoring, feedback</div>
+  </div>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">Power BI analogy</div><p>The model is like the DAX engine: powerful, but a report only works because of the data model, security roles, refresh pipeline and testing around it. Nobody ships "just the engine".</p></div></div>
+</section>
+
+<section class="sec extra" id="when-not-llm">
+  <h2><span class="n">+</span>When not to use an LLM <span class="tag-extra">Extra</span></h2>
+  <p>In industry, a key skill is choosing the <em>simplest</em> tool that solves the problem. GenAI does not replace classical ML.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Problem</th><th>Usually best fit</th><th>Why</th></tr></thead>
+    <tbody>
+    <tr><td>Fixed policy (e.g. approval limits)</td><td>Rules / SQL</td><td>Must be exact, auditable, cheap</td></tr>
+    <tr><td>Churn or fraud score on tabular data</td><td>Gradient boosting, logistic regression</td><td>Faster, cheaper, well-calibrated, easy to evaluate</td></tr>
+    <tr><td>Forecast a numeric series</td><td>Time-series / regression models</td><td>LLMs are poor at precise arithmetic over many rows</td></tr>
+    <tr><td>Understand or write free text, few labels</td><td>LLM</td><td>Works from instructions with little or no training data</td></tr>
+    <tr><td>Answer questions over company documents</td><td>LLM + retrieval (RAG)</td><td>Language understanding plus grounded evidence</td></tr>
+    </tbody></table></div>
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Industry pattern</div><p>Hybrids are common: an LLM extracts structured fields from messy text (emails, tickets, contracts), then a classical model or plain SQL scores or aggregates those fields.</p></div></div>
+</section>
+
+<section class="sec extra" id="misconceptions">
+  <h2><span class="n">+</span>Common misconceptions <span class="tag-extra">Extra</span></h2>
+  <div class="callout c-bad"><div class="ci">✕</div><div><p><strong>"The model remembers our chat."</strong> The app re-sends history every call; the model keeps no state between requests.</p></div></div>
+  <div class="callout c-bad"><div class="ci">✕</div><div><p><strong>"Putting a document in the prompt teaches the model."</strong> Only for that request. The next request starts clean unless the app sends it again.</p></div></div>
+  <div class="callout c-bad"><div class="ci">✕</div><div><p><strong>"A bigger model fixes wrong answers."</strong> If the needed fact is not in the context or training data, a bigger model mostly produces a more fluent wrong answer. Fix the context first.</p></div></div>
+</section>
+
+<section class="sec" id="check">
+  <h2><span class="n">?</span>Check yourself</h2>
+  <details class="disc"><summary><span class="tag q">Q1</span><span class="q">Is an image classifier built with a CNN "deep learning", "generative AI", both or neither?</span><span class="chev"></span></summary>
+    <div class="ans"><p><strong>Deep learning, but not generative.</strong> It is a multi-layer neural network (deep) that outputs a label (discriminative). This is the cleanest example of why the two words are different axes.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q2</span><span class="q">Your manager asks for an LLM to predict monthly churn from a customer table. What do you say?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Start with a classical model (e.g. gradient boosting) on the table: it is cheaper, faster, gives calibrated probabilities and is easy to evaluate with AUC. An LLM could help elsewhere, e.g. turning free-text support tickets into features the churn model uses.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q3</span><span class="q">Which layer of the stack is responsible for checking that the model's JSON is valid?</span><span class="chev"></span></summary>
+    <div class="ans"><p><strong>Guardrails / validation, in your application code.</strong> The model only produces text that looks like JSON; your code must parse it, validate it against a schema, and retry or fail cleanly (Module 2).</p></div></details>
+</section>
+
+<section class="recap">
+  <h2>Recap</h2>
+  <ul>
+    <li>AI is the field; ML learns from data; DL uses multi-layer networks that learn their own features.</li>
+    <li>"Generative" is what a system does; "deep" is how it is built. They are different axes.</li>
+    <li>LLMs are transformer models trained to predict the next token on huge text corpora.</li>
+    <li>Training changes parameters; inference uses frozen parameters plus your context.</li>
+    <li>The model is one layer of an application stack. Pick the simplest tool for each problem.</li>
+  </ul>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>

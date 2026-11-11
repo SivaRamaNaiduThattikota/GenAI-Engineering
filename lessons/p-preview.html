@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Preview · Prompts, tokens and context</title>
+<meta name="color-scheme" content="light dark">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-id="preview" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Preview</span></div>
+  <h1>Prompts, tokens and context</h1>
+  <p>A first quick tour of the ideas every later lesson leans on. Each one gets a full lesson in its proper stage; this page is the solid short version.</p>
+  <div class="chips"><span class="chip">~15 min</span><span class="chip">Full depth in Stages 2 and 4</span><span class="chip">Python</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="what-is-genai">
+  <h2><span class="n">1</span>What generative AI is</h2>
+  <p>Generative AI learns patterns from examples and uses them to <strong>create new content</strong>: text, images, audio, code. The output did not exist before the request; it is produced on the spot, conditioned on your input.</p>
+  <ul>
+    <li>A spam classifier <strong>categorises</strong> an email into a fixed set of labels.</li>
+    <li>A generative model <strong>writes</strong> an email from your instructions.</li>
+  </ul>
+  <div class="callout c-warn"><div class="ci">!</div><div><p><strong>A convincing answer can still be wrong.</strong> Fluency is what the model is trained for; factual accuracy is not guaranteed by it. Lesson 1.2 shows exactly why.</p></div></div>
+  <details class="disc"><summary><span class="tag">Exercise</span><span class="q">Is an app that writes a birthday message generative AI? Why?</span><span class="chev"></span></summary>
+    <div class="ans"><p><strong>Yes</strong>, if a model composes the message: it produces new text conditioned on an instruction (name, tone, relationship), instead of choosing a label.</p>
+    <p>The subtle part: an app that only <em>picks</em> one of 20 pre-written templates is not generative, even if the result looks the same to the user. It is selection, closer to retrieval. What matters is how the output was produced, not what it looks like.</p></div></details>
+</section>
+
+<section class="sec" id="prompt-flow">
+  <h2><span class="n">2</span>What happens when you send a prompt</h2>
+  <div class="flow"><span>Your prompt</span><b>→</b><span>Tokenizer</span><b>→</b><span>Token IDs</span><b>→</b><span class="hl">Model</span><b>→</b><span>Next token</span><b>↺</b><span>Response text</span></div>
+  <p>A <strong>token</strong> is a piece of text: a whole word, part of a word, a space plus a word, or punctuation. The <strong>tokenizer</strong> maps text to integer IDs from a fixed <strong>vocabulary</strong>, and the model only ever sees those integers.</p>
+  <p>Given <code>The capital of France is</code>, the model predicts a likely next token, appends it, and repeats until it emits a stop token or hits a length limit.</p>
+  <h3>Training vs using the model</h3>
+  <p>During <strong>training</strong>, the model's <strong>parameters</strong> (weights) are adjusted. During normal use (<strong>inference</strong>), the parameters are frozen and your prompt is only <strong>context</strong> for that one request.</p>
+  <details class="disc"><summary><span class="tag">Exercise</span><span class="q">You paste a Python file and ask for a summary. Is the model retraining, or using the file as context?</span><span class="chev"></span></summary>
+    <div class="ans"><p><strong>Using it as context.</strong> The parameters stay exactly the same; the file just conditions this one response. Fine-tuning is a separate training job that updates parameters, and it is done ahead of time, not during a chat.</p>
+    <div class="you">You answered this correctly.</div></div></details>
+  <div class="callout c-extra"><div class="ci">+</div><div><div class="ct">Extra · tokens are the unit of everything</div>
+    <p>Hosted APIs bill per token, usually with separate prices for input and output tokens. Context limits, rate limits and latency are all measured in tokens too.</p>
+    <p>A common rough rule for English is about 4 characters or ¾ of a word per token, but it varies a lot by tokenizer, language and content. Code, numbers and non-English text often use more tokens. Always count with the model's own tokenizer when it matters (Lesson 2.1).</p></div></div>
+</section>
+
+<section class="sec" id="context-window">
+  <h2><span class="n">3</span>The context window</h2>
+  <p>The <strong>context window</strong> is the maximum number of tokens a model can handle in one request. Depending on the provider, that budget covers the system instructions, conversation history, supplied documents, tool definitions <em>and</em> the generated output. Think of it as the model's working memory for that single call.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">budget.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-c"># illustrative numbers, real limits depend on the model</span>
+context_limit = <span class="tk-n">8_000</span>
+instructions_and_history = <span class="tk-n">1_000</span>
+python_file = <span class="tk-n">5_000</span>
+reserved_output = <span class="tk-n">2_000</span>
+
+total = instructions_and_history + python_file + reserved_output
+<span class="tk-f">print</span>(total &lt;= context_limit)  <span class="tk-c"># True, but with zero headroom</span></code></pre></div>
+  <p>A long file can exceed the window even when the upload itself succeeded. The <strong>application</strong>, not the model, decides what goes in.</p>
+  <h3>Why the chat "remembers"</h3>
+  <p>The model keeps no memory between calls. A chat app re-sends the earlier messages every turn, so long chats slowly fill the window. When it is full, the app must drop, summarise or retrieve older parts. That is an application design decision.</p>
+  <div class="callout c-extra"><div class="ci">+</div><div><div class="ct">Extra · capacity is not the same as effective use</div>
+    <p>Fitting in the window does not mean the model uses everything equally well. Research such as <em>Lost in the Middle</em> (Liu et al., 2023) found that models often use information placed in the middle of a long context less reliably than information at the start or end.</p>
+    <p>Bigger context also costs more and responds slower, because every input token is processed on every call. In practice, sending the <strong>right</strong> 3,000 tokens usually beats sending everything you have.</p></div></div>
+</section>
+
+<section class="sec" id="chunking-retrieval">
+  <h2><span class="n">4</span>Chunking and retrieval: a first look at RAG</h2>
+  <details class="disc"><summary><span class="tag">Exercise</span><span class="q">Your document is 20,000 tokens, the window is 8,000, and the question is about one function. What do you send?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Split the document and send only the relevant part: <strong>the function itself plus whatever is needed to understand it</strong> (imports, constants, and the helpers it calls), and leave the rest out.</p>
+    <div class="you">You answered this correctly: split it, or take only the required part.</div></div></details>
+  <div class="list plain" style="margin:14px 0">
+    <div class="row"><div><div class="t">Chunking</div><div class="d">Splitting a document into smaller pieces that can be stored, searched and sent independently.</div></div></div>
+    <div class="row"><div><div class="t">Retrieval</div><div class="d">Finding the chunks most relevant to a question, typically by keyword search, vector similarity, or both.</div></div></div>
+    <div class="row"><div><div class="t">RAG · Retrieval-Augmented Generation</div><div class="d">Retrieve relevant information first, put it in the prompt, then let the model generate an answer grounded in it.</div></div></div>
+  </div>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">manual_retrieval.py</span><button class="copy">Copy</button></div>
+<pre><code>question = <span class="tk-s">"How does calculate_discount work?"</span>
+
+<span class="tk-c"># picked by hand for now, later a retriever does this</span>
+context = <span class="tk-s">"""
+def calculate_discount(price, percentage):
+    return price * percentage / 100
+"""</span>
+
+prompt = <span class="tk-k">f</span><span class="tk-s">"""
+Explain the function using the supplied code.
+If information is missing, say what is missing.
+
+Code:
+{context}
+
+Question:
+{question}
+"""</span></code></pre></div>
+  <p>The line <em>"If information is missing, say what is missing"</em> matters: it gives the model a sanctioned way to admit a gap instead of filling it with a guess.</p>
+
+  <h3>Dependencies decide what a good chunk is</h3>
+  <details class="disc"><summary><span class="tag">Exercise</span><span class="q">If the function calls get_tax_rate(country), should you include that helper too? Why?</span><span class="chev"></span></summary>
+    <div class="ans"><p><strong>Yes, include it.</strong> The function's output depends on the value <code>get_tax_rate</code> returns, so the function alone cannot be fully explained.</p>
+    <p>Without the helper the model only sees a call to an unknown function. It might say the rate is unknown (good), or it might <strong>invent</strong> a plausible rule like "uses 18% GST" (bad, and hard to spot). Including the helper, and the data it reads, lets the answer be grounded.</p>
+    <p>General rule: a chunk should carry what is needed to interpret it. For code, that means splitting along functions and classes and pulling in what they call.</p></div></details>
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Industry note</div>
+    <p>"Retrieved the right function but not its dependency" is one of the most common real RAG failures. It looks like a model problem (a wrong answer) but it is a retrieval problem. In Stage 4 we measure it separately with retrieval recall, so you can tell which half of the system failed.</p></div></div>
+</section>
+
+<section class="recap">
+  <h2>Recap</h2>
+  <ul>
+    <li>Generative AI produces new content; what counts is how the output is produced.</li>
+    <li>Models see token IDs, not text. Tokens are the unit of cost, limits and latency.</li>
+    <li>Inference uses frozen parameters; the prompt is context for one call only.</li>
+    <li>The context window is a budget the application manages. Relevant beats long.</li>
+    <li>RAG = chunk, retrieve, then generate. Good chunks keep their dependencies.</li>
+  </ul>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>

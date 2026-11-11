@@ -1,0 +1,306 @@
+// Course manifest. To add a lesson: add an entry here and create the file.
+const STAGES = {
+  0: { name: 'Preview', icon: 'bg-teal' },
+  1: { name: 'Stage 1 · Foundations', icon: 'bg-blue' },
+  2: { name: 'Stage 2 · How LLMs work', icon: 'bg-indigo' },
+  3: { name: 'Stage 3 · Working with models', icon: 'bg-purple' },
+  4: { name: 'Stage 4 · Working with your data', icon: 'bg-teal' },
+  5: { name: 'Stage 5 · Agents and workflows', icon: 'bg-orange' },
+  6: { name: 'Stage 6 · Advanced development', icon: 'bg-red' },
+};
+
+const COURSE = [
+  { id: 'preview', stage: 0, num: 'P', file: 'lessons/p-preview.html', mins: 15,
+    title: 'Prompts, tokens and context',
+    desc: 'The first quick tour: what GenAI is, what a prompt becomes, context windows and a first look at RAG.',
+    keys: 'token context window chunking retrieval rag prompt budget lost in the middle' },
+  { id: 'l1-1', stage: 1, num: '1.1', file: 'lessons/1-1-ai-landscape.html', mins: 20,
+    title: 'How AI, ML, DL and GenAI fit together',
+    desc: 'The hierarchy, training vs inference, the GenAI application stack, and when not to use an LLM.',
+    keys: 'ai machine learning deep learning llm foundation model rules training inference stack' },
+  { id: 'l1-2', stage: 1, num: '1.2', file: 'lessons/1-2-prediction-to-generation.html', mins: 35,
+    title: 'From prediction models to generative models',
+    desc: 'Next-token prediction, the chain rule, the training loss, logits and temperature, and why fluent is not true.',
+    keys: 'autoregressive chain rule cross entropy logits softmax temperature greedy sampling hallucination prefill decode base instruct' },
+  { id: 'l2-1', stage: 2, num: '2.1', file: 'lessons/2-1-tokenization.html', mins: 40,
+    title: 'Tokens and tokenization',
+    desc: 'How text becomes token IDs, how BPE learns a vocabulary, and what token counts mean for cost, context and accuracy.',
+    keys: 'token tokenizer bpe byte pair encoding wordpiece unigram sentencepiece vocabulary token id embedding table utf-8 code point tiktoken special tokens chat template' },
+  { id: 'l2-2', stage: 2, num: '2.2', soon: true, title: 'Embeddings',
+    desc: 'How a token ID becomes a vector, how those vectors are learned, and token vs document embeddings.' },
+];
+
+(function () {
+  const root = document.body.dataset.root || '';
+  const pageId = document.body.dataset.id || 'home';
+  const KEY = 'genai-notes-done';
+  let done = JSON.parse(localStorage.getItem(KEY) || '[]');
+  const lesson = COURSE.find(c => c.id === pageId);
+  if (lesson) document.body.dataset.stage = lesson.stage;
+
+  const svg = {
+    menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+    print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  };
+
+  // ---------- shell: sidebar + navbar ----------
+  const shell = document.querySelector('.shell');
+  const main = shell.querySelector('.main');
+  const side = document.createElement('aside');
+  side.className = 'sidebar'; side.id = 'sidebar'; side.setAttribute('aria-label', 'Contents');
+  side.innerHTML = `
+    <a class="brand" href="${root}index.html"><span class="logo">AI</span><span><b>GenAI Engineering</b><small>Basics to production</small></span></a>
+    <label class="search">${svg.search}<input id="q" type="search" placeholder="Search lessons" autocomplete="off"></label>
+    <div id="side-groups"></div><p class="side-empty" id="side-empty">No lessons match.</p>
+    <div class="side-group" style="margin-top:20px"><h4>Appearance</h4></div>
+    <div class="seg" id="theme-seg"><span class="thumb"></span><button data-v="auto">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div>
+    <p class="side-foot">Progress is saved in this browser.<br>Ctrl / ⌘ + K to search.</p>`;
+  shell.insertBefore(side, main);
+
+  const nav = document.createElement('header');
+  nav.className = 'navbar'; nav.id = 'navbar';
+  const title = lesson ? `${lesson.num} ${lesson.title}` : (document.body.dataset.title || 'GenAI Engineering');
+  nav.innerHTML = `
+    <button class="nav-btn menu-btn" id="menu-btn" aria-label="Open contents">${svg.menu}</button>
+    ${pageId !== 'home' ? `<a class="nav-btn" href="${root}index.html" aria-label="Home">${svg.home}</a>` : ''}
+    <div class="small-title">${title}</div>
+    <button class="nav-btn" id="print-btn" aria-label="Print or save as PDF" title="Print / save as PDF">${svg.print}</button>
+    <div class="progress" id="read-progress"></div>`;
+  main.insertBefore(nav, main.firstChild);
+
+  const groups = side.querySelector('#side-groups');
+  function buildSide(filter = '') {
+    const f = filter.trim().toLowerCase();
+    const match = c => !f || (c.title + ' ' + (c.keys || '') + ' ' + (c.desc || '') + ' ' + c.num).toLowerCase().includes(f);
+    let html = '';
+    if (!f) html += `<div class="side-group"><h4>Course</h4><ul class="side-list">
+      <li><a href="${root}index.html" class="${pageId === 'home' ? 'active' : ''}"><span class="ico bg-blue">★</span>Overview and roadmap</a></li>
+      <li><a href="${root}glossary.html" class="${pageId === 'glossary' ? 'active' : ''}"><span class="ico bg-purple">Aa</span>Glossary</a></li></ul></div>`;
+    let any = false;
+    Object.keys(STAGES).forEach(s => {
+      const items = COURSE.filter(c => String(c.stage) === s && match(c));
+      if (!items.length) return;
+      any = true;
+      html += `<div class="side-group" data-stage="${s}"><h4><i></i>${STAGES[s].name}</h4><ul class="side-list">` +
+        items.map(c => `<li><a href="${c.soon ? '#' : root + c.file}" class="${c.id === pageId ? 'active' : ''} ${c.soon ? 'soon' : ''}">
+          <span class="dot ${done.includes(c.id) ? 'done' : ''} ${c.soon ? 'soon' : ''}"></span><span class="num">${c.num}</span><span>${c.title}${c.soon ? ' · soon' : ''}</span></a></li>`).join('') +
+        '</ul></div>';
+    });
+    groups.innerHTML = html;
+    side.querySelector('#side-empty').style.display = any || !f ? 'none' : 'block';
+  }
+  buildSide();
+  const q = side.querySelector('#q');
+  q.addEventListener('input', () => buildSide(q.value));
+
+  // keep sidebar scroll position across pages
+  side.scrollTop = +sessionStorage.getItem('genai-side-scroll') || 0;
+  addEventListener('beforeunload', () => sessionStorage.setItem('genai-side-scroll', side.scrollTop));
+
+  // ---------- theme ----------
+  const seg = side.querySelector('#theme-seg'), thumb = seg.querySelector('.thumb');
+  const mq = matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme(v) {
+    localStorage.setItem('genai-notes-theme', v);
+    const dark = v === 'dark' || (v === 'auto' && mq.matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    const btns = [...seg.querySelectorAll('button')], i = btns.findIndex(b => b.dataset.v === v);
+    thumb.style.width = btns[0].offsetWidth + 'px';
+    thumb.style.transform = `translateX(${i * btns[0].offsetWidth}px)`;
+  }
+  seg.addEventListener('click', e => { if (e.target.dataset.v) applyTheme(e.target.dataset.v); });
+  mq.addEventListener('change', () => applyTheme(localStorage.getItem('genai-notes-theme') || 'auto'));
+  applyTheme(localStorage.getItem('genai-notes-theme') || 'auto');
+
+  // ---------- mobile sheet ----------
+  const scrim = document.createElement('div'); scrim.className = 'scrim'; document.body.appendChild(scrim);
+  const openSheet = o => { side.classList.toggle('open', o); scrim.classList.toggle('on', o); };
+  nav.querySelector('#menu-btn').onclick = () => openSheet(true);
+  scrim.onclick = () => openSheet(false);
+  addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if (innerWidth <= 1000) openSheet(true); q.focus(); }
+    if (e.key === 'Escape') openSheet(false);
+  });
+
+  // ---------- page transitions ----------
+  // Direction follows course order, like an iOS navigation stack:
+  // home < preview < 1.1 < 1.2 < ... < glossary. Deeper = push, shallower = pop.
+  function depth(path) {
+    const f = decodeURIComponent(path).replace(/\\/g, '/');
+    if (/\/index\.html$/.test(f) || /\/$/.test(f)) return 0;
+    if (/\/glossary\.html$/.test(f)) return 999;
+    const i = COURSE.findIndex(c => c.file && f.endsWith('/' + c.file));
+    return i < 0 ? 500 : i + 1;
+  }
+  const vt = document.documentElement.classList.contains('vt');
+  if (!vt) requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('ready')));
+  else document.body.classList.add('ready');
+  addEventListener('pageshow', e => {
+    if (e.persisted) { document.body.classList.remove('leaving', 'go-forward', 'go-back'); document.body.classList.add('ready'); }
+  });
+  let navigating = false;
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank') return;
+    if (a.getAttribute('href') === '#') { e.preventDefault(); return; }
+    const url = new URL(a.href, location.href);
+    if (url.protocol !== location.protocol || url.host !== location.host) return;
+    if (url.pathname === location.pathname) return; // in-page anchor: CSS smooth scroll
+    const dir = depth(url.pathname) < depth(location.pathname) ? 'back' : 'forward';
+    sessionStorage.setItem('genai-nav-dir', dir);
+    openSheet(false);
+    if (vt) return; // the browser runs the view transition
+    e.preventDefault();
+    if (navigating) return;
+    navigating = true;
+    document.body.classList.add('leaving', 'go-' + dir);
+    setTimeout(() => { location.href = url.href; }, 180);
+  });
+
+  // drag the mobile sheet down to dismiss it, like an iOS sheet
+  let dragY = null, dragStart = 0;
+  side.addEventListener('touchstart', e => {
+    if (!side.classList.contains('open') || side.scrollTop > 0) return;
+    dragY = dragStart = e.touches[0].clientY;
+  }, { passive: true });
+  side.addEventListener('touchmove', e => {
+    if (dragY === null) return;
+    dragY = e.touches[0].clientY;
+    const d = Math.max(0, dragY - dragStart);
+    if (d > 0) { side.classList.add('dragging'); side.style.setProperty('--drag', d + 'px'); }
+  }, { passive: true });
+  side.addEventListener('touchend', () => {
+    if (dragY === null) return;
+    const d = dragY - dragStart;
+    side.classList.remove('dragging'); side.style.removeProperty('--drag');
+    if (d > 110) openSheet(false);
+    dragY = null;
+  });
+
+  // ---------- scroll effects ----------
+  const prog = nav.querySelector('#read-progress');
+  const topBtn = document.createElement('button');
+  topBtn.className = 'top-btn'; topBtn.setAttribute('aria-label', 'Back to top'); topBtn.innerHTML = svg.up;
+  document.body.appendChild(topBtn);
+  topBtn.onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+  let ticking = false;
+  function onScroll() {
+    const y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
+    const big = document.querySelector('.hero h1, .l-hero h1');
+    nav.classList.toggle('scrolled', big ? big.getBoundingClientRect().bottom < 60 : y > 70);
+    prog.style.transform = `scaleX(${h > 0 ? Math.min(1, y / h) : 0})`;
+    topBtn.classList.toggle('on', y > 900);
+    ticking = false;
+  }
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  onScroll();
+
+  // reveal on scroll
+  const io = new IntersectionObserver(entries => entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    en.target.classList.add('in');
+    en.target.querySelectorAll('.bar .fl[data-w]').forEach(b => b.style.width = b.dataset.w);
+    io.unobserve(en.target);
+  }), { rootMargin: '0px 0px -8% 0px', threshold: 0.04 });
+  function watch(sel) {
+    document.querySelectorAll(sel).forEach((el, i) => {
+      el.classList.add('reveal');
+      el.style.transitionDelay = Math.min(i % 4, 3) * 50 + 'ms';
+      io.observe(el);
+    });
+  }
+
+  // ---------- home page ----------
+  const real = COURSE.filter(c => !c.soon);
+  function updateHome() {
+    const ring = document.getElementById('ring');
+    if (!ring) return;
+    const d = real.filter(c => done.includes(c.id)).length, pct = real.length ? Math.round(d / real.length * 100) : 0;
+    ring.style.strokeDashoffset = 163.4 * (1 - pct / 100);
+    document.getElementById('pct').textContent = pct + '%';
+    document.getElementById('n-lessons').textContent = real.length;
+    document.getElementById('n-done').textContent = d;
+    const nextUp = real.find(c => !done.includes(c.id)) || real[real.length - 1];
+    const cta = document.getElementById('cta');
+    if (cta && nextUp) { cta.href = root + nextUp.file; cta.querySelector('span').textContent = (done.length ? 'Continue: ' : 'Start: ') + (nextUp.stage === 0 ? '' : nextUp.num + ' ') + nextUp.title; }
+  }
+  const cards = document.getElementById('lesson-cards');
+  if (cards) {
+    cards.innerHTML = COURSE.map(c => `<a class="lcard ${c.soon ? 'soon' : ''}" data-stage="${c.stage}" href="${c.soon ? '#' : root + c.file}">
+      <span class="n">${c.stage === 0 ? 'Preview' : 'Lesson ' + c.num}</span><span class="t">${c.title}</span><span class="d">${c.desc}</span>
+      <span class="f"><span>${c.soon ? 'Coming next' : '~' + c.mins + ' min'}</span>${done.includes(c.id) ? '<span class="ok">✓ Done</span>' : ''}</span></a>`).join('');
+  }
+  updateHome();
+
+  // ---------- lesson page ----------
+  if (lesson) {
+    // table of contents + scrollspy
+    const secs = [...document.querySelectorAll('.sec[id]')];
+    const toc = document.getElementById('toc');
+    if (toc && secs.length) {
+      toc.innerHTML = `<summary>On this page<span class="muted" style="font-weight:500">· ${secs.length} sections</span><span class="c"></span></summary><ol>` +
+        secs.map(s => { const h = s.querySelector('h2'); const n = h.querySelector('.n')?.textContent || '•';
+          const t = h.cloneNode(true); t.querySelector('.n')?.remove(); t.querySelector('.tag-extra')?.remove();
+          return `<li><a href="#${s.id}"><span>${n}</span>${t.textContent.trim()}</a></li>`; }).join('') + '</ol>';
+      if (innerWidth > 640) toc.open = true;
+      const links = [...toc.querySelectorAll('a')];
+      const spy = new IntersectionObserver(es => es.forEach(en => {
+        if (en.isIntersecting) links.forEach(l => l.classList.toggle('on', l.getAttribute('href') === '#' + en.target.id));
+      }), { rootMargin: '-30% 0px -60% 0px' });
+      secs.forEach(s => spy.observe(s));
+    }
+    // done toggle
+    const t = document.getElementById('done-toggle');
+    if (t) {
+      t.checked = done.includes(lesson.id);
+      const msg = document.getElementById('done-msg');
+      const setMsg = () => msg.textContent = t.checked ? 'Nice. Marked as completed.' : 'Finished reading and tried the code? Mark it done.';
+      setMsg();
+      t.addEventListener('change', () => {
+        done = t.checked ? [...new Set([...done, lesson.id])] : done.filter(x => x !== lesson.id);
+        localStorage.setItem(KEY, JSON.stringify(done));
+        buildSide(q.value); setMsg();
+      });
+    }
+    // prev / next
+    const pager = document.getElementById('pager');
+    if (pager) {
+      const i = COURSE.indexOf(lesson), prev = COURSE[i - 1], next = COURSE[i + 1];
+      pager.innerHTML =
+        (prev ? `<a href="${root + prev.file}"><small>← Previous</small><b>${prev.num} ${prev.title}</b></a>` : `<a href="${root}index.html"><small>← Back</small><b>Overview</b></a>`) +
+        (next ? `<a class="nx ${next.soon ? 'soon' : ''}" href="${next.soon ? '#' : root + next.file}"><small>${next.soon ? 'Coming next' : 'Next →'}</small><b>${next.num} ${next.title}</b></a>` : '');
+    }
+  }
+
+  // temperature tabs
+  document.querySelectorAll('[data-temps]').forEach(box => {
+    const sets = JSON.parse(box.dataset.temps);
+    const fills = box.querySelectorAll('.fl'), pcs = box.querySelectorAll('.pc');
+    box.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+      box.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+      sets[b.dataset.t].forEach((p, i) => { fills[i].style.width = (p * 100) + '%'; fills[i].dataset.w = (p * 100) + '%'; pcs[i].textContent = p.toFixed(3); });
+    }));
+  });
+
+  // copy buttons
+  document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', async () => {
+    const code = b.closest('.code').querySelector('pre code').innerText;
+    try { await navigator.clipboard.writeText(code); } catch (_) {
+      const ta = document.createElement('textarea'); ta.value = code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    b.textContent = 'Copied'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = 'Copy'; b.classList.remove('ok'); }, 1400);
+  }));
+
+  nav.querySelector('#print-btn').onclick = () => {
+    document.querySelectorAll('details').forEach(d => d.open = true);
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    document.querySelectorAll('.bar .fl[data-w]').forEach(b => b.style.width = b.dataset.w);
+    print();
+  };
+
+  watch('.sec, .recap, .done-bar, .pager, .tile, .lcard, .content > .list, .term');
+})();

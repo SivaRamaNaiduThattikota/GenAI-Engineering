@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GenAI Engineering · Course notes</title>
+<meta name="color-scheme" content="light dark">
+<script src="assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-id="home" data-root="" data-title="Overview">
+<div class="shell"><div class="main">
+<main class="content page">
+
+  <section class="hero">
+    <div class="eyebrow">Personal course notes</div>
+    <h1>GenAI Engineering,<br>from basics to production</h1>
+    <p>One substantial topic per lesson: intuition, mechanism, Python, engineering judgment and verification. Written for building real GenAI applications at work.</p>
+    <a class="cta" id="cta" href="lessons/p-preview.html"><span>Start</span> →</a>
+  </section>
+
+  <div class="stats">
+    <div class="tile ring-tile">
+      <svg class="ring" viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34C759"/><stop offset="1" stop-color="#30B0C7"/></linearGradient></defs>
+        <circle class="track" cx="32" cy="32" r="26"/><circle class="prog" id="ring" cx="32" cy="32" r="26" stroke-dasharray="163.4" stroke-dashoffset="163.4"/></svg>
+      <div><div class="k">Completed</div><div class="v" id="pct">0%</div></div>
+    </div>
+    <div class="tile"><div class="k">Lessons written</div><div class="v" id="n-lessons">0</div></div>
+    <div class="tile"><div class="k">Done</div><div class="v" id="n-done">0</div></div>
+    <div class="tile"><div class="k">Current stage</div><div class="v">2 / 6</div></div>
+  </div>
+
+  <div class="group-label">Lessons</div>
+  <div class="cards" id="lesson-cards"></div>
+
+  <div class="group-label">Starting point</div>
+  <div class="list">
+    <div class="row"><div class="icon bg-blue">Py</div><div><div class="t">Python: comfortable</div><div class="d">No programming basics needed. Python is the lab bench for every lesson.</div></div></div>
+    <div class="row"><div class="icon bg-indigo">ML</div><div><div class="t">ML / DL: hands-on with prediction models</div><div class="d">Classification and regression are known ground. GenAI is built on top of that.</div></div></div>
+    <div class="row"><div class="icon bg-orange">0</div><div><div class="t">Not built yet: LLM API calls, RAG, agents</div><div class="d">Built from first principles. Direct SDKs and plain Python first, frameworks only once the mechanism is clear.</div></div></div>
+    <div class="row"><div class="icon bg-green">✓</div><div><div class="t">Scope</div><div class="d">Every level, basics included, with industry depth. Big topics such as transformers or RAG get several lessons.</div></div></div>
+  </div>
+
+  <div class="group-label">How every lesson is built</div>
+  <div class="list">
+    <div class="row"><div class="icon bg-pink">1</div><div><div class="t">Intuition</div><div class="d">What problem does this solve, and why does it exist?</div></div></div>
+    <div class="row"><div class="icon bg-purple">2</div><div><div class="t">Mechanism</div><div class="d">How it works, with the maths where it helps.</div></div></div>
+    <div class="row"><div class="icon bg-blue">3</div><div><div class="t">Implementation</div><div class="d">Python code and the relevant tools.</div></div></div>
+    <div class="row"><div class="icon bg-orange">4</div><div><div class="t">Engineering judgment</div><div class="d">When to use it, the tradeoffs, and how it fails.</div></div></div>
+    <div class="row"><div class="icon bg-green">5</div><div><div class="t">Verification</div><div class="d">How to tell whether it actually works.</div></div></div>
+  </div>
+  <p class="group-foot">Purple "Extra" sections go beyond the live lesson. Exercises show the correct answer; your answers are noted only where they were right.</p>
+
+  <div class="group-label">Roadmap · 6 stages, in learning order</div>
+  <div class="list">
+    <div class="row"><div class="icon bg-blue">1</div><div style="flex:1"><div class="t">Foundations</div><div class="d">AI / ML / DL / GenAI relationships, discriminative vs generative modelling, language modelling, model vs application, training vs fine-tuning vs inference.</div><div class="d"><b>Milestone:</b> explain how a GenAI app differs from a prediction pipeline.</div><span class="pill done">Written</span></div></div>
+    <div class="row"><div class="icon bg-indigo">2</div><div style="flex:1"><div class="t">How LLMs work</div><div class="d">Tokens, embeddings, attention, transformers, autoregressive generation, pretraining, post-training, decoding, context limits.</div><div class="d"><b>Milestone:</b> Python experiments that link model mechanics to behaviour.</div><span class="pill now">In progress</span></div></div>
+    <div class="row"><div class="icon bg-purple">3</div><div style="flex:1"><div class="t">Working with models</div><div class="d">First API call, prompting and context construction, structured output, streaming, tool calling, retries, model selection, local models.</div><div class="d"><b>Milestone:</b> a Python assistant with validation and error handling.</div><span class="pill">Planned</span></div></div>
+    <div class="row"><div class="icon bg-teal">4</div><div style="flex:1"><div class="t">Working with your data</div><div class="d">Document processing, chunking, embeddings, vector search, hybrid retrieval, reranking, citations, permissions, evaluation.</div><div class="d"><b>Milestone:</b> build and evaluate a document Q&amp;A app.</div><span class="pill">Planned</span></div></div>
+    <div class="row"><div class="icon bg-orange">5</div><div style="flex:1"><div class="t">Agents and workflows</div><div class="d">Workflows vs agents, tool execution, state, memory, orchestration, persistence, approvals, recovery.</div><div class="d"><b>Milestone:</b> a bounded assistant that completes a multistep task.</div><span class="pill">Planned</span></div></div>
+    <div class="row"><div class="icon bg-red">6</div><div style="flex:1"><div class="t">Advanced development</div><div class="d">Evaluation, fine-tuning, LoRA / QLoRA, security, observability, cost, latency, deployment, monitoring.</div><div class="d"><b>Milestone:</b> test, improve and deploy a complete application.</div><span class="pill">Planned</span></div></div>
+  </div>
+
+  <div class="group-label">Engineering depth · 8 modules, all included</div>
+  <div class="list">
+    <div class="row"><div class="icon bg-blue">1</div><div><div class="t">LLM behaviour and mechanics</div><div class="d">Autoregressive generation, tokenization, embeddings, attention, pretraining vs post-training, decoding, context limits, and how each affects applications.</div></div><div class="m">Stages 1–2</div></div>
+    <div class="row"><div class="icon bg-indigo">2</div><div><div class="t">Model integration</div><div class="d">Model selection, APIs, local / open-weight models, streaming, async, retries, rate limits, structured outputs, versioning.</div></div><div class="m">Stage 3</div></div>
+    <div class="row"><div class="icon bg-purple">3</div><div><div class="t">Context and prompting</div><div class="d">Instruction hierarchy, context construction, few-shot examples, prompt injection, caching, systematic prompt evaluation.</div></div><div class="m">Stage 3</div></div>
+    <div class="row"><div class="icon bg-teal">4</div><div><div class="t">Retrieval systems and RAG</div><div class="d">Parsing, chunking, embedding models, lexical and vector retrieval, hybrid search, reranking, citations, access control, retrieval evaluation.</div></div><div class="m">Stage 4</div></div>
+    <div class="row"><div class="icon bg-orange">5</div><div><div class="t">Tool use and agents</div><div class="d">Tool schemas, execution loops, workflows vs agents, state, persistence, human approval, failure recovery, bounded autonomy.</div></div><div class="m">Stage 5</div></div>
+    <div class="row"><div class="icon bg-green">6</div><div><div class="t">Evaluation and reliability</div><div class="d">Test datasets, task metrics, groundedness, tool correctness, model-based judging, adversarial cases, tracing, regression tests.</div></div><div class="m">From day 1</div></div>
+    <div class="row"><div class="icon bg-pink">7</div><div><div class="t">Model adaptation</div><div class="d">When prompting or retrieval is not enough; fine-tuning, LoRA / QLoRA, data preparation, checking whether adaptation helped.</div></div><div class="m">Stage 6</div></div>
+    <div class="row"><div class="icon bg-red">8</div><div><div class="t">Production systems</div><div class="d">Service architecture, deployment, latency, cost, observability, privacy, security, fallbacks, monitoring.</div></div><div class="m">Stage 6</div></div>
+  </div>
+  <p class="group-foot">Running project: a document-grounded assistant with citations and tool access. Evaluation and production controls get added to it stage by stage.</p>
+
+  <div class="group-label">Reference</div>
+  <div class="list">
+    <a class="row" href="glossary.html"><div class="icon bg-purple">Aa</div><div style="flex:1"><div class="t">Glossary</div><div class="d">Every term introduced so far, in one place, linked to the lesson that explains it.</div></div><span class="chev-r"></span></a>
+  </div>
+
+</main>
+</div></div>
+<script src="assets/app.js"></script>
+</body>
+</html>

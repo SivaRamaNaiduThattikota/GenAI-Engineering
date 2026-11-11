@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glossary · GenAI Engineering</title>
+<meta name="color-scheme" content="light dark">
+<script src="assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-id="glossary" data-root="" data-title="Glossary" data-stage="3">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="index.html">Course</a><span>›</span><span>Reference</span></div>
+  <h1>Glossary</h1>
+  <p>Every term introduced so far, in plain words, with a link to the lesson that explains it properly.</p>
+  <div class="chips"><span class="chip" id="gl-count"></span></div>
+</section>
+
+<label class="gl-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="color:var(--label2)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  <input id="gq" type="search" placeholder="Filter terms" autocomplete="off"></label>
+<div class="gl-filter" id="gl-filter"></div>
+<div class="list" id="gl-list"></div>
+<p class="group-foot" id="gl-empty" style="display:none">No terms match.</p>
+
+</main>
+</div></div>
+<script src="assets/app.js"></script>
+<script>
+const TERMS = [
+  ['Artificial intelligence', 'The broad field of systems doing tasks associated with intelligence. Includes hand-written rules.', 'l1-1'],
+  ['Machine learning', 'Systems that learn patterns from data by adjusting parameters to reduce error.', 'l1-1'],
+  ['Deep learning', 'ML with multi-layer neural networks that learn their own features from raw input.', 'l1-1'],
+  ['Generative AI', 'Systems that produce new content: text, images, audio, video, code.', 'l1-1'],
+  ['LLM', 'Large language model: a transformer trained on huge text corpora to predict the next token.', 'l1-1'],
+  ['Foundation model', 'A large model trained on broad data that can be adapted to many tasks.', 'l1-1'],
+  ['Multimodal model', 'A model that takes or produces more than one kind of data, e.g. text and images.', 'l1-1'],
+  ['Open-weight model', 'A model whose weights can be downloaded and run or fine-tuned on your own hardware.', 'l1-1'],
+  ['Parameters / weights', 'The numbers inside a model that training adjusts. Frozen during inference.', 'preview'],
+  ['Training', 'Adjusting parameters using data and a loss function.', 'l1-1'],
+  ['Pretraining', 'The first, huge training run on broad text that builds general language ability.', 'l1-2'],
+  ['Post-training', 'Later training (instruction and preference tuning) that makes a base model a helpful assistant.', 'l1-2'],
+  ['Fine-tuning', 'Further training of an existing model on targeted data to change its behaviour.', 'l1-1'],
+  ['Inference', 'Using a trained model with frozen parameters to produce output from your context.', 'l1-1'],
+  ['Base model', 'A pretrained-only model: continues text, does not reliably follow instructions.', 'l1-2'],
+  ['Instruction-tuned model', 'A post-trained model that treats input as a request and answers it. What APIs serve.', 'l1-2'],
+  ['Token', 'One entry in a tokenizer vocabulary: a word, word piece, punctuation, bytes or a special marker. The unit of cost and limits.', 'l2-1'],
+  ['Tokenizer', 'The component that converts text to token IDs and back, using a fixed vocabulary and merge rules.', 'l2-1'],
+  ['Vocabulary', 'The fixed set of tokens a tokenizer knows. Its size is the number of "classes" at each generation step.', 'l2-1'],
+  ['Context', 'Everything sent to the model in one request: instructions, history, documents, tools.', 'preview'],
+  ['Context window', 'The maximum number of tokens one request can hold, often including the output.', 'preview'],
+  ['Lost in the middle', 'The finding that models often use information in the middle of a long context less reliably.', 'preview'],
+  ['Chunking', 'Splitting documents into pieces that can be stored, searched and sent independently.', 'preview'],
+  ['Retrieval', 'Finding the chunks most relevant to a question.', 'preview'],
+  ['RAG', 'Retrieval-Augmented Generation: retrieve evidence, put it in the prompt, then generate.', 'preview'],
+  ['Grounding', 'Basing an answer on supplied evidence instead of the model\'s training patterns.', 'l1-2'],
+  ['Hallucination', 'Fluent, confident output that is false or unsupported by the evidence.', 'l1-2'],
+  ['Discriminative model', 'Models P(y | x): predicts a label from an input.', 'l1-2'],
+  ['Generative model', 'Models the data itself, P(x) or P(x, y), and can sample new data.', 'l1-2'],
+  ['Autoregressive generation', 'Producing output one token at a time, each conditioned on all previous tokens.', 'l1-2'],
+  ['Chain rule (of probability)', 'P(y1..yT | x) = product of P(yi | x, y1..yi-1). Turns next-token predictions into a sequence probability.', 'l1-2'],
+  ['Cross-entropy / NLL', 'Loss = minus the log probability of the true next token, summed over positions.', 'l1-2'],
+  ['Causal mask', 'Stops each position from seeing future tokens during parallel training.', 'l1-2'],
+  ['Logits', 'Raw scores the network outputs for each vocabulary token, before softmax.', 'l1-2'],
+  ['Softmax', 'Turns logits into probabilities that sum to 1.', 'l1-2'],
+  ['Temperature', 'Divides logits before softmax. Lower = sharper and more deterministic, higher = more varied.', 'l1-2'],
+  ['Decoding', 'The rule for picking the next token from the distribution.', 'l1-2'],
+  ['Greedy decoding', 'Always pick the most probable token. Deterministic, not necessarily correct.', 'l1-2'],
+  ['Sampling', 'Pick the next token at random according to its probability.', 'l1-2'],
+  ['Log-probability', 'The log of a probability. Sequence log-probs add instead of multiplying, avoiding underflow.', 'l1-2'],
+  ['Prefill', 'The inference phase that processes the whole prompt in parallel.', 'l1-2'],
+  ['Decode (phase)', 'The inference phase that generates output tokens one at a time.', 'l1-2'],
+  ['Time to first token', 'Latency until the first output token appears. Driven mainly by prompt size.', 'l1-2'],
+  ['Streaming', 'Sending tokens to the user as they are generated, so progress is visible early.', 'l1-2'],
+  ['Byte Pair Encoding (BPE)', 'Tokenizer training method: start from characters or bytes and repeatedly merge the most frequent neighbouring pair.', 'l2-1'],
+  ['Byte-level BPE', 'BPE starting from the 256 byte values, so any text can be encoded and there is no unknown token.', 'l2-1'],
+  ['Merge rules', 'The ordered list of pair merges a BPE tokenizer learned. Encoding applies them to new text.', 'l2-1'],
+  ['WordPiece', 'A BPE relative that chooses merges by likelihood gain. Used by BERT.', 'l2-1'],
+  ['Unigram / SentencePiece', 'Tokenizer that prunes a large vocabulary down; SentencePiece treats spaces as a symbol (shown as ▁).', 'l2-1'],
+  ['Token ID', 'The integer a tokenizer assigns to a vocabulary entry. A row number, not a meaning, valid for one tokenizer only.', 'l2-1'],
+  ['Embedding table', 'Matrix of shape (vocabulary size, embedding dimension) holding one learned vector per token.', 'l2-1'],
+  ['Special tokens', 'Reserved tokens such as end-of-sequence or role markers that normal text never produces.', 'l2-1'],
+  ['Chat template', 'The model-specific format that joins chat messages into one token sequence using special tokens.', 'l2-1'],
+  ['Unicode code point', 'One entry in the Unicode standard; what Python len() counts. Not always one visible character.', 'l2-1'],
+  ['UTF-8', 'The common byte encoding for text: 1 byte for English letters, 2 to 4 bytes for most other characters.', 'l2-1'],
+  ['Token-aware chunking', 'Splitting documents by measured token length instead of characters, so chunk sizes are predictable.', 'l2-1'],
+  ['Token tax', 'Informal name for some languages needing many more tokens for the same content, raising cost and latency.', 'l2-1'],
+].sort((a, b) => a[0].localeCompare(b[0]));
+
+const byId = Object.fromEntries(COURSE.map(c => [c.id, c]));
+const list = document.getElementById('gl-list'), gq = document.getElementById('gq'), filt = document.getElementById('gl-filter');
+let lessonFilter = 'all';
+const used = [...new Set(TERMS.map(t => t[2]))];
+filt.innerHTML = '<button data-f="all" class="on">All</button>' + COURSE.filter(c => used.includes(c.id)).map(c => `<button data-f="${c.id}">${c.num === 'P' ? 'Preview' : c.num}</button>`).join('');
+filt.addEventListener('click', e => {
+  if (!e.target.dataset.f) return;
+  lessonFilter = e.target.dataset.f;
+  filt.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === e.target));
+  render();
+});
+function render() {
+  const f = gq.value.trim().toLowerCase();
+  const rows = TERMS.filter(t => (lessonFilter === 'all' || t[2] === lessonFilter) && (!f || (t[0] + ' ' + t[1]).toLowerCase().includes(f)));
+  list.innerHTML = rows.map(([term, def, id]) => { const c = byId[id];
+    return `<div class="row term" data-stage="${c.stage}"><div class="icon bg-accent">${term[0]}</div><div style="flex:1"><div class="t">${term}</div><div class="d">${def}</div>
+      <a class="ln" href="${c.file}">${c.num === 'P' ? 'Preview' : 'Lesson ' + c.num} · ${c.title} →</a></div></div>`; }).join('');
+  list.style.display = rows.length ? '' : 'none';
+  document.getElementById('gl-empty').style.display = rows.length ? 'none' : 'block';
+  document.getElementById('gl-count').textContent = TERMS.length + ' terms';
+}
+gq.addEventListener('input', render);
+render();
+</script>
+</body>
+</html>

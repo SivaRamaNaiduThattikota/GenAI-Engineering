@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2.1 · Tokens and tokenization</title>
+<meta name="color-scheme" content="light dark">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-id="l2-1" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Stage 2 · How LLMs work</span></div>
+  <h1>2.1 Tokens and tokenization</h1>
+  <p>Before an LLM can process text, the text has to become numbers. How that happens decides your context budget, your bill, and some surprising model failures.</p>
+  <div class="chips"><span class="chip">~40 min</span><span class="chip">Module 1</span><span class="chip">Real tokenizer output</span><span class="chip">Python</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="pipeline">
+  <h2><span class="n">1</span>From text to numbers</h2>
+  <p>A neural network can only do arithmetic on numbers. So every piece of text you send goes through this input pipeline first:</p>
+  <div class="flow"><span>Text</span><b>→</b><span class="hl">Tokenizer</span><b>→</b><span>Token IDs</span><b>→</b><span>Embedding lookup</span><b>→</b><span>Transformer</span></div>
+  <p>The output path runs the other way: the model generates token IDs one at a time, and the tokenizer's <strong>decoder</strong> turns those IDs back into text.</p>
+  <div class="flow"><span>Transformer</span><b>→</b><span>Next token ID</span><b>→</b><span class="hl">Tokenizer decode</span><b>→</b><span>Text you see</span></div>
+  <p>This lesson covers the first box, the <strong>tokenizer</strong>. The embedding lookup gets its own lesson next.</p>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">SQL / Power BI analogy</div><p>The tokenizer works like a lookup to a dimension table's surrogate key. The text "Paris" is replaced by an integer key such as 12650. That key identifies a row, but the number itself carries no meaning, just like <code>CustomerKey = 4711</code> says nothing about the customer.</p></div></div>
+</section>
+
+<section class="sec" id="what-is-token">
+  <h2><span class="n">2</span>What exactly is a token?</h2>
+  <p><strong>Definition:</strong> a token is one entry in a tokenizer's <strong>vocabulary</strong>, the fixed list of text pieces the tokenizer knows. Each entry has an integer ID.</p>
+  <p>Depending on the tokenizer and the input, a token can be:</p>
+  <ul>
+    <li>A complete word, e.g. <code>Hello</code>.</li>
+    <li>Part of a word, e.g. <code>ievable</code>.</li>
+    <li>Punctuation, e.g. <code>!</code>.</li>
+    <li>Whitespace joined to the following text, e.g. <code>" world"</code> (with its leading space).</li>
+    <li>A byte or a sequence of bytes, which is how unusual characters and other scripts are covered.</li>
+    <li>A <strong>special token</strong>: a marker the model uses internally, such as "end of text" (section 7).</li>
+  </ul>
+  <h3>Real example: two tokenizers, one word</h3>
+  <p>Here is <code>unbelievable!</code> split by two real tokenizers from the <code>tiktoken</code> library (used by OpenAI models). <code>o200k_base</code> has about 200,000 entries, <code>cl100k_base</code> about 100,000.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Tokenizer</th><th>Pieces</th><th>Count</th></tr></thead>
+    <tbody>
+    <tr><td>o200k_base</td><td><code>un</code> · <code>bel</code> · <code>ievable</code> · <code>!</code></td><td>4</td></tr>
+    <tr><td>cl100k_base</td><td><code>un</code> · <code>belie</code> · <code>vable</code> · <code>!</code></td><td>4</td></tr>
+    </tbody></table></div>
+  <p class="muted">Real output, tiktoken 0.14.0. The code to reproduce it is in section 6.</p>
+  <p>Same count, different boundaries. Neither split follows the dictionary (<code>un</code> + <code>believ</code> + <code>able</code>); the pieces come from statistics over training text, not from grammar.</p>
+  <div class="callout c-key"><div class="ci">i</div><div><p><strong>Tokens are not words and not characters.</strong> Token boundaries depend on the particular tokenizer, so the same text can have different token counts on different models.</p></div></div>
+</section>
+
+<section class="sec" id="why-subwords">
+  <h2><span class="n">3</span>Why use pieces of words?</h2>
+  <p>A tokenizer designer has to choose the unit text is cut into. There are three options, each with a real trade-off:</p>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Characters or bytes</div>
+    <p>A tiny vocabulary (there are only 256 possible byte values), and any text at all can be represented, in any language. The cost: sequences get very long. "Hello world" becomes 11 units instead of 2, and since the model processes every unit, long sequences are slow and use up the context window.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Whole words</div>
+    <p>Short sequences for familiar words. But the vocabulary would need every word form in every language (run, runs, running, runner…), and any word not in the list, such as a new product name or a typo, has no representation at all.</p></div></div>
+  <div class="point"><div class="point-n">3</div><div>
+    <div class="point-t">Subword pieces (what modern LLMs use)</div>
+    <p>Common words get a single token, while rare words are built from reusable pieces. "running" might be one token, while a rare word is split into a few familiar pieces. The downside is that boundaries can be unintuitive, and efficiency varies by input: plain English is cheap, while code, numbers and many other languages cost more.</p></div></div>
+  <p>Summary of the trade-off:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Representation</th><th>Advantage</th><th>Limitation</th></tr></thead>
+    <tbody>
+    <tr><td>Characters / bytes</td><td>Small vocabulary, covers any text</td><td>Long sequences</td></tr>
+    <tr><td>Whole words</td><td>Short sequences for familiar words</td><td>Huge vocabulary, fails on unseen words</td></tr>
+    <tr><td>Subwords</td><td>Reuses pieces across many words</td><td>Unintuitive boundaries, uneven efficiency</td></tr>
+    </tbody></table></div>
+  <h3>Why this matters for code</h3>
+  <p>A programmer sees <code>customer_transaction_reconciliation_status</code> as one name. A real tokenizer sees five tokens:</p>
+  <div class="steps">
+    <div class="step"><span class="ctx">o200k_base</span><span class="nx">customer</span></div>
+    <div class="step"><span class="ctx"></span><span class="nx">_transaction</span></div>
+    <div class="step"><span class="ctx"></span><span class="nx">_re</span></div>
+    <div class="step"><span class="ctx"></span><span class="nx">conciliation</span></div>
+    <div class="step"><span class="ctx"></span><span class="nx">_status</span></div>
+  </div>
+  <p>Notice that the underscore is attached to the following piece, just as a space is attached to the following word in normal text. Long identifiers, URLs and UUIDs are token-expensive, which matters when you paste large code files or logs into a prompt.</p>
+</section>
+
+<section class="sec extra" id="vocab-size">
+  <h2><span class="n">+</span>The vocabulary size trade-off <span class="tag-extra">Extra</span></h2>
+  <p>Why not just make the vocabulary huge so everything is one token? Because the vocabulary size <span class="im">V</span> appears inside the model twice:</p>
+  <ul>
+    <li><strong>The embedding table</strong> has one row per token: <span class="im">V × d</span> numbers, where <span class="im">d</span> is the embedding size.</li>
+    <li><strong>The output layer</strong> produces one logit per token at every step, so softmax runs over all <span class="im">V</span> entries.</li>
+  </ul>
+  <div class="math">200,019 × 4,096 = 819,277,824<span class="cap">o200k's real vocabulary size × an illustrative embedding size: about 0.8 billion parameters for the embedding table alone</span></div>
+  <p>A bigger vocabulary gives shorter sequences (faster, more text per context window) but a bigger, more expensive model, and rare tokens get fewer training examples each. Recent tokenizers have grown (cl100k ≈ 100k entries → o200k ≈ 200k) partly to handle more languages efficiently; you will see the effect on Telugu in section 6.</p>
+</section>
+
+<section class="sec" id="bpe">
+  <h2><span class="n">4</span>How a tokenizer gets its vocabulary: BPE</h2>
+  <p>The vocabulary is not written by hand. It is <strong>learned once</strong> from a large text corpus, before the model itself is trained. The most common method is <strong>Byte Pair Encoding (BPE)</strong>:</p>
+  <ol>
+    <li>Start with the smallest units: characters, or in modern tokenizers, raw bytes.</li>
+    <li>Count every pair of neighbouring units across the corpus.</li>
+    <li>Merge the most frequent pair into a new single unit and add it to the vocabulary.</li>
+    <li>Repeat thousands of times, until the vocabulary reaches the target size.</li>
+  </ol>
+  <p>The output is two things: the <strong>vocabulary</strong>, and the ordered list of <strong>merge rules</strong>. For example, repeated merges could build <code>"t" + "h" → "th"</code>, then <code>"th" + "e" → "the"</code>.</p>
+  <h3>Run BPE yourself</h3>
+  <p>This is a complete, simplified BPE trainer in plain Python, no libraries needed. The corpus is four words with how often each appears; <code>&lt;/w&gt;</code> marks the end of a word, so the trainer can learn word endings.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">bpe_toy.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">from</span> collections <span class="tk-k">import</span> Counter
+
+<span class="tk-c"># word -&gt; how often it appears in our tiny "corpus"</span>
+corpus = {<span class="tk-s">"low"</span>: <span class="tk-n">5</span>, <span class="tk-s">"lower"</span>: <span class="tk-n">2</span>, <span class="tk-s">"newest"</span>: <span class="tk-n">6</span>, <span class="tk-s">"widest"</span>: <span class="tk-n">3</span>}
+
+<span class="tk-c"># start with every word split into characters, plus an end-of-word marker</span>
+words = {<span class="tk-f">tuple</span>(w) + (<span class="tk-s">"&lt;/w&gt;"</span>,): n <span class="tk-k">for</span> w, n <span class="tk-k">in</span> corpus.items()}
+
+
+<span class="tk-k">def</span> <span class="tk-f">pair_counts</span>(words):
+    counts = Counter()
+    <span class="tk-k">for</span> symbols, n <span class="tk-k">in</span> words.items():
+        <span class="tk-k">for</span> a, b <span class="tk-k">in</span> <span class="tk-f">zip</span>(symbols, symbols[<span class="tk-n">1</span>:]):
+            counts[(a, b)] += n
+    <span class="tk-k">return</span> counts
+
+
+<span class="tk-k">def</span> <span class="tk-f">merge</span>(words, pair):
+    merged = {}
+    <span class="tk-k">for</span> symbols, n <span class="tk-k">in</span> words.items():
+        out, i = [], <span class="tk-n">0</span>
+        <span class="tk-k">while</span> i &lt; <span class="tk-f">len</span>(symbols):
+            <span class="tk-k">if</span> i &lt; <span class="tk-f">len</span>(symbols) - <span class="tk-n">1</span> <span class="tk-k">and</span> (symbols[i], symbols[i + <span class="tk-n">1</span>]) == pair:
+                out.append(symbols[i] + symbols[i + <span class="tk-n">1</span>])
+                i += <span class="tk-n">2</span>
+            <span class="tk-k">else</span>:
+                out.append(symbols[i])
+                i += <span class="tk-n">1</span>
+        merged[<span class="tk-f">tuple</span>(out)] = n
+    <span class="tk-k">return</span> merged
+
+
+<span class="tk-k">for</span> step <span class="tk-k">in</span> <span class="tk-f">range</span>(<span class="tk-n">1</span>, <span class="tk-n">7</span>):
+    best, count = pair_counts(words).most_common(<span class="tk-n">1</span>)[<span class="tk-n">0</span>]
+    words = merge(words, best)
+    <span class="tk-f">print</span>(<span class="tk-k">f</span><span class="tk-s">"merge {step}: {best[0]!r} + {best[1]!r} (seen {count}x)"</span>)
+
+<span class="tk-f">print</span>()
+<span class="tk-k">for</span> symbols <span class="tk-k">in</span> words:
+    <span class="tk-f">print</span>(symbols)</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>merge 1: 'e' + 's' (seen 9x)
+merge 2: 'es' + 't' (seen 9x)
+merge 3: 'est' + '&lt;/w&gt;' (seen 9x)
+merge 4: 'l' + 'o' (seen 7x)
+merge 5: 'lo' + 'w' (seen 7x)
+merge 6: 'n' + 'e' (seen 6x)
+
+('low', '&lt;/w&gt;')
+('low', 'e', 'r', '&lt;/w&gt;')
+('ne', 'w', 'est&lt;/w&gt;')
+('w', 'i', 'd', 'est&lt;/w&gt;')</pre></div></div>
+  <h3>Reading the output</h3>
+  <ul>
+    <li><strong>Merges 1–3</strong> build <code>est&lt;/w&gt;</code>: "es" appears 9 times (6 in newest + 3 in widest), so it wins first. The tokenizer has discovered the suffix "-est" purely from counting.</li>
+    <li><strong>Merges 4–5</strong> build <code>low</code>, shared by "low" and "lower" (5 + 2 = 7).</li>
+    <li>Now "low" is a single token, while "lower" is <code>low</code> + <code>e</code> + <code>r</code>. With more merges, <code>er</code> would eventually form too.</li>
+  </ul>
+  <p>Frequent pieces become single tokens; rare words stay split. That is exactly the subword behaviour from section 3, emerging from a dozen lines of code.</p>
+  <div class="point"><div class="point-n">!</div><div>
+    <div class="point-t">Training the tokenizer happens once; encoding just applies the rules</div>
+    <p>When you send a prompt, the tokenizer <strong>does not learn anything</strong>. It applies its fixed merge rules to your text. The vocabulary is frozen together with the model, which is why a model's tokenizer can never be swapped for another one.</p></div></div>
+  <h3>Other tokenizer families</h3>
+  <div class="list plain" style="margin:12px 0">
+    <div class="row"><div><div class="t">Byte-level BPE</div><div class="d">BPE that starts from the 256 byte values instead of characters, so any input in any language or encoding can be represented and there is never an "unknown" token. Used by GPT-style models.</div></div></div>
+    <div class="row"><div><div class="t">WordPiece</div><div class="d">A close relative of BPE that picks merges by how much they improve the likelihood of the corpus. Used by BERT; you will meet it in embedding models.</div></div></div>
+    <div class="row"><div><div class="t">Unigram (usually via SentencePiece)</div><div class="d">Starts with a large vocabulary and removes pieces that matter least. SentencePiece also treats spaces as a normal symbol (shown as ▁), so it works for languages without spaces between words.</div></div></div>
+  </div>
+</section>
+
+<section class="sec" id="ids">
+  <h2><span class="n">5</span>Token IDs are identifiers, not meanings</h2>
+  <p>After tokenization, text is a list of integers. Real output from <code>o200k_base</code>:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Text</th><th>Pieces</th><th>Token IDs</th></tr></thead>
+    <tbody>
+    <tr><td><code>"Hello world"</code></td><td><code>Hello</code> · <code>" world"</code></td><td>[13225, 2375]</td></tr>
+    <tr><td><code>" Paris"</code></td><td><code>" Paris"</code></td><td>[12650]</td></tr>
+    <tr><td><code>"Paris"</code></td><td><code>Paris</code></td><td>[72782]</td></tr>
+    </tbody></table></div>
+  <p>Two things to notice:</p>
+  <ul>
+    <li><code>" Paris"</code> (with a space) and <code>"Paris"</code> are <strong>completely different tokens</strong>. To the model they are as unrelated as two different words until training has taught it otherwise.</li>
+    <li>The ID <code>12650</code> does not express the meaning of Paris mathematically. Nearby IDs are not similar words. The ID is just a row number.</li>
+  </ul>
+  <h3>From ID to vector: the embedding table</h3>
+  <p>The model holds an <strong>embedding table</strong>: a matrix with one learned vector per vocabulary entry. Looking up a token means taking its row:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">conceptual shapes</span><button class="copy">Copy</button></div>
+<pre><code>embedding_table.shape == (vocabulary_size, embedding_dimension)
+
+token_vector = embedding_table[token_id]   <span class="tk-c"># one row, length embedding_dimension</span></code></pre></div>
+  <p>For a sequence of <span class="im">n</span> tokens and embedding dimension <span class="im">d</span>, the lookup produces a matrix:</p>
+  <div class="math">(<i>n</i>, <i>d</i>)<span class="cap">one row per token in the input, one column per embedding dimension</span></div>
+  <p>Keep three operations separate in your head:</p>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Tokenization chooses which vocabulary entries represent the text</div>
+    <p>Pure string processing, done by fixed rules, outside the neural network.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Embedding lookup converts those entries into learned vectors</div>
+    <p>A table lookup inside the model. The vectors are parameters, learned during training. Meaning starts to live here.</p></div></div>
+  <div class="point"><div class="point-n">3</div><div>
+    <div class="point-t">Transformer layers process those vectors using the surrounding context</div>
+    <p>This is where "bank" in "river bank" and "bank account" end up with different representations, even though they start from the same embedding row.</p></div></div>
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Model compatibility</div><p>The same ID means different text in different tokenizers. <code>" Paris"</code> is 12650 in o200k_base but 12366 in cl100k_base. Never store token IDs and reuse them with another model; store text.</p></div></div>
+</section>
+
+<section class="sec" id="experiment">
+  <h2><span class="n">6</span>Python experiments: four ways to measure length</h2>
+  <h3>Experiment A · no install needed</h3>
+  <p>First, see how familiar ways of measuring text disagree with each other:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">lengths.py</span><button class="copy">Copy</button></div>
+<pre><code>examples = [
+    <span class="tk-s">"Hello world"</span>,
+    <span class="tk-s">"Hello, world!"</span>,
+    <span class="tk-s">"customer_transaction_reconciliation_status"</span>,
+    <span class="tk-s">"నమస్కారం"</span>,
+]
+
+<span class="tk-k">for</span> text <span class="tk-k">in</span> examples:
+    <span class="tk-f">print</span>({
+        <span class="tk-s">"text"</span>: text,
+        <span class="tk-s">"whitespace_words"</span>: <span class="tk-f">len</span>(text.split()),
+        <span class="tk-s">"unicode_code_points"</span>: <span class="tk-f">len</span>(text),
+        <span class="tk-s">"utf8_bytes"</span>: <span class="tk-f">len</span>(text.encode(<span class="tk-s">"utf-8"</span>)),
+    })</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>{'text': 'Hello world', 'whitespace_words': 2, 'unicode_code_points': 11, 'utf8_bytes': 11}
+{'text': 'Hello, world!', 'whitespace_words': 2, 'unicode_code_points': 13, 'utf8_bytes': 13}
+{'text': 'customer_transaction_reconciliation_status', 'whitespace_words': 1, 'unicode_code_points': 42, 'utf8_bytes': 42}
+{'text': 'నమస్కారం', 'whitespace_words': 1, 'unicode_code_points': 8, 'utf8_bytes': 24}</pre></div></div>
+  <p>What each column measures:</p>
+  <ul>
+    <li><strong>whitespace_words</strong>: pieces separated by spaces. The identifier is "1 word" even though it is 42 characters long.</li>
+    <li><strong>unicode_code_points</strong>: what Python's <code>len()</code> counts. A <em>code point</em> is one entry in the Unicode standard.</li>
+    <li><strong>utf8_bytes</strong>: the size when stored or sent as UTF-8. English letters take 1 byte each; each Telugu code point here takes 3 bytes, so 8 code points become 24 bytes.</li>
+  </ul>
+  <div class="callout c-warn"><div class="ci">!</div><div><p><strong>Code points are not visible characters either.</strong> నమస్కారం looks like about 5 written characters, but Python counts 8, because vowel signs and the virama (్) are separate code points that combine visually. The same happens with many emoji and accented letters.</p></div></div>
+
+  <h3>Experiment B · a real tokenizer (the fourth measurement)</h3>
+  <p>None of the numbers above is an LLM token count. For that you need the model's own tokenizer. <code>tiktoken</code> is a small library with the tokenizers of OpenAI models:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">terminal</span><button class="copy">Copy</button></div>
+<pre><code>pip install tiktoken</code></pre></div>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">tokens.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> tiktoken
+
+old = tiktoken.get_encoding(<span class="tk-s">"cl100k_base"</span>)
+new = tiktoken.get_encoding(<span class="tk-s">"o200k_base"</span>)
+
+<span class="tk-k">for</span> text <span class="tk-k">in</span> [<span class="tk-s">"Hello, world!"</span>, <span class="tk-s">"The invoice INV-204 is overdue."</span>,
+             <span class="tk-s">"నమస్కారం"</span>, <span class="tk-s">"12345678 + 87654321"</span>]:
+    ids = new.encode(text)
+    pieces = [new.decode([i]) <span class="tk-k">for</span> i <span class="tk-k">in</span> ids]
+    <span class="tk-f">print</span>(<span class="tk-f">repr</span>(text), <span class="tk-s">"cl100k:"</span>, <span class="tk-f">len</span>(old.encode(text)), <span class="tk-s">"o200k:"</span>, <span class="tk-f">len</span>(ids), pieces)</code></pre></div>
+  <p>The first run downloads the tokenizer files. On a corporate network that inspects HTTPS, the download can fail with a certificate error; installing <code>truststore</code> and calling <code>truststore.inject_into_ssl()</code> before importing tiktoken makes Python use the Windows certificate store. Results from a real run:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Text</th><th>cl100k</th><th>o200k</th><th>o200k pieces</th></tr></thead>
+    <tbody>
+    <tr><td><code>Hello, world!</code></td><td>4</td><td>4</td><td><code>Hello</code> · <code>,</code> · <code>" world"</code> · <code>!</code></td></tr>
+    <tr><td><code>The invoice INV-204 is overdue.</code></td><td>8</td><td>8</td><td><code>The</code> · <code>" invoice"</code> · <code>" INV"</code> · <code>-</code> · <code>204</code> · <code>" is"</code> · <code>" overdue"</code> · <code>.</code></td></tr>
+    <tr><td><code>నమస్కారం</code></td><td><strong>16</strong></td><td><strong>5</strong></td><td><code>న</code> · <code>మ</code> · <code>స</code> · <code>్క</code> · <code>ారం</code></td></tr>
+    <tr><td><code>12345678 + 87654321</code></td><td>8</td><td>8</td><td><code>123</code> · <code>456</code> · <code>78</code> · <code>" +"</code> · <code>" "</code> · <code>876</code> · <code>543</code> · <code>21</code></td></tr>
+    </tbody></table></div>
+  <h3>What these results teach</h3>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">The same text can cost very different amounts on different tokenizers</div>
+    <p>One Telugu word is 16 tokens in the older cl100k tokenizer but 5 in o200k. In cl100k, Telugu is mostly split into raw byte fragments. For non-English users this means more cost, slower answers and less room in the context window. It is often called the "token tax", and it depends heavily on the tokenizer.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Numbers are chopped into chunks that do not line up with place value</div>
+    <p><code>12345678</code> becomes <code>123</code> · <code>456</code> · <code>78</code>. The model never sees "8 digits"; it sees three unrelated tokens. This is one reason LLMs are unreliable at exact arithmetic and digit counting. In applications, do calculations in Python or SQL, not in the model.</p></div></div>
+  <div class="point"><div class="point-n">3</div><div>
+    <div class="point-t">Plain English is roughly one token per word or punctuation mark</div>
+    <p>"The invoice INV-204 is overdue." is 6 words but 8 tokens, because <code>-</code> and <code>.</code> are tokens too. Rules of thumb are fine for rough planning, but count with the real tokenizer when limits or cost matter.</p></div></div>
+  <p class="muted">Other model families ship their own tokenizers, usually loaded with Hugging Face's <code>AutoTokenizer.from_pretrained(...)</code>, and hosted APIs generally provide a way to count tokens for their models. Covered in Stage 3.</p>
+</section>
+
+<section class="sec extra" id="special-tokens">
+  <h2><span class="n">+</span>Special tokens and chat templates <span class="tag-extra">Extra</span></h2>
+  <p>Besides text pieces, every vocabulary has a few <strong>special tokens</strong> that are never produced by normal text. Typical ones:</p>
+  <ul>
+    <li><strong>End of sequence / end of text</strong>: the model generates this when it is done. It is how the generation loop from Lesson 1.2 knows when to stop.</li>
+    <li><strong>Beginning of sequence</strong>: marks the start of the input in some models.</li>
+    <li><strong>Role markers</strong>: separate the system instructions, the user's message and the assistant's reply.</li>
+  </ul>
+  <p>A chat API takes a list of messages, but the model only reads one flat token sequence. A <strong>chat template</strong> joins the messages into that sequence using the special tokens. Conceptually:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">what the model actually reads (illustrative format)</span><button class="copy">Copy</button></div>
+<pre><code>&lt;|start|&gt;system
+You are a helpful finance assistant.&lt;|end|&gt;
+&lt;|start|&gt;user
+What is overdue?&lt;|end|&gt;
+&lt;|start|&gt;assistant
+</code></pre></div>
+  <p>The exact markers differ for every model family; the shape above is only for illustration. Three practical consequences:</p>
+  <ul>
+    <li>The API usually reports a few <strong>more input tokens</strong> than your text alone, because the template's markers count too.</li>
+    <li>When you run an open-weight model yourself, you must apply <strong>its</strong> chat template (Hugging Face tokenizers provide <code>apply_chat_template</code>). The wrong template quietly makes answers worse.</li>
+    <li>Role markers are how the model tells instructions apart from user text. This matters for prompt injection (Module 3).</li>
+  </ul>
+</section>
+
+<section class="sec" id="applications">
+  <h2><span class="n">7</span>What tokenization means for applications</h2>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Context budgeting</div>
+    <p>Context limits are measured in tokens. Word counts are only rough estimates, and they vary across languages, code and data formats. A budget that works for English documents can overflow on Telugu documents or JSON logs of the same "size".</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Truncation and chunking</div>
+    <p>Cutting documents by characters gives chunks of uneven token length. <strong>Token-aware chunking</strong> (measuring chunk size with the tokenizer) keeps sizes predictable. Size is not everything, though: chunks should also follow the document's structure (headings, paragraphs, functions) so they keep their meaning. Stage 4 goes deep on this.</p></div></div>
+  <div class="point"><div class="point-n">3</div><div>
+    <div class="point-t">Cost and latency</div>
+    <p>Hosted APIs bill per token, input and output separately. Input tokens are processed in parallel; output tokens are generated one at a time, so they are slower (see the latency Extra in Lesson 1.2).</p></div></div>
+  <div class="point"><div class="point-n">4</div><div>
+    <div class="point-t">Model compatibility</div>
+    <p>Token IDs belong to one tokenizer. Changing models can change token counts, costs and limits even with identical prompts, so re-measure when you switch.</p></div></div>
+  <div class="point"><div class="point-n">5</div><div>
+    <div class="point-t">Exact-string tasks</div>
+    <p>Spelling, counting letters, reversing strings, matching identifiers exactly and strict formatting interact awkwardly with token boundaries, because the model never sees individual characters directly. When exactness matters, validate the output in Python (regex, schema checks) instead of trusting the model.</p></div></div>
+  <div class="point"><div class="point-n">6</div><div>
+    <div class="point-t">Streaming and partial characters <span class="tag-extra">Extra</span></div>
+    <p>With byte-level tokenizers, one character can be split across tokens. The cl100k run above shows it: decoding Telugu tokens <em>one at a time</em> printed broken "�" symbols, because each token held only part of a character. If you stream raw tokens yourself, buffer bytes until a character is complete. Hosted APIs normally handle this and stream text pieces for you.</p></div></div>
+  <div class="point"><div class="point-n">7</div><div>
+    <div class="point-t">Whitespace and formatting change the tokens <span class="tag-extra">Extra</span></div>
+    <p><code>" Paris"</code> and <code>"Paris"</code> are different tokens. Trailing spaces, odd line breaks or inconsistent casing in prompts and few-shot examples change what the model sees. Keep prompt templates clean and consistent.</p></div></div>
+</section>
+
+<section class="sec" id="check">
+  <h2><span class="n">?</span>Check yourself</h2>
+  <details class="disc"><summary><span class="tag q">Q1</span><span class="q">Your English documents fit a 8,000-token budget at about 6,000 words. Can you assume the same word limit for Telugu documents?</span><span class="chev"></span></summary>
+    <div class="ans"><p><strong>No.</strong> Other scripts usually need more tokens per word, and how many more depends on the tokenizer (5 vs 16 tokens for one Telugu word in our run). Measure a sample of real documents with the model's tokenizer and set the limit in tokens, not words.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q2</span><span class="q">Does the tokenizer learn new words from your prompts?</span><span class="chev"></span></summary>
+    <div class="ans"><p><strong>No.</strong> The vocabulary and merge rules were learned once, before model training, and are frozen. A new product name is simply split into existing pieces.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q3</span><span class="q">Why is an LLM unreliable at "How many digits are in 12345678?"</span><span class="chev"></span></summary>
+    <div class="ans"><p>It never sees 8 separate digits. It sees tokens like <code>123</code>, <code>456</code>, <code>78</code>, and has to infer the digit count from what it learned about those tokens. Use <code>len(str(n))</code> in Python for anything exact.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q4</span><span class="q">A teammate caches token IDs from one model to save time and reuses them with another model. What goes wrong?</span><span class="chev"></span></summary>
+    <div class="ans"><p>The IDs mean different text in a different vocabulary (" Paris" is 12650 in one tokenizer and 12366 in another), so the second model receives garbage. Cache text, or cache IDs per tokenizer only.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q5</span><span class="q">Put these in order and say which one contains learned parameters: transformer layers, tokenizer, embedding lookup.</span><span class="chev"></span></summary>
+    <div class="ans"><p>Tokenizer → embedding lookup → transformer layers. The tokenizer is fixed rules (its vocabulary was learned beforehand, but it has no neural parameters). The embedding table and the transformer layers both hold learned parameters.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q6</span><span class="q">In the BPE toy run, why did "e" + "s" get merged before "l" + "o"?</span><span class="chev"></span></summary>
+    <div class="ans"><p>BPE always merges the most frequent pair. "es" appears 9 times (newest × 6 + widest × 3), while "lo" appears 7 times (low × 5 + lower × 2).</p></div></details>
+</section>
+
+<section class="recap">
+  <h2>What to retain from this lesson</h2>
+  <p>A tokenizer converts text into vocabulary IDs. Those IDs are mapped to embeddings before transformer processing. Token boundaries depend on the tokenizer, so words, characters, bytes and tokens are four different units.</p>
+  <ul>
+    <li>Subword tokenizers (mostly BPE) learn their vocabulary once by merging frequent pairs; encoding just applies the rules.</li>
+    <li>Token IDs are row numbers, not meanings, and they are only valid for one tokenizer.</li>
+    <li>Code, numbers and non-English text cost more tokens. Count with the real tokenizer.</li>
+    <li>Special tokens and chat templates turn messages into one sequence; they count against your budget.</li>
+    <li>For exact work (arithmetic, spelling, identifiers), compute or validate in code.</li>
+  </ul>
+  <p style="margin-bottom:0">Next: <strong>embeddings</strong>. How a token ID becomes a vector, how those vectors are learned, and how token embeddings differ from the document embeddings used in RAG.</p>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>

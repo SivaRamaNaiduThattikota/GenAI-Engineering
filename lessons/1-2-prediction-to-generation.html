@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.2 · From prediction models to generative models</title>
+<meta name="color-scheme" content="light dark">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-id="l1-2" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Stage 1 · Foundations</span></div>
+  <h1>1.2 From prediction models to generative models</h1>
+  <p>What changes when we move from predicting a label or a value to generating text? Built directly on what you already do with ML and DL.</p>
+  <div class="chips"><span class="chip">~35 min</span><span class="chip">Module 1</span><span class="chip">Maths + Python</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="familiar">
+  <h2><span class="n">1</span>Start from a familiar prediction problem</h2>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">input</span><button class="copy">Copy</button></div>
+<pre><code>review = <span class="tk-s">"The delivery was late, but the product is excellent."</span></code></pre></div>
+  <p>A sentiment classifier outputs a probability for each predefined class:</p>
+  <div class="bars">
+    <div class="bar"><span class="lbl">Positive</span><span class="tr"><span class="fl" data-w="75%" style="--c:var(--green)"></span></span><span class="pc">0.75</span></div>
+    <div class="bar"><span class="lbl">Neutral</span><span class="tr"><span class="fl" data-w="20%" style="--c:var(--gray)"></span></span><span class="pc">0.20</span></div>
+    <div class="bar"><span class="lbl">Negative</span><span class="tr"><span class="fl" data-w="5%" style="--c:var(--red)"></span></span><span class="pc">0.05</span></div>
+  </div>
+  <div class="math"><i>P</i>(<i>y</i> | <i>x</i>)<span class="cap"><i>x</i> = the review, <i>y</i> = a sentiment label. The app usually picks the most probable one.</span></div>
+  <p>A language model also outputs probabilities, but over <strong>every token in its vocabulary</strong>, given the tokens so far:</p>
+  <div class="bars">
+    <div class="bh">"The delivery was" → next token?</div>
+    <div class="bar"><span class="lbl">" late"</span><span class="tr"><span class="fl" data-w="46%"></span></span><span class="pc">0.46</span></div>
+    <div class="bar"><span class="lbl">" fast"</span><span class="tr"><span class="fl" data-w="22%"></span></span><span class="pc">0.22</span></div>
+    <div class="bar"><span class="lbl">" delayed"</span><span class="tr"><span class="fl" data-w="12%"></span></span><span class="pc">0.12</span></div>
+    <div class="bar"><span class="lbl">all others</span><span class="tr"><span class="fl" data-w="20%" style="--c:var(--gray)"></span></span><span class="pc">0.20</span></div>
+    <div class="bf">Illustrative numbers. Real vocabularies have tens of thousands to a few hundred thousand tokens, so "all others" is a very long tail.</div>
+  </div>
+  <div class="callout c-key"><div class="ci">i</div><div><p><strong>Key connection:</strong> a text generator is a classifier run in a loop. At each step the "classes" are the vocabulary, and the chosen token is fed back in as input.</p></div></div>
+</section>
+
+<section class="sec" id="autoregressive">
+  <h2><span class="n">2</span>How repeated prediction becomes an answer</h2>
+  <p>Prompt: <code>Explain overfitting in one sentence.</code></p>
+  <div class="steps">
+    <div class="step"><span class="ctx">Prompt</span><span class="nx">Over</span></div>
+    <div class="step"><span class="ctx">Prompt + <b>Over</b></span><span class="nx">fitting</span></div>
+    <div class="step"><span class="ctx">Prompt + <b>Overfitting</b></span><span class="nx">␣occurs</span></div>
+    <div class="step"><span class="ctx">Prompt + <b>Overfitting occurs</b></span><span class="nx">␣when</span></div>
+    <div class="step"><span class="ctx">…</span><span class="nx" style="background:var(--gray)">⟨end⟩</span></div>
+  </div>
+  <p class="muted">Token boundaries are illustrative, not from a specific tokenizer. Generation stops at a special end-of-sequence token or a length limit.</p>
+  <p>At every step the model computes a distribution over the next token:</p>
+  <div class="math"><i>P</i>(<i>t<sub>i</sub></i> | <i>t</i><sub>1</sub>, <i>t</i><sub>2</sub>, …, <i>t</i><sub><i>i</i>−1</sub>)</div>
+  <p>A <strong>decoding</strong> procedure picks one token from it, and that token joins the context for the next step. This is <strong>autoregressive generation</strong>: each prediction is conditioned on everything before it, including the model's own earlier output.</p>
+  <p>For an output <span class="im">y<sub>1</sub>…y<sub>T</sub></span> given a prompt <span class="im">x</span>, the chain rule of probability gives:</p>
+  <div class="math"><i>P</i>(<i>y</i><sub>1</sub>, …, <i>y<sub>T</sub></i> | <i>x</i>) = <span class="big">∏</span><sub><i>i</i>=1</sub><sup><i>T</i></sup> <i>P</i>(<i>y<sub>i</sub></i> | <i>x</i>, <i>y</i><sub>1</sub>, …, <i>y</i><sub><i>i</i>−1</sub>)<span class="cap">Next-token probabilities multiply into a probability for the whole answer.</span></div>
+  <div class="callout c-warn"><div class="ci">!</div><div><p><strong>Consequence:</strong> there is no backspace. Once a token is chosen, everything after conditions on it. An early wrong token (a wrong number, a wrong name) tends to get "justified" by what follows, which is one reason long answers drift.</p></div></div>
+</section>
+
+<section class="sec extra" id="disc-vs-gen">
+  <h2><span class="n">+</span>Discriminative vs generative, precisely <span class="tag-extra">Extra</span></h2>
+  <p>These are the formal names for the two kinds of model you now know:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Kind</th><th>Models</th><th>Example</th></tr></thead>
+    <tbody>
+    <tr><td>Discriminative</td><td><span class="im">P(y | x)</span>: a label given an input</td><td>Logistic regression, your sentiment classifier</td></tr>
+    <tr><td>Generative</td><td>The data itself: <span class="im">P(x)</span> or <span class="im">P(x, y)</span></td><td>Naive Bayes, language models, image generators</td></tr>
+    </tbody></table></div>
+  <p>A language model is generative because it models the probability of <strong>text itself</strong>:</p>
+  <div class="math"><i>P</i>(<i>text</i>) = <span class="big">∏</span><sub><i>i</i></sub> <i>P</i>(<i>t<sub>i</sub></i> | <i>t</i><sub>&lt;<i>i</i></sub>)</div>
+  <p>A chat answer is just <strong>conditional</strong> generation: the same model, with the prompt treated as the first part of the text.</p>
+</section>
+
+<section class="sec" id="training">
+  <h2><span class="n">3</span>What the model learns in training</h2>
+  <p>In causal language-model training, every position is trained to predict the token that comes after it. One sentence gives many training examples at once:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Sees</th><th>Must predict</th></tr></thead>
+    <tbody>
+    <tr><td>The</td><td>cat</td></tr>
+    <tr><td>The cat</td><td>sat</td></tr>
+    <tr><td>The cat sat</td><td>on</td></tr>
+    <tr><td>The cat sat on</td><td>the</td></tr>
+    </tbody></table></div>
+  <p>The loss is the negative log-likelihood of the true next tokens:</p>
+  <div class="math">𝓛(<i>θ</i>) = − <span class="big">∑</span><sub><i>i</i></sub> log <i>P<sub>θ</sub></i>(<i>t<sub>i</sub></i> | <i>t</i><sub>&lt;<i>i</i></sub>)
+    <span class="cap"><i>θ</i> = parameters · <i>t<sub>i</sub></i> = the true next token · <i>t</i><sub>&lt;<i>i</i></sub> = all tokens before position <i>i</i></span></div>
+  <p>This connects straight to classification: at each position the model predicts one "class" out of a very large vocabulary, and the loss is the same <strong>cross-entropy loss</strong> you already use for multi-class classifiers. The only difference is that it is applied at every position, then summed (or averaged).</p>
+
+  <h3>Two details matter</h3>
+  <p>Training and inference handle positions in opposite ways. This difference explains why training is efficient on GPUs and why using the model feels slow for long answers.</p>
+
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">During training, predictions at many positions are computed in parallel</div>
+      <p>In training we already have the full sentence <code>The cat sat on the</code>. So the model does not need to wait for anything: it can make all four predictions (after "The", after "The cat", and so on) <strong>in one forward pass</strong>, and the loss for all of them is computed at once.</p>
+      <p>There is a catch. If every position could see the whole sentence, the position that must predict "sat" could simply look at "sat" and copy it. The model would learn nothing. So a <strong>causal mask</strong> is applied: each position is only allowed to see the tokens <em>before</em> it, never the ones after.</p>
+      <div class="tbl mask"><table>
+        <thead><tr><th>Predicting after…</th><th>The</th><th>cat</th><th>sat</th><th>on</th></tr></thead>
+        <tbody>
+        <tr><td>"The"</td><td class="y">sees</td><td class="n">hidden</td><td class="n">hidden</td><td class="n">hidden</td></tr>
+        <tr><td>"The cat"</td><td class="y">sees</td><td class="y">sees</td><td class="n">hidden</td><td class="n">hidden</td></tr>
+        <tr><td>"The cat sat"</td><td class="y">sees</td><td class="y">sees</td><td class="y">sees</td><td class="n">hidden</td></tr>
+        <tr><td>"The cat sat on"</td><td class="y">sees</td><td class="y">sees</td><td class="y">sees</td><td class="y">sees</td></tr>
+        </tbody></table></div>
+      <p>The result: all positions are trained at the same time, but each one behaves exactly as if the future did not exist yet. That is the same situation the model will face when it is used for real.</p>
+    </div>
+  </div>
+
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">During normal (autoregressive) inference, new tokens are produced one at a time</div>
+      <p>When you use the model, the answer does not exist yet. The model predicts the first output token, a decoding rule picks it, and only then can the model predict the second token, because the second one depends on which first token was chosen.</p>
+      <p>So generation is a loop: <em>predict → pick → append → predict again</em>. There is no way to compute token 50 before token 49 has been chosen. Training could use parallelism because the answer was known in advance; inference cannot.</p>
+      <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Why this matters in your apps</div><p>A 1,000-token answer needs 1,000 steps of this loop, so long outputs are slow and expensive. This is the root of the latency and cost behaviour covered in the Extra section on latency below, and later in Module 8.</p></div></div>
+    </div>
+  </div>
+
+  <div class="callout c-key"><div class="ci">i</div><div><div class="ct">In one sentence</div><p>Training: the answer is known, so all positions are learned together, and the causal mask stops them from cheating. Inference: the answer is unknown, so tokens must be produced one after another.</p></div></div>
+
+  <h3>Pretraining and post-training</h3>
+  <p><strong>Pretraining</strong> is the large next-token training described above, run on huge amounts of text. It establishes the model's language-modelling ability: grammar, facts it has seen often, coding patterns, styles of writing.</p>
+  <p>Later <strong>post-training</strong> stages (for example instruction tuning and preference tuning) shape how the model behaves: following instructions, answering in a helpful format, refusing unsafe requests. We study these stages separately in Stage 2.</p>
+</section>
+
+<section class="sec extra" id="base-vs-instruct">
+  <h2><span class="n">+</span>Base models vs instruction-tuned models <span class="tag-extra">Extra</span></h2>
+  <p>Pretraining alone gives a <strong>base model</strong>: an excellent text continuer that does not know it is supposed to answer you. Ask it <code>What is the capital of France?</code> and it may continue with more quiz questions, because that is what such a line often precedes on the web.</p>
+  <p>Post-training produces an <strong>instruction-tuned</strong> (chat) model that treats your text as a request and answers it. Almost every API model you will call is this kind.</p>
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Why it matters at work</div><p>Open-weight model families are often released in both versions (e.g. a name ending in "-base" and one ending in "-instruct" or "-chat"). Pick the instruct version for applications; the base version is mainly a starting point for your own fine-tuning.</p></div></div>
+</section>
+
+<section class="sec" id="app-design">
+  <h2><span class="n">4</span>Why this changes application design</h2>
+  <div class="list plain" style="margin:14px 0">
+    <div class="row"><div class="icon bg-green">A</div><div><div class="t">"Explain what an invoice is."</div><div class="d">The model can answer from patterns learned in training.</div></div></div>
+    <div class="row"><div class="icon bg-red">B</div><div><div class="t">"What is the outstanding balance on invoice INV-204?"</div><div class="d">The app must fetch the actual record. Generation alone cannot know the current balance; it can only produce a plausible-looking number.</div></div></div>
+  </div>
+  <div class="callout c-key"><div class="ci">1</div><div><div class="ct">Engineering principle #1</div><p>A model's ability to <em>generate</em> an answer is separate from the application's ability to supply <em>evidence</em> for it.</p></div></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Model behaviour</th><th>Application responsibility</th></tr></thead>
+    <tbody>
+    <tr><td>Produces plausible continuations</td><td>Supply relevant, authorised information</td></tr>
+    <tr><td>Can state something false</td><td>Check claims against evidence where it matters</td></tr>
+    <tr><td>Produces text that resembles JSON</td><td>Parse and validate the output</td></tr>
+    <tr><td>Can propose a tool call</td><td>Validate the arguments and control execution</td></tr>
+    <tr><td>Answers of varying quality</td><td>Evaluate against task-specific criteria</td></tr>
+    </tbody></table></div>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">SQL / Power BI analogy</div><p>Question B is a lookup: <code>SELECT balance FROM invoices WHERE id = 'INV-204'</code>. You would never let a report <em>estimate</em> that figure. In a GenAI app, the model phrases the answer around the queried value; it is never the source of the value.</p></div></div>
+</section>
+
+<section class="sec extra" id="fluent-not-true">
+  <h2><span class="n">+</span>Why fluent is not the same as true <span class="tag-extra">Extra</span></h2>
+  <p>Look at the loss again: it rewards assigning high probability to text that <em>looks like the training data</em>. Nothing in it checks facts. So when the model lacks the knowledge, the most likely continuation is still a confident, well-formed sentence, just with wrong content. This is what people call <strong>hallucination</strong>.</p>
+  <p>Three root causes you will meet in practice:</p>
+  <ul>
+    <li><strong>Missing knowledge:</strong> private data (your invoices) or events after the training cutoff.</li>
+    <li><strong>Pattern over fact:</strong> a rare fact loses to a common-looking pattern, e.g. inventing a citation in the right format.</li>
+    <li><strong>No abstention by default:</strong> "I don't know" is only produced if training or your prompt makes it likely.</li>
+  </ul>
+  <div class="tbl"><table>
+    <thead><tr><th>Mitigation</th><th>What it does</th><th>Covered in</th></tr></thead>
+    <tbody>
+    <tr><td>Grounding (RAG)</td><td>Puts the evidence in the context</td><td>Stage 4</td></tr>
+    <tr><td>Tools</td><td>Fetches exact values (SQL, APIs) instead of generating them</td><td>Stages 3, 5</td></tr>
+    <tr><td>Allowed abstention</td><td>Instruct the model to say what is missing</td><td>Module 3</td></tr>
+    <tr><td>Verification</td><td>Check claims against sources; cite them</td><td>Module 6</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sec" id="decoding-experiment">
+  <h2><span class="n">5</span>Python experiment: picking a token</h2>
+  <p>This code isolates <strong>how a next token can be selected after a model has produced probabilities</strong>. It uses a hand-written distribution, so you can understand the selection step without loading an LLM. Here is the full script, then a line-by-line walkthrough.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">decode.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> numpy <span class="tk-k">as</span> np
+
+<span class="tk-c"># candidate next tokens for "The capital of France is"</span>
+tokens = np.array([<span class="tk-s">" Paris"</span>, <span class="tk-s">" Lyon"</span>, <span class="tk-s">" Berlin"</span>, <span class="tk-s">"."</span>])
+probabilities = np.array([<span class="tk-n">0.85</span>, <span class="tk-n">0.08</span>, <span class="tk-n">0.05</span>, <span class="tk-n">0.02</span>])
+
+<span class="tk-c"># greedy: always take the most probable token</span>
+greedy_token = <span class="tk-f">str</span>(tokens[np.argmax(probabilities)])
+<span class="tk-f">print</span>(<span class="tk-s">"Greedy:"</span>, <span class="tk-f">repr</span>(greedy_token))
+
+<span class="tk-c"># sampling: draw according to the distribution</span>
+rng = np.random.default_rng(seed=<span class="tk-n">42</span>)
+samples = rng.choice(tokens, size=<span class="tk-n">20</span>, p=probabilities)
+<span class="tk-f">print</span>(<span class="tk-s">"Samples:"</span>, samples.tolist())</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>Greedy: ' Paris'
+Samples: [' Paris', ' Paris', ' Lyon', ' Paris', ' Paris', ' Berlin', ' Paris', ' Paris', ' Paris', ' Paris',
+          ' Paris', ' Lyon', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris']</pre></div></div>
+
+  <h3>Step 1 · Import NumPy</h3>
+  <p>NumPy provides arrays, numerical operations and random sampling. Here it stores the candidates, finds the largest probability, and draws the samples.</p>
+
+  <h3>Step 2 · Define candidate tokens and their probabilities</h3>
+  <p>The two arrays line up <strong>by position</strong>: index 0 of <code>tokens</code> goes with index 0 of <code>probabilities</code>, and so on.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Index</th><th>Candidate token</th><th>Probability</th></tr></thead>
+    <tbody>
+    <tr><td>0</td><td><code>" Paris"</code></td><td>0.85</td></tr>
+    <tr><td>1</td><td><code>" Lyon"</code></td><td>0.08</td></tr>
+    <tr><td>2</td><td><code>" Berlin"</code></td><td>0.05</td></tr>
+    <tr><td>3</td><td><code>"."</code></td><td>0.02</td></tr>
+    </tbody></table></div>
+  <p>The probabilities sum to 1, as a probability distribution must. NumPy's <code>choice</code> raises an error if they do not.</p>
+  <p>The <strong>leading spaces</strong> in <code>" Paris"</code> and the other city names are intentional. Many tokenizers store a space together with the word that follows it as a single token. With a real tokenizer, <code>" Paris"</code> and <code>"Paris"</code> are two different tokens with different IDs; Lesson 2.1 shows this with real output.</p>
+  <p>A real model does not hand you probabilities directly. It produces <strong>logits</strong> (one raw score per vocabulary entry), and a <strong>softmax</strong> converts those scores into probabilities. Here we skipped that and wrote the probabilities by hand. The Extra section below shows the softmax step.</p>
+
+  <h3>Step 3 · Select the most probable token (greedy decoding)</h3>
+  <p>The greedy line does two things at once. Split apart, it reads:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">greedy, step by step</span><button class="copy">Copy</button></div>
+<pre><code>best_index = np.argmax(probabilities)   <span class="tk-c"># 0</span>
+greedy_token = tokens[best_index]        <span class="tk-c"># " Paris"</span></code></pre></div>
+  <ul>
+    <li><code>argmax</code> returns the <strong>index</strong> of the largest value, not the value itself. The largest probability is 0.85 at index 0, so it returns <code>0</code>.</li>
+    <li>That index is then used to look up the token in the same position.</li>
+  </ul>
+  <p>Always taking the highest-probability next token is called <strong>greedy decoding</strong>.</p>
+  <p><code>repr()</code> prints the string with its quotation marks, which makes the leading space visible: <code>' Paris'</code> instead of a bare <code>Paris</code>. The extra <code>str()</code> is only there because NumPy 2 would otherwise print <code>np.str_(' Paris')</code>.</p>
+  <div class="callout c-warn"><div class="ci">!</div><div><div class="ct">Greedy is local</div>
+    <p>Greedy makes the best choice <strong>for this one step</strong>. It does not guarantee the most probable <em>complete</em> answer, because a slightly less likely token now can lead to a much more likely sentence later. It also never guarantees a factually correct answer: if the model ranks a wrong token highest, greedy picks it every time.</p></div></div>
+
+  <h3>Step 4 · Create a reproducible random generator</h3>
+  <p><code>np.random.default_rng(seed=42)</code> creates a <strong>pseudorandom number generator</strong>: an algorithm that produces numbers which look random but are fully determined by its starting state.</p>
+  <ul>
+    <li>The <strong>seed</strong> sets that starting state. Recreate the generator with the same seed, in the same environment, and you get exactly the same samples. That makes experiments reproducible.</li>
+    <li>The number 42 has no special meaning; any integer works.</li>
+    <li>Each call to <code>rng.choice()</code> advances the generator's state, so calling it again draws a new set of samples.</li>
+  </ul>
+
+  <h3>Step 5 · Sample according to the probabilities</h3>
+  <ul>
+    <li><code>tokens</code>: the candidates to choose from.</li>
+    <li><code>size=20</code>: make 20 selections.</li>
+    <li><code>p=probabilities</code>: how likely each candidate is to be picked.</li>
+  </ul>
+  <p>Sampling is <strong>with replacement</strong> by default, so the same token can appear many times. <code>.tolist()</code> converts the NumPy array into a normal Python list for printing.</p>
+  <p>Across many draws, about 85% would be <code>' Paris'</code>. In only 20 draws you should not expect exactly 17. This run happened to give 17 Paris, 2 Lyon and 1 Berlin, but another seed could give 15 or 19. <strong>Probabilities describe the sampling process; they are not fixed quotas.</strong></p>
+  <p>Notice that sampling returned <code>' Berlin'</code> once. <strong>A possible token is not necessarily a correct one.</strong></p>
+
+  <div class="point"><div class="point-n">!</div><div>
+    <div class="point-t">One essential distinction: 20 samples are not a 20-token sentence</div>
+    <p>These are <strong>20 independent selections for the same next-token position</strong>, all drawn from one fixed distribution. Nothing was appended, and the distribution never changed.</p>
+    <p>Real autoregressive generation is a loop in which the model recomputes the distribution after every chosen token:</p>
+    <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">conceptual pseudocode</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">for</span> step <span class="tk-k">in</span> <span class="tk-f">range</span>(max_new_tokens):
+    probabilities = model(context)           <span class="tk-c"># new distribution every step</span>
+    next_token = select_token(probabilities)  <span class="tk-c"># greedy or sampling</span>
+    context.append(next_token)               <span class="tk-c"># the choice becomes input</span>
+    <span class="tk-k">if</span> next_token == END_OF_SEQUENCE:
+        <span class="tk-k">break</span></code></pre></div>
+    <p>Our experiment is only the <code>select_token</code> line, studied on its own.</p></div></div>
+</section>
+
+<section class="sec extra" id="logits-temperature">
+  <h2><span class="n">+</span>Where the probabilities come from: logits and temperature <span class="tag-extra">Extra</span></h2>
+  <p>The network does not output probabilities directly. Its last layer outputs one raw score per vocabulary token, called a <strong>logit</strong>. <strong>Softmax</strong> turns logits into probabilities, exactly as in your multi-class classifiers:</p>
+  <div class="math"><i>p<sub>k</sub></i> = exp(<i>z<sub>k</sub></i> / <i>T</i>) / <span class="big">∑</span><sub><i>j</i></sub> exp(<i>z<sub>j</sub></i> / <i>T</i>)<span class="cap"><i>z</i> = logits · <i>T</i> = temperature (normal softmax is <i>T</i> = 1)</span></div>
+  <p><strong>Temperature</strong> divides the logits before softmax. Below 1 it sharpens the distribution (closer to greedy); above 1 it flattens it (more variety, more risk). Tap the buttons:</p>
+  <div class="bars" data-temps='{"0.5":[0.988,0.008,0.003,0.0],"1.0":[0.856,0.078,0.047,0.019],"2.0":[0.593,0.179,0.139,0.089]}'>
+    <div class="tabs"><button data-t="0.5">T = 0.5</button><button data-t="1.0" class="on">T = 1.0</button><button data-t="2.0">T = 2.0</button></div>
+    <div class="bar"><span class="lbl">" Paris"</span><span class="tr"><span class="fl" data-w="85.6%"></span></span><span class="pc">0.856</span></div>
+    <div class="bar"><span class="lbl">" Lyon"</span><span class="tr"><span class="fl" data-w="7.8%"></span></span><span class="pc">0.078</span></div>
+    <div class="bar"><span class="lbl">" Berlin"</span><span class="tr"><span class="fl" data-w="4.7%" style="--c:var(--red)"></span></span><span class="pc">0.047</span></div>
+    <div class="bar"><span class="lbl">"."</span><span class="tr"><span class="fl" data-w="1.9%" style="--c:var(--gray)"></span></span><span class="pc">0.019</span></div>
+    <div class="bf">Logits [4.0, 1.6, 1.1, 0.2]. Values are from the code below.</div>
+  </div>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">temperature.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> numpy <span class="tk-k">as</span> np
+
+logits = np.array([<span class="tk-n">4.0</span>, <span class="tk-n">1.6</span>, <span class="tk-n">1.1</span>, <span class="tk-n">0.2</span>])  <span class="tk-c"># Paris, Lyon, Berlin, "."</span>
+
+<span class="tk-k">for</span> T <span class="tk-k">in</span> [<span class="tk-n">0.5</span>, <span class="tk-n">1.0</span>, <span class="tk-n">2.0</span>]:
+    z = logits / T
+    p = np.exp(z - z.max())   <span class="tk-c"># subtract max for numerical stability</span>
+    p /= p.sum()
+    <span class="tk-f">print</span>(T, np.round(p, <span class="tk-n">3</span>).tolist())</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>0.5 [0.988, 0.008, 0.003, 0.0]
+1.0 [0.856, 0.078, 0.047, 0.019]
+2.0 [0.593, 0.179, 0.139, 0.089]</pre></div></div>
+  <p>At <i>T</i> = 2, " Berlin" goes from about 5% to about 14%. As <i>T</i> approaches 0, sampling becomes greedy. That is why low temperature is the usual choice for extraction, classification and code, and higher temperature for brainstorming. Other decoding settings (top-p, top-k) come in Stage 2.</p>
+</section>
+
+<section class="sec extra" id="log-space">
+  <h2><span class="n">+</span>Why everything is done in log space <span class="tag-extra">Extra</span></h2>
+  <p>The chain rule multiplies many probabilities below 1. For long outputs that product underflows to zero in floating point, so models and APIs work with <strong>log-probabilities</strong> and add them instead.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">logprobs.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> math
+
+<span class="tk-c"># per-token probabilities for a short 4-token answer</span>
+step_probs = [<span class="tk-n">0.9</span>, <span class="tk-n">0.7</span>, <span class="tk-n">0.8</span>, <span class="tk-n">0.6</span>]
+<span class="tk-f">print</span>(math.prod(step_probs))                      <span class="tk-c"># 0.3024</span>
+<span class="tk-f">print</span>(<span class="tk-f">sum</span>(math.log(p) <span class="tk-k">for</span> p <span class="tk-k">in</span> step_probs))     <span class="tk-c"># -1.196 (same information, as a sum)</span>
+
+<span class="tk-c"># a 2000-token answer where each step has probability 0.5</span>
+<span class="tk-f">print</span>(<span class="tk-n">0.5</span> ** <span class="tk-n">2000</span>)              <span class="tk-c"># 0.0  -> underflow, information lost</span>
+<span class="tk-f">print</span>(<span class="tk-n">2000</span> * math.log(<span class="tk-n">0.5</span>))     <span class="tk-c"># -1386.29  -> still usable</span></code></pre></div>
+  <p>Why you will care later: many APIs can return per-token <strong>logprobs</strong>, which are handy as confidence signals for classification-style prompts and for evaluation. The training loss in section 3 is simply the negative of this sum.</p>
+</section>
+
+<section class="sec extra" id="latency">
+  <h2><span class="n">+</span>Sequential decoding has a price: latency and cost <span class="tag-extra">Extra</span></h2>
+  <p>The two details from section 3 show up again inside a single API call. Inference actually has two phases:</p>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Prefill: reading your prompt</div>
+      <p>Your whole prompt is already known, just like the sentence in training. So the model processes all prompt tokens <strong>in parallel</strong>. This is fast per token, but a very long prompt (big documents, long chat history) still takes noticeable time. It decides how long you wait before the first word appears, called <strong>time to first token</strong>.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Decode: writing the answer</div>
+      <p>The answer is unknown, so output tokens come out <strong>one at a time</strong> through the predict → pick → append loop. Each step is a full pass through the model, so output tokens are much slower per token than prompt tokens.</p>
+    </div>
+  </div>
+  <p>Putting the two together gives a simple model of how long a response takes:</p>
+  <div class="math">latency ≈ time to first token + (output tokens × time per output token)</div>
+  <ul>
+    <li><strong>Long answers are slow answers.</strong> Asking for a concise reply or a compact JSON object is a real performance lever.</li>
+    <li><strong>Streaming</strong> shows tokens as they are produced. It does not reduce total time, but users see progress after the first token.</li>
+    <li>Providers usually charge more per output token than per input token, which matches the cost difference above.</li>
+  </ul>
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Industry note</div><p>When a GenAI feature feels slow, measure time-to-first-token and output length separately before changing models. Often the fix is a shorter output, not a faster model. Covered in Module 8.</p></div></div>
+</section>
+
+<section class="sec extra" id="side-by-side">
+  <h2><span class="n">+</span>Predictive ML vs generative LLM, side by side <span class="tag-extra">Extra</span></h2>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Predictive ML</th><th>Generative LLM</th></tr></thead>
+    <tbody>
+    <tr><td>Output</td><td>One label or number</td><td>A sequence, built token by token</td></tr>
+    <tr><td>Class set</td><td>Small and fixed</td><td>Whole vocabulary, reused at every step</td></tr>
+    <tr><td>Loss</td><td>Cross-entropy or MSE on one target</td><td>Cross-entropy at every position</td></tr>
+    <tr><td>Same input twice</td><td>Same output</td><td>Can differ when sampling</td></tr>
+    <tr><td>Evaluation</td><td>Accuracy, F1, AUC, RMSE against a label</td><td>Many valid answers; task criteria, groundedness, judges</td></tr>
+    <tr><td>Cost driver</td><td>Training; inference is cheap</td><td>Tokens in and out on every call</td></tr>
+    <tr><td>Typical failure</td><td>Wrong class</td><td>Fluent, confident and wrong; broken format</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sec" id="check">
+  <h2><span class="n">?</span>Check yourself</h2>
+  <details class="disc"><summary><span class="tag q">Q1</span><span class="q">Why can't an LLM on its own reliably answer "What is the balance on INV-204?"</span><span class="chev"></span></summary>
+    <div class="ans"><p>The balance is a private, changing business fact that was never in the training data. The model can only produce a plausible continuation, which may be a made-up number. The app must query the record (tool or retrieval) and pass it in as context.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q2</span><span class="q">Training processes positions in parallel, but inference is sequential. Why?</span><span class="chev"></span></summary>
+    <div class="ans"><p>In training the full target text is known, so every position's next token is available at once; the causal mask hides the future. In inference the next token does not exist until it has been chosen, so each step waits for the previous one.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q3</span><span class="q">You need repeatable output for a test. What decoding setting, and what is the catch?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Temperature 0 (greedy), or a fixed seed where the provider supports one. The catch: hosted APIs can still vary slightly across hardware, batching and model versions. That is why GenAI tests check <em>properties</em> of an answer (valid JSON, correct fields, cites the source) instead of exact strings. Module 6.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q4</span><span class="q">How is the LLM training loss related to the loss of your sentiment classifier?</span><span class="chev"></span></summary>
+    <div class="ans"><p>It is the same cross-entropy. The classifier applies it once per example over a few classes. The language model applies it at every position over the whole vocabulary, then sums or averages.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q5</span><span class="q">A user complains a summary feature takes 12 seconds. Name two things to check before switching models.</span><span class="chev"></span></summary>
+    <div class="ans"><p>(1) Output length: a 1,000-token summary decodes far slower than a 150-token one, so cap or tighten it. (2) Time to first token: a huge prompt makes prefill slow, so trim the context. Also consider streaming so the user sees progress.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q6</span><span class="q">Which temperature would you use to extract invoice fields into JSON, and why?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Low, 0 or close to it. Extraction has one correct answer, so you want the most likely tokens, not variety. Higher temperature only adds chances of a wrong digit or broken JSON.</p></div></details>
+</section>
+
+<section class="recap">
+  <h2>What to retain from this lesson</h2>
+  <p>An autoregressive LLM generates text through repeated next-token prediction. Its training objective teaches it to model sequences of text; that objective alone does not guarantee factual correctness or the successful completion of a business task.</p>
+  <p>Your work as a GenAI application developer is to connect this probabilistic component to data, tools and controls that make the overall system useful and measurable.</p>
+  <ul>
+    <li>An LLM generates text by repeated next-token prediction; each choice is fed back in.</li>
+    <li>Next-token probabilities multiply (in practice, log-probs add) into the probability of a whole answer.</li>
+    <li>Training uses per-position cross-entropy. It rewards likely text, not true text.</li>
+    <li>Logits → softmax with temperature → decoding rule (greedy or sampling) → token.</li>
+    <li>Decoding is sequential, so output length drives latency and cost.</li>
+    <li>Your job: connect this probabilistic component to data, tools and checks that make the system reliable and measurable.</li>
+  </ul>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>
