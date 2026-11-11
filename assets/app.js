@@ -56,7 +56,10 @@ const COURSE = [
     <label class="search">${svg.search}<input id="q" type="search" placeholder="Search lessons" autocomplete="off"></label>
     <div id="side-groups"></div><p class="side-empty" id="side-empty">No lessons match.</p>
     <div class="side-group" style="margin-top:20px"><h4>Appearance</h4></div>
-    <div class="seg" id="theme-seg"><span class="thumb"></span><button data-v="auto">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div>
+    <div class="seg" id="theme-seg"><span class="thumb"></span><button data-v="auto">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button><button data-v="glass" title="Liquid Glass">Glass</button></div>
+    <div class="glass-slider"><div class="gs-top"><span>Clear</span><span>Liquid Glass</span><span>Tinted</span></div>
+      <input type="range" id="glass-tint" min="0" max="100" step="1" aria-label="Liquid Glass look, from clear to tinted">
+      <div class="gs-cap">Follows your system light or dark mode.</div></div>
     <p class="side-foot">Progress is saved in this browser.<br>Ctrl / ⌘ + K to search.</p>`;
   shell.insertBefore(side, main);
 
@@ -105,12 +108,25 @@ const COURSE = [
   const mq = matchMedia('(prefers-color-scheme: dark)');
   function applyTheme(v) {
     localStorage.setItem('genai-notes-theme', v);
-    const dark = v === 'dark' || (v === 'auto' && mq.matches);
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    const btns = [...seg.querySelectorAll('button')], i = btns.findIndex(b => b.dataset.v === v);
-    thumb.style.width = btns[0].offsetWidth + 'px';
-    thumb.style.transform = `translateX(${i * btns[0].offsetWidth}px)`;
+    const dark = v === 'dark' || ((v === 'auto' || v === 'glass') && mq.matches);
+    const h = document.documentElement;
+    h.dataset.theme = dark ? 'dark' : 'light';
+    h.classList.toggle('glass', v === 'glass');
+    const btn = seg.querySelector(`button[data-v="${v}"]`) || seg.querySelector('button');
+    thumb.style.left = '0';
+    thumb.style.width = btn.offsetWidth + 'px';
+    thumb.style.transform = `translateX(${btn.offsetLeft}px)`;
   }
+  // iOS 27 style slider: from ultra-clear to fully tinted glass
+  const tintInput = side.querySelector('#glass-tint');
+  const savedTint = localStorage.getItem('genai-glass-tint');
+  const defaultTint = matchMedia('(prefers-reduced-transparency: reduce)').matches ? 0.7 : 0.35;
+  tintInput.value = Math.round((savedTint === null ? defaultTint : +savedTint) * 100);
+  tintInput.addEventListener('input', () => {
+    const t = (tintInput.value / 100).toFixed(2);
+    document.documentElement.style.setProperty('--tint', t);
+    localStorage.setItem('genai-glass-tint', t);
+  });
   seg.addEventListener('click', e => { if (e.target.dataset.v) applyTheme(e.target.dataset.v); });
   mq.addEventListener('change', () => applyTheme(localStorage.getItem('genai-notes-theme') || 'auto'));
   applyTheme(localStorage.getItem('genai-notes-theme') || 'auto');

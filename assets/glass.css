@@ -1,0 +1,143 @@
+/* =====================================================================
+   Liquid Glass theme (iOS 26 design language, iOS 27 refinements)
+   Rules followed from Apple's HIG (Materials, Color):
+   - glass only on the functional layer: bars, sidebar, search, segmented
+     control, floating buttons, page navigation. Content uses standard
+     materials, never glass.
+   - glass has no colour of its own, it picks up what is behind it.
+     Bigger surfaces (sidebar) are more opaque for legibility.
+   - colour is used sparingly: accent-tinted glass only on the primary
+     action; selected items get coloured text instead of a solid fill.
+   - iOS 27: a user slider from clear to fully tinted, more uniform
+     refraction, better contrast. Reduce Transparency and Increase
+     Contrast are respected.
+   ===================================================================== */
+html.glass{--tint:.35;--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
+  --lg-shadow:0 10px 30px -10px rgba(16,24,64,.28),0 2px 6px -2px rgba(16,24,64,.12);
+  --mat:rgba(255,255,255,.74);--mat-edge:rgba(255,255,255,.7)}
+html.glass[data-theme="dark"]{--lg-rgb:38,38,44;--lg-edge:rgba(255,255,255,.22);--lg-edge2:rgba(255,255,255,.06);
+  --lg-shadow:0 12px 34px -10px rgba(0,0,0,.7),0 2px 6px -2px rgba(0,0,0,.5);
+  --mat:rgba(28,28,32,.72);--mat-edge:rgba(255,255,255,.08)}
+
+/* a visually rich wallpaper, so the glass has something to pick colour up from */
+html.glass body{background:
+  radial-gradient(42vw 42vw at 8% 12%,color-mix(in srgb,var(--blue) 42%,transparent),transparent 70%),
+  radial-gradient(38vw 38vw at 92% 18%,color-mix(in srgb,var(--pink) 34%,transparent),transparent 70%),
+  radial-gradient(46vw 46vw at 78% 92%,color-mix(in srgb,var(--purple) 36%,transparent),transparent 70%),
+  radial-gradient(40vw 40vw at 12% 88%,color-mix(in srgb,var(--teal) 34%,transparent),transparent 70%),
+  radial-gradient(30vw 30vw at 50% 50%,color-mix(in srgb,var(--orange) 16%,transparent),transparent 70%),
+  #EEF0F7;background-attachment:fixed}
+html.glass[data-theme="dark"] body{background:
+  radial-gradient(42vw 42vw at 8% 12%,color-mix(in srgb,var(--blue) 30%,transparent),transparent 70%),
+  radial-gradient(38vw 38vw at 92% 18%,color-mix(in srgb,var(--pink) 22%,transparent),transparent 70%),
+  radial-gradient(46vw 46vw at 78% 92%,color-mix(in srgb,var(--purple) 28%,transparent),transparent 70%),
+  radial-gradient(40vw 40vw at 12% 88%,color-mix(in srgb,var(--teal) 20%,transparent),transparent 70%),
+  #050509;background-attachment:fixed}
+
+/* the glass recipe: translucent fill set by the slider, blur + saturation,
+   a bright top rim, a soft lower rim, and a specular sheen */
+html.glass .navbar .nav-btn,html.glass .sidebar,html.glass .search,html.glass .seg,html.glass .top-btn,
+html.glass .toc,html.glass .pager a,html.glass .glass-slider,html.glass .gl-search,html.glass .gl-filter button{
+  position:relative;
+  background:rgba(var(--lg-rgb),calc(.04 + .76 * var(--tint)));
+  -webkit-backdrop-filter:blur(calc(4px + 18px * var(--tint))) saturate(190%) brightness(1.04);
+  backdrop-filter:blur(calc(4px + 18px * var(--tint))) saturate(190%) brightness(1.04);
+  border:0;
+  box-shadow:inset 0 1px 0 var(--lg-edge),inset 0 0 0 .5px var(--lg-edge2),inset 0 -1px 1px var(--lg-edge2),var(--lg-shadow)}
+html.glass .sidebar{position:sticky}
+html.glass .top-btn{position:fixed}
+html.glass .navbar .nav-btn::after,html.glass .sidebar::after,html.glass .seg::after,html.glass .top-btn::after,
+html.glass .toc::after,html.glass .pager a::after,html.glass .search::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,calc(.42 - .2 * var(--tint))) 0%,rgba(255,255,255,0) 38%,
+    rgba(255,255,255,0) 70%,rgba(255,255,255,.12) 100%);mix-blend-mode:soft-light}
+/* larger surfaces stay more opaque (HIG) */
+html.glass .sidebar,html.glass .toc{background:rgba(var(--lg-rgb),calc(.16 + .74 * var(--tint)))}
+
+/* navigation bar: no bar fill, a scroll-edge blur that fades out,
+   controls float as glass circles */
+/* view-transition-name makes the bar a backdrop root, which would stop its blur from seeing the page */
+html.glass .navbar{view-transition-name:none;background:transparent;border-bottom-color:transparent!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+html.glass .navbar::before{content:"";position:absolute;inset:0 0 -26px 0;z-index:-1;pointer-events:none;
+  background:linear-gradient(rgba(var(--lg-rgb),.62),rgba(var(--lg-rgb),.25));
+  -webkit-backdrop-filter:blur(12px) saturate(170%);backdrop-filter:blur(12px) saturate(170%);
+  -webkit-mask:linear-gradient(#000 55%,transparent);mask:linear-gradient(#000 55%,transparent);
+  opacity:0;transition:opacity .3s var(--ios)}
+html.glass .navbar.scrolled::before{opacity:1}
+html.glass .navbar .nav-btn{width:40px;height:40px;justify-content:center;padding:0;border-radius:50%;color:var(--label)}
+html.glass .navbar .nav-btn:hover{background:rgba(var(--lg-rgb),calc(.25 + .6 * var(--tint)))}
+html.glass .navbar .nav-btn:active{transform:scale(1.08);opacity:1}
+html.glass .progress{height:2px;bottom:-1px;opacity:.85}
+
+/* floating sidebar, like iPadOS 26 */
+@media (min-width:1001px){
+  html.glass .shell{grid-template-columns:316px minmax(0,1fr)}
+  html.glass .sidebar{margin:10px 0 10px 10px;top:10px;height:calc(100vh - 20px);border-radius:26px;border-right:0;padding:14px 10px 30px}
+}
+html.glass .side-list a:hover{background:rgba(var(--lg-rgb),.35)}
+html.glass .side-list a.active{background:rgba(var(--lg-rgb),calc(.45 + .4 * var(--tint)));color:var(--accent);font-weight:600;
+  box-shadow:inset 0 1px 0 var(--lg-edge),0 4px 14px -6px rgba(0,0,0,.2)}
+html.glass .side-list a.active .num{color:var(--accent)}
+html.glass .side-list a.active .dot{border-color:var(--accent)}
+html.glass .side-list a.active .dot.done{background:var(--green);border-color:var(--green);color:#fff}
+html.glass .search{border-radius:99px}
+html.glass .seg{border-radius:99px;padding:3px;background:rgba(120,120,128,calc(.12 + .1 * var(--tint)))}
+html.glass .seg .thumb{border-radius:99px;top:3px;bottom:3px;background:rgba(255,255,255,calc(.55 + .35 * var(--tint)));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 4px 12px -4px rgba(0,0,0,.25)}
+html.glass[data-theme="dark"] .seg .thumb{background:rgba(255,255,255,calc(.16 + .14 * var(--tint)))}
+
+/* content layer: standard material, no glass (HIG) */
+html.glass .sec,html.glass .tile,html.glass .list,html.glass .lcard,html.glass .done-bar{
+  background:var(--mat);box-shadow:inset 0 0 0 .5px var(--mat-edge),var(--shadow)}
+html.glass .lcard.soon{background:transparent;box-shadow:none}
+html.glass .code{background:color-mix(in srgb,var(--code-bg) 88%,transparent)}
+html.glass .group-label{color:var(--label);opacity:.72}
+html.glass .group-foot{color:var(--label);opacity:.7}
+
+/* colour sparingly: the primary action gets accent-tinted glass */
+html.glass .pager a.nx:not(.soon){background:color-mix(in srgb,var(--accent) calc(55% + 30% * var(--tint)),transparent)}
+html.glass .pager a.nx:not(.soon) small,html.glass .pager a.nx:not(.soon) b{color:#fff}
+html.glass .pager a.soon{background:transparent;box-shadow:none}
+html.glass .hero .cta{background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 10px 24px -10px rgba(0,0,0,.4)}
+
+/* floating controls */
+html.glass .top-btn{color:var(--label);width:46px;height:46px}
+html.glass .toc{border-radius:22px}
+html.glass .pager a{border-radius:22px}
+/* toggles take on glass only while being touched (HIG) */
+html.glass .switch:active .track::after{transform:scale(1.18,1.1);background:rgba(255,255,255,.55);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);box-shadow:inset 0 1px 0 #fff,0 6px 16px -4px rgba(0,0,0,.3)}
+html.glass .switch:active input:checked+.track::after{transform:translateX(18px) scale(1.18,1.1)}
+
+/* mobile sheet */
+@media (max-width:1000px){
+  html.glass .sidebar{position:fixed;background:rgba(var(--lg-rgb),calc(.45 + .45 * var(--tint)));border-radius:30px 30px 0 0}
+}
+
+/* the iOS 27 look slider: clear <-> tinted */
+.glass-slider{display:none;margin:12px 8px 0;padding:12px 14px;border-radius:18px}
+html.glass .glass-slider{display:block}
+.glass-slider .gs-top{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--label2);margin-bottom:6px}
+.glass-slider input{width:100%;-webkit-appearance:none;appearance:none;height:28px;background:transparent;cursor:pointer;margin:0}
+.glass-slider input::-webkit-slider-runnable-track{height:6px;border-radius:99px;
+  background:linear-gradient(90deg,rgba(var(--lg-rgb),.3),color-mix(in srgb,var(--blue) 70%,transparent))}
+.glass-slider input::-moz-range-track{height:6px;border-radius:99px;
+  background:linear-gradient(90deg,rgba(var(--lg-rgb),.3),color-mix(in srgb,var(--blue) 70%,transparent))}
+.glass-slider input::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.06);transition:transform .25s var(--ios)}
+.glass-slider input::-moz-range-thumb{width:28px;height:28px;border:0;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.2)}
+.glass-slider input:active::-webkit-slider-thumb{transform:scale(1.25,1.12);background:rgba(255,255,255,.6)}
+.glass-slider .gs-cap{font-size:11.5px;color:var(--label2);margin-top:4px}
+
+/* accessibility. Glass is opt-in here, so Reduce Transparency (on Windows: Settings >
+   Personalisation > Transparency effects off) starts the slider at a more opaque,
+   higher-contrast look instead of switching the glass off. Moving the slider still wins. */
+@media (prefers-reduced-transparency:reduce){
+  html.glass{--tint:.7}
+}
+@media (prefers-contrast:more){
+  html.glass{--tint:.85}
+  html.glass .navbar .nav-btn,html.glass .sidebar,html.glass .search,html.glass .seg,html.glass .top-btn,html.glass .toc,
+  html.glass .pager a,html.glass .glass-slider{box-shadow:inset 0 0 0 1.5px var(--label3),var(--lg-shadow)}
+}

@@ -2,9 +2,13 @@
 (function () {
   var h = document.documentElement;
   var v = localStorage.getItem('genai-notes-theme') || 'auto';
-  var dark = v === 'dark' || (v === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  // 'glass' (Liquid Glass) follows the system light / dark setting, like 'auto'
+  var dark = v === 'dark' || ((v === 'auto' || v === 'glass') && matchMedia('(prefers-color-scheme: dark)').matches);
   h.dataset.theme = dark ? 'dark' : 'light';
   h.classList.add('js');
+  if (v === 'glass') h.classList.add('glass');
+  var tint = localStorage.getItem('genai-glass-tint');
+  if (tint !== null && !matchMedia('(prefers-contrast: more)').matches) h.style.setProperty('--tint', tint);
 
   var dir = sessionStorage.getItem('genai-nav-dir') || 'none';
   sessionStorage.removeItem('genai-nav-dir');
