@@ -7,6 +7,7 @@
   h.dataset.theme = dark ? 'dark' : 'light';
   h.classList.add('js');
   if (v === 'glass') h.classList.add('glass');
+  if (localStorage.getItem('genai-side-collapsed') === '1') h.classList.add('side-collapsed');
   var tint = localStorage.getItem('genai-glass-tint');
   if (tint !== null && !matchMedia('(prefers-contrast: more)').matches) h.style.setProperty('--tint', tint);
 

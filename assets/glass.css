@@ -12,7 +12,7 @@
      refraction, better contrast. Reduce Transparency and Increase
      Contrast are respected.
    ===================================================================== */
-html.glass{--tint:.35;--lg-outline:rgba(0,0,0,.10);--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
+html.glass{--tint:.12;--lg-outline:rgba(0,0,0,.10);--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
   --lg-shadow:0 10px 30px -10px rgba(16,24,64,.28),0 2px 6px -2px rgba(16,24,64,.12);
   --mat:rgba(255,255,255,.74);--mat-edge:rgba(255,255,255,.7)}
 html.glass[data-theme="dark"]{--lg-outline:rgba(0,0,0,.5);--lg-rgb:38,38,44;--lg-edge:rgba(255,255,255,.22);--lg-edge2:rgba(255,255,255,.06);
@@ -34,48 +34,65 @@ html.glass[data-theme="dark"] body{background:
   radial-gradient(40vw 40vw at 12% 88%,color-mix(in srgb,var(--teal) 20%,transparent),transparent 70%),
   #050509;background-attachment:fixed}
 
-/* the glass recipe: translucent fill set by the slider, blur + saturation,
-   a bright top rim, a soft lower rim, and a specular sheen */
+/* the glass recipe. At the Clear end (tint 0) there is no fill and no blur at all:
+   only the lens, the rim and the highlights make the glass visible, like clear water. */
 html.glass .navbar .nav-btn,html.glass .sidebar,html.glass .search,html.glass .seg,html.glass .top-btn,html.glass .tabbar,
 html.glass .toc,html.glass .pager a,html.glass .glass-slider,html.glass .gl-search,html.glass .gl-filter button{
   position:relative;isolation:isolate;
-  /* Clear end: almost no fill, so the content behind stays visible */
-  background:rgba(var(--lg-rgb),calc(.02 + .78 * var(--tint)));
-  -webkit-backdrop-filter:blur(calc(1.5px + 20px * var(--tint))) saturate(200%) brightness(calc(1 + .06 * var(--tint)));
-  backdrop-filter:blur(calc(1.5px + 20px * var(--tint))) saturate(200%) brightness(calc(1 + .06 * var(--tint)));
+  background:rgba(var(--lg-rgb),calc(.8 * var(--tint)));
+  -webkit-backdrop-filter:blur(calc(20px * var(--tint))) saturate(calc(140% + 60% * var(--tint))) brightness(calc(1 + .05 * var(--tint)));
+  backdrop-filter:blur(calc(20px * var(--tint))) saturate(calc(140% + 60% * var(--tint))) brightness(calc(1 + .05 * var(--tint)));
   border:0;
-  /* the rim: a bright edge where light enters (top-left), a fainter one where it leaves,
-     an inner glow that gives the glass its thickness, and the drop shadow */
+  /* thickness: a soft inner glow, a faint inner shadow at the bottom, a hairline outline, the drop shadow.
+     The bright rim itself is drawn evenly all the way round in ::after. */
   box-shadow:
-    inset 1.5px 1.5px 1px -.5px rgba(255,255,255,calc(.95 - .35 * var(--tint))),
-    inset -1px -1px 1px -.5px rgba(255,255,255,calc(.6 - .3 * var(--tint))),
-    inset 0 0 0 .5px var(--lg-edge2),
-    inset 0 0 14px -8px rgba(255,255,255,calc(.4 - .25 * var(--tint))),
+    inset 0 0 16px -8px rgba(255,255,255,calc(.55 - .3 * var(--tint))),
+    inset 0 -8px 14px -12px rgba(0,0,0,calc(.22 - .15 * var(--tint))),
     0 0 0 .5px var(--lg-outline),
-    inset 0 -10px 16px -14px rgba(0,0,0,calc(.25 - .2 * var(--tint))),
     var(--lg-shadow)}
-/* real refraction (Chromium): the backdrop is bent by a lens-shaped displacement map.
-   Small controls get the strong lens, larger panels a softer one. */
-html.glass .navbar .nav-btn,html.glass .top-btn,html.glass .tabbar,html.glass .seg,html.glass .pager a,html.glass .search{
-  backdrop-filter:url(#lg-lens) blur(calc(.3px + 16px * var(--tint))) saturate(200%) brightness(calc(1 + .06 * var(--tint)))}
-html.glass .toc,html.glass .glass-slider{
-  backdrop-filter:url(#lg-lens-soft) blur(calc(1px + 18px * var(--tint))) saturate(190%) brightness(1.05)}
+/* real refraction (Chromium): the backdrop is bent by a lens-shaped displacement map */
+html.glass .navbar .nav-btn,html.glass .top-btn,html.glass .tabbar,html.glass .pager a{
+  backdrop-filter:url(#lg-lens) blur(calc(16px * var(--tint))) saturate(calc(140% + 60% * var(--tint))) brightness(calc(1 + .05 * var(--tint)))}
+html.glass .toc{
+  backdrop-filter:url(#lg-lens-soft) blur(calc(18px * var(--tint))) saturate(calc(140% + 50% * var(--tint))) brightness(calc(1 + .05 * var(--tint)))}
 html.glass .sidebar{position:sticky}
 html.glass .top-btn{position:fixed}
 html.glass .tabbar{position:fixed}
-/* specular highlight: a moving light spot (follows the pointer) plus a fixed sheen */
-html.glass .navbar .nav-btn::after,html.glass .sidebar::after,html.glass .seg::after,html.glass .top-btn::after,html.glass .tabbar::after,
+
+/* rim + specular. One even ring round the whole shape (brightest at the top-left and
+   bottom-right corners, where light catches a curved edge), a light spot that follows
+   the pointer, and a fixed sheen across the top. */
+html.glass{--rim:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,.35) 22%,rgba(255,255,255,.12) 50%,rgba(255,255,255,.35) 78%,rgba(255,255,255,.85))}
+html.glass[data-theme="dark"]{--rim:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.16) 22%,rgba(255,255,255,.05) 50%,rgba(255,255,255,.16) 78%,rgba(255,255,255,.45))}
+html.glass .navbar .nav-btn::after,html.glass .seg::after,html.glass .top-btn::after,html.glass .tabbar::after,
 html.glass .toc::after,html.glass .pager a::after,html.glass .search::after,html.glass .glass-slider::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  border:1px solid transparent;
   background:
-    radial-gradient(120px 90px at var(--mx,30%) var(--my,-20%),rgba(255,255,255,calc(.7 - .35 * var(--tint))),rgba(255,255,255,0) 70%),
-    linear-gradient(165deg,rgba(255,255,255,calc(.5 - .25 * var(--tint))) 0%,rgba(255,255,255,0) 32%,rgba(255,255,255,0) 72%,rgba(255,255,255,.16) 100%);
-  mix-blend-mode:overlay;transition:opacity .3s}
-html.glass[data-theme="dark"] .navbar .nav-btn::after,html.glass[data-theme="dark"] .sidebar::after,html.glass[data-theme="dark"] .seg::after,
-html.glass[data-theme="dark"] .top-btn::after,html.glass[data-theme="dark"] .tabbar::after,html.glass[data-theme="dark"] .toc::after,
-html.glass[data-theme="dark"] .pager a::after,html.glass[data-theme="dark"] .search::after,html.glass[data-theme="dark"] .glass-slider::after{mix-blend-mode:soft-light}
-html.glass .sidebar>*,html.glass .toc>*,html.glass .pager a>*,html.glass .seg>*,html.glass .glass-slider>*{position:relative;z-index:2}
+    radial-gradient(130px 90px at var(--mx,30%) var(--my,-20%),rgba(255,255,255,calc(.42 - .2 * var(--tint))),rgba(255,255,255,0) 70%) padding-box,
+    linear-gradient(170deg,rgba(255,255,255,calc(.34 - .18 * var(--tint))) 0%,rgba(255,255,255,0) 30%) padding-box,
+    var(--rim) border-box;
+  -webkit-mask:linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0)}
+html.glass[data-theme="dark"] .navbar .nav-btn::after,html.glass[data-theme="dark"] .seg::after,html.glass[data-theme="dark"] .top-btn::after,
+html.glass[data-theme="dark"] .tabbar::after,html.glass[data-theme="dark"] .toc::after,html.glass[data-theme="dark"] .pager a::after,
+html.glass[data-theme="dark"] .search::after,html.glass[data-theme="dark"] .glass-slider::after{
+  background:
+    radial-gradient(130px 90px at var(--mx,30%) var(--my,-20%),rgba(255,255,255,calc(.16 - .08 * var(--tint))),rgba(255,255,255,0) 70%) padding-box,
+    linear-gradient(170deg,rgba(255,255,255,calc(.12 - .06 * var(--tint))) 0%,rgba(255,255,255,0) 30%) padding-box,
+    var(--rim) border-box}
+/* the sidebar scrolls, so an overlay would scroll away with its content: its rim is drawn
+   with inset shadows instead, which stay fixed to the panel's edge */
+html.glass .sidebar{box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,calc(.9 - .3 * var(--tint))),inset -1px -1px 0 rgba(255,255,255,calc(.6 - .25 * var(--tint))),
+    inset 0 0 0 1px rgba(255,255,255,calc(.22 - .1 * var(--tint))),inset 0 0 24px -10px rgba(255,255,255,calc(.5 - .3 * var(--tint))),
+    0 0 0 .5px var(--lg-outline),var(--lg-shadow)}
+html.glass[data-theme="dark"] .sidebar{box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.3),inset -1px -1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06),
+    0 0 0 .5px var(--lg-outline),var(--lg-shadow)}
+html.glass .toc>*,html.glass .pager a>*,html.glass .seg>*,html.glass .glass-slider>*{position:relative;z-index:2}
 html.glass .seg>.thumb{position:absolute}
+/* the sidebar is the largest surface: a touch more body than the controls, but still clear at tint 0 */
+html.glass .sidebar,html.glass .toc{background:rgba(var(--lg-rgb),calc(.05 + .8 * var(--tint)))}
 
 /* floating tab bar (lesson pages): minimises while scrolling down */
 .tabbar{display:none}
@@ -100,8 +117,6 @@ html.glass .content{padding-bottom:150px}
 /* the segmented thumb stretches mid-slide, then settles */
 html.glass .seg .thumb.stretch{animation:lg-stretch .5s var(--ios)}
 @keyframes lg-stretch{0%{scale:1 1}35%{scale:1.22 .9}70%{scale:.97 1.04}100%{scale:1 1}}
-/* larger surfaces stay more opaque (HIG) */
-html.glass .sidebar,html.glass .toc{background:rgba(var(--lg-rgb),calc(.16 + .74 * var(--tint)))}
 
 /* navigation bar: no bar fill, a scroll-edge blur that fades out,
    controls float as glass circles */
@@ -182,9 +197,7 @@ html.glass .glass-slider{display:block}
 /* accessibility. Glass is opt-in here, so Reduce Transparency (on Windows: Settings >
    Personalisation > Transparency effects off) starts the slider at a more opaque,
    higher-contrast look instead of switching the glass off. Moving the slider still wins. */
-@media (prefers-reduced-transparency:reduce){
-  html.glass{--tint:.7}
-}
+
 @media (prefers-contrast:more){
   html.glass{--tint:.85}
   html.glass .navbar .nav-btn,html.glass .sidebar,html.glass .search,html.glass .seg,html.glass .top-btn,html.glass .toc,

@@ -452,3 +452,25 @@ details.disc .ans p{margin:6px 0}
 .mask td.n{color:var(--label3)}
 @media (max-width:640px){.point{padding:14px;gap:10px}.mask td,.mask th{padding:8px 6px}}
 .sec p code,.sec li code,.point code{overflow-wrap:anywhere}
+
+/* collapsible sidebar (desktop). The column animates to zero while the panel slides
+   out with the iOS curve; the content re-centres in the freed space. */
+.brand-row{display:flex;align-items:center;gap:6px}
+.brand-row .brand{flex:1;min-width:0}
+.side-toggle{border:0;background:none;color:var(--label2);cursor:pointer;width:34px;height:34px;border-radius:10px;
+  display:grid;place-items:center;flex:none;transition:background .2s,color .2s,scale .4s var(--ios)}
+.side-toggle:hover{background:var(--fill2);color:var(--label)}
+.side-toggle:active{scale:.92}
+.side-toggle svg{width:21px;height:21px}
+.navbar .side-toggle.in-nav{display:none;color:var(--accent)}
+@media (min-width:1001px){
+  .shell{transition:grid-template-columns .55s var(--ios)}
+  .sidebar{transition:transform .55s var(--ios),opacity .4s var(--ios),background-color .35s var(--ease)}
+  html.side-collapsed .shell{grid-template-columns:0 minmax(0,1fr)!important}
+  html.side-collapsed .sidebar{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none;visibility:hidden;
+    transition:transform .55s var(--ios),opacity .4s var(--ios),visibility 0s .55s}
+  html.side-collapsed .navbar .side-toggle.in-nav{display:grid}
+  html.side-collapsed .tabbar{left:50%!important}
+}
+@media (max-width:1000px){.side-toggle{display:none!important}}
+@media (prefers-reduced-motion:reduce){.shell,.sidebar{transition:none!important}}

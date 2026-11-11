@@ -43,6 +43,7 @@ const COURSE = [
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
     print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+    sidebar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="3.5"/><path d="M9.5 4.5v15M5.6 8.5h1.6M5.6 11.5h1.6"/></svg>',
     up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
   };
 
@@ -52,7 +53,8 @@ const COURSE = [
   const side = document.createElement('aside');
   side.className = 'sidebar'; side.id = 'sidebar'; side.setAttribute('aria-label', 'Contents');
   side.innerHTML = `
-    <a class="brand" href="${root}index.html"><span class="logo">AI</span><span><b>GenAI Engineering</b><small>Basics to production</small></span></a>
+    <div class="brand-row"><a class="brand" href="${root}index.html"><span class="logo">AI</span><span><b>GenAI Engineering</b><small>Basics to production</small></span></a>
+    <button class="side-toggle in-side" type="button" aria-label="Hide sidebar" title="Hide sidebar (Ctrl + B)">${svg.sidebar}</button></div>
     <label class="search">${svg.search}<input id="q" type="search" placeholder="Search lessons" autocomplete="off"></label>
     <div id="side-groups"></div><p class="side-empty" id="side-empty">No lessons match.</p>
     <div class="side-group" style="margin-top:20px"><h4>Appearance</h4></div>
@@ -68,6 +70,7 @@ const COURSE = [
   const title = lesson ? `${lesson.num} ${lesson.title}` : (document.body.dataset.title || 'GenAI Engineering');
   nav.innerHTML = `
     <button class="nav-btn menu-btn" id="menu-btn" aria-label="Open contents">${svg.menu}</button>
+    <button class="nav-btn side-toggle in-nav" type="button" aria-label="Show sidebar" title="Show sidebar (Ctrl + B)">${svg.sidebar}</button>
     ${pageId !== 'home' ? `<a class="nav-btn" href="${root}index.html" aria-label="Home">${svg.home}</a>` : ''}
     <div class="small-title">${title}</div>
     <button class="nav-btn" id="print-btn" aria-label="Print or save as PDF" title="Print / save as PDF">${svg.print}</button>
@@ -103,6 +106,19 @@ const COURSE = [
   side.scrollTop = +sessionStorage.getItem('genai-side-scroll') || 0;
   addEventListener('beforeunload', () => sessionStorage.setItem('genai-side-scroll', side.scrollTop));
 
+  // ---------- collapsible sidebar (desktop) ----------
+  function setCollapsed(c) {
+    document.documentElement.classList.toggle('side-collapsed', c);
+    localStorage.setItem('genai-side-collapsed', c ? '1' : '0');
+  }
+  document.querySelectorAll('.side-toggle').forEach(b => b.addEventListener('click', () =>
+    setCollapsed(!document.documentElement.classList.contains('side-collapsed'))));
+  addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && innerWidth > 1000) {
+      e.preventDefault(); setCollapsed(!document.documentElement.classList.contains('side-collapsed'));
+    }
+  });
+
   // ---------- theme ----------
   const seg = side.querySelector('#theme-seg'), thumb = seg.querySelector('.thumb');
   const mq = matchMedia('(prefers-color-scheme: dark)');
@@ -112,15 +128,23 @@ const COURSE = [
     const h = document.documentElement;
     h.dataset.theme = dark ? 'dark' : 'light';
     h.classList.toggle('glass', v === 'glass');
+    placeThumb();
+  }
+  // measure the selected button each time: widths change when the web font finishes
+  // loading or the sidebar resizes, which used to leave the pill off-centre
+  function placeThumb() {
+    const v = localStorage.getItem('genai-notes-theme') || 'auto';
     const btn = seg.querySelector(`button[data-v="${v}"]`) || seg.querySelector('button');
     thumb.style.left = '0';
     thumb.style.width = btn.offsetWidth + 'px';
     thumb.style.transform = `translateX(${btn.offsetLeft}px)`;
   }
+  if (document.fonts) document.fonts.ready.then(placeThumb);
+  new ResizeObserver(placeThumb).observe(seg);
   // iOS 27 style slider: from ultra-clear to fully tinted glass
   const tintInput = side.querySelector('#glass-tint');
   const savedTint = localStorage.getItem('genai-glass-tint');
-  const defaultTint = matchMedia('(prefers-reduced-transparency: reduce)').matches ? 0.7 : 0.35;
+  const defaultTint = 0.12;
   tintInput.value = Math.round((savedTint === null ? defaultTint : +savedTint) * 100);
   tintInput.addEventListener('input', () => {
     const t = (tintInput.value / 100).toFixed(2);
