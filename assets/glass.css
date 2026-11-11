@@ -12,10 +12,10 @@
      refraction, better contrast. Reduce Transparency and Increase
      Contrast are respected.
    ===================================================================== */
-html.glass{--tint:.35;--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
+html.glass{--tint:.35;--lg-outline:rgba(0,0,0,.10);--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
   --lg-shadow:0 10px 30px -10px rgba(16,24,64,.28),0 2px 6px -2px rgba(16,24,64,.12);
   --mat:rgba(255,255,255,.74);--mat-edge:rgba(255,255,255,.7)}
-html.glass[data-theme="dark"]{--lg-rgb:38,38,44;--lg-edge:rgba(255,255,255,.22);--lg-edge2:rgba(255,255,255,.06);
+html.glass[data-theme="dark"]{--lg-outline:rgba(0,0,0,.5);--lg-rgb:38,38,44;--lg-edge:rgba(255,255,255,.22);--lg-edge2:rgba(255,255,255,.06);
   --lg-shadow:0 12px 34px -10px rgba(0,0,0,.7),0 2px 6px -2px rgba(0,0,0,.5);
   --mat:rgba(28,28,32,.72);--mat-edge:rgba(255,255,255,.08)}
 
@@ -36,21 +36,70 @@ html.glass[data-theme="dark"] body{background:
 
 /* the glass recipe: translucent fill set by the slider, blur + saturation,
    a bright top rim, a soft lower rim, and a specular sheen */
-html.glass .navbar .nav-btn,html.glass .sidebar,html.glass .search,html.glass .seg,html.glass .top-btn,
+html.glass .navbar .nav-btn,html.glass .sidebar,html.glass .search,html.glass .seg,html.glass .top-btn,html.glass .tabbar,
 html.glass .toc,html.glass .pager a,html.glass .glass-slider,html.glass .gl-search,html.glass .gl-filter button{
-  position:relative;
-  background:rgba(var(--lg-rgb),calc(.04 + .76 * var(--tint)));
-  -webkit-backdrop-filter:blur(calc(4px + 18px * var(--tint))) saturate(190%) brightness(1.04);
-  backdrop-filter:blur(calc(4px + 18px * var(--tint))) saturate(190%) brightness(1.04);
+  position:relative;isolation:isolate;
+  /* Clear end: almost no fill, so the content behind stays visible */
+  background:rgba(var(--lg-rgb),calc(.02 + .78 * var(--tint)));
+  -webkit-backdrop-filter:blur(calc(1.5px + 20px * var(--tint))) saturate(200%) brightness(calc(1 + .06 * var(--tint)));
+  backdrop-filter:blur(calc(1.5px + 20px * var(--tint))) saturate(200%) brightness(calc(1 + .06 * var(--tint)));
   border:0;
-  box-shadow:inset 0 1px 0 var(--lg-edge),inset 0 0 0 .5px var(--lg-edge2),inset 0 -1px 1px var(--lg-edge2),var(--lg-shadow)}
+  /* the rim: a bright edge where light enters (top-left), a fainter one where it leaves,
+     an inner glow that gives the glass its thickness, and the drop shadow */
+  box-shadow:
+    inset 1.5px 1.5px 1px -.5px rgba(255,255,255,calc(.95 - .35 * var(--tint))),
+    inset -1px -1px 1px -.5px rgba(255,255,255,calc(.6 - .3 * var(--tint))),
+    inset 0 0 0 .5px var(--lg-edge2),
+    inset 0 0 14px -8px rgba(255,255,255,calc(.4 - .25 * var(--tint))),
+    0 0 0 .5px var(--lg-outline),
+    inset 0 -10px 16px -14px rgba(0,0,0,calc(.25 - .2 * var(--tint))),
+    var(--lg-shadow)}
+/* real refraction (Chromium): the backdrop is bent by a lens-shaped displacement map.
+   Small controls get the strong lens, larger panels a softer one. */
+html.glass .navbar .nav-btn,html.glass .top-btn,html.glass .tabbar,html.glass .seg,html.glass .pager a,html.glass .search{
+  backdrop-filter:url(#lg-lens) blur(calc(.3px + 16px * var(--tint))) saturate(200%) brightness(calc(1 + .06 * var(--tint)))}
+html.glass .toc,html.glass .glass-slider{
+  backdrop-filter:url(#lg-lens-soft) blur(calc(1px + 18px * var(--tint))) saturate(190%) brightness(1.05)}
 html.glass .sidebar{position:sticky}
 html.glass .top-btn{position:fixed}
-html.glass .navbar .nav-btn::after,html.glass .sidebar::after,html.glass .seg::after,html.glass .top-btn::after,
-html.glass .toc::after,html.glass .pager a::after,html.glass .search::after{
-  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:linear-gradient(160deg,rgba(255,255,255,calc(.42 - .2 * var(--tint))) 0%,rgba(255,255,255,0) 38%,
-    rgba(255,255,255,0) 70%,rgba(255,255,255,.12) 100%);mix-blend-mode:soft-light}
+html.glass .tabbar{position:fixed}
+/* specular highlight: a moving light spot (follows the pointer) plus a fixed sheen */
+html.glass .navbar .nav-btn::after,html.glass .sidebar::after,html.glass .seg::after,html.glass .top-btn::after,html.glass .tabbar::after,
+html.glass .toc::after,html.glass .pager a::after,html.glass .search::after,html.glass .glass-slider::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:
+    radial-gradient(120px 90px at var(--mx,30%) var(--my,-20%),rgba(255,255,255,calc(.7 - .35 * var(--tint))),rgba(255,255,255,0) 70%),
+    linear-gradient(165deg,rgba(255,255,255,calc(.5 - .25 * var(--tint))) 0%,rgba(255,255,255,0) 32%,rgba(255,255,255,0) 72%,rgba(255,255,255,.16) 100%);
+  mix-blend-mode:overlay;transition:opacity .3s}
+html.glass[data-theme="dark"] .navbar .nav-btn::after,html.glass[data-theme="dark"] .sidebar::after,html.glass[data-theme="dark"] .seg::after,
+html.glass[data-theme="dark"] .top-btn::after,html.glass[data-theme="dark"] .tabbar::after,html.glass[data-theme="dark"] .toc::after,
+html.glass[data-theme="dark"] .pager a::after,html.glass[data-theme="dark"] .search::after,html.glass[data-theme="dark"] .glass-slider::after{mix-blend-mode:soft-light}
+html.glass .sidebar>*,html.glass .toc>*,html.glass .pager a>*,html.glass .seg>*,html.glass .glass-slider>*{position:relative;z-index:2}
+html.glass .seg>.thumb{position:absolute}
+
+/* floating tab bar (lesson pages): minimises while scrolling down */
+.tabbar{display:none}
+html.glass .tabbar{display:flex;gap:4px;left:50%;bottom:18px;z-index:45;padding:6px;border-radius:99px;
+  transform:translateX(-50%);transition:padding .45s var(--ios),gap .45s var(--ios),transform .45s var(--ios)}
+@media (min-width:1001px){html.glass .tabbar{left:calc(50% + 158px)}}
+html.glass .tabbar .tb{position:relative;z-index:2;display:flex;align-items:center;gap:6px;height:44px;padding:0 16px;border:0;border-radius:99px;
+  background:transparent;color:var(--label);font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:background .25s,padding .45s var(--ios),height .45s var(--ios),transform .3s var(--ios)}
+html.glass .tabbar .tb:hover{background:rgba(var(--lg-rgb),.35)}
+html.glass .tabbar .tb:active{transform:scale(1.1)}
+html.glass .tabbar .tb .ic{font-size:18px;line-height:1}
+html.glass .tabbar .tb.primary{background:color-mix(in srgb,var(--accent) calc(70% + 20% * var(--tint)),transparent);color:#fff;
+  box-shadow:inset 1px 1px 1px -.5px rgba(255,255,255,.7)}
+html.glass .tabbar .tl{max-width:90px;overflow:hidden;transition:max-width .45s var(--ios),opacity .3s}
+html.glass .tabbar.min{padding:4px;gap:2px;transform:translateX(-50%) scale(.92)}
+html.glass .tabbar.min .tb{height:38px;padding:0 12px}
+html.glass .tabbar.min .tl{max-width:0;opacity:0}
+html.glass body:has(.tabbar) .top-btn{display:none}
+html.glass .content{padding-bottom:150px}
+
+/* the segmented thumb stretches mid-slide, then settles */
+html.glass .seg .thumb.stretch{animation:lg-stretch .5s var(--ios)}
+@keyframes lg-stretch{0%{scale:1 1}35%{scale:1.22 .9}70%{scale:.97 1.04}100%{scale:1 1}}
 /* larger surfaces stay more opaque (HIG) */
 html.glass .sidebar,html.glass .toc{background:rgba(var(--lg-rgb),calc(.16 + .74 * var(--tint)))}
 

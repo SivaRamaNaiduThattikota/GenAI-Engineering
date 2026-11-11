@@ -319,4 +319,75 @@ const COURSE = [
   };
 
   watch('.sec, .recap, .done-bar, .pager, .tile, .lcard, .content > .list, .term');
+
+  // ---------- Liquid Glass extras (only visible in the Glass theme) ----------
+  // 1. Refraction. An SVG displacement map bends whatever is behind a glass
+  //    control, strongest at the edges like a real lens. Chromium applies it via
+  //    backdrop-filter: url(#...); other browsers keep the plain blur.
+  const lensMap = 'data:image/svg+xml,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="x" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#f00"/><stop offset=".22" stop-color="#800000"/><stop offset=".78" stop-color="#800000"/><stop offset="1" stop-color="#000"/></linearGradient>
+        <linearGradient id="y" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0f0"/><stop offset=".3" stop-color="#008000"/><stop offset=".7" stop-color="#008000"/><stop offset="1" stop-color="#000"/></linearGradient>
+      </defs>
+      <rect width="100" height="100" fill="url(#x)"/><rect width="100" height="100" fill="url(#y)" style="mix-blend-mode:screen"/>
+    </svg>`);
+  const lens = (id, scale, blur) => `
+    <filter id="${id}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feImage href="${lensMap}" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="${blur}" result="soft"/>
+      <feDisplacementMap in="soft" in2="map" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="bent"/>
+      <feColorMatrix in="bent" type="saturate" values="1.5"/>
+    </filter>`;
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  defs.setAttribute('width', '0'); defs.setAttribute('height', '0'); defs.setAttribute('aria-hidden', 'true');
+  defs.style.position = 'absolute';
+  defs.innerHTML = lens('lg-lens', 48, 0.8) + lens('lg-lens-soft', 30, 2);
+  document.body.appendChild(defs);
+
+  // 2. Specular highlights that follow the pointer, like light moving over glass.
+  const shiny = () => document.querySelectorAll('html.glass .nav-btn, html.glass .top-btn, html.glass .tabbar, html.glass .seg, html.glass .search, html.glass .pager a, html.glass .toc, html.glass .sidebar, html.glass .glass-slider');
+  let px = innerWidth * 0.3, py = -200, lightQueued = false;
+  function moveLight() {
+    lightQueued = false;
+    shiny().forEach(el => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', ((px - r.left) / r.width * 100).toFixed(1) + '%');
+      el.style.setProperty('--my', ((py - r.top) / r.height * 100).toFixed(1) + '%');
+    });
+  }
+  addEventListener('pointermove', e => {
+    px = e.clientX; py = e.clientY;
+    if (!lightQueued && document.documentElement.classList.contains('glass')) { lightQueued = true; requestAnimationFrame(moveLight); }
+  }, { passive: true });
+  addEventListener('scroll', () => {
+    if (!lightQueued && document.documentElement.classList.contains('glass')) { lightQueued = true; requestAnimationFrame(moveLight); }
+  }, { passive: true });
+
+  // 3. Floating tab bar on lesson pages that minimises while you scroll down
+  //    and grows back when you scroll up (iOS 26 tab bar behaviour).
+  if (lesson) {
+    const i = COURSE.indexOf(lesson), prev = COURSE[i - 1], next = COURSE[i + 1];
+    const bar = document.createElement('nav');
+    bar.className = 'tabbar'; bar.setAttribute('aria-label', 'Lesson navigation');
+    bar.innerHTML =
+      `<a class="tb" href="${prev ? root + prev.file : root + 'index.html'}" aria-label="Previous"><span class="ic">‹</span><span class="tl">${prev ? prev.num : 'Home'}</span></a>
+       <a class="tb" href="#toc" aria-label="On this page"><span class="ic">☰</span><span class="tl">Contents</span></a>
+       <button class="tb" type="button" aria-label="Back to top"><span class="ic">↑</span><span class="tl">Top</span></button>
+       ${next && !next.soon ? `<a class="tb primary" href="${root + next.file}" aria-label="Next"><span class="tl">${next.num}</span><span class="ic">›</span></a>` : ''}`;
+    document.body.appendChild(bar);
+    bar.querySelector('button').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+    bar.querySelector('a[href="#toc"]').addEventListener('click', () => { const t = document.getElementById('toc'); if (t) t.open = true; });
+    let lastY = scrollY;
+    addEventListener('scroll', () => {
+      const y = scrollY;
+      if (Math.abs(y - lastY) > 6) { bar.classList.toggle('min', y > lastY && y > 300); lastY = y; }
+    }, { passive: true });
+  }
+
+  // 4. The segmented control's thumb stretches while it slides, like a drop of liquid.
+  seg.addEventListener('click', e => {
+    if (!e.target.dataset.v) return;
+    thumb.classList.remove('stretch'); void thumb.offsetWidth; thumb.classList.add('stretch');
+  });
 })();
