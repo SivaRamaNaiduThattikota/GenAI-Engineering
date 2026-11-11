@@ -275,3 +275,50 @@ html.glass .content.pulling{transition:none}
   html.glass .lg-glow::before,html.glass .tabbar.materialise,html.glass .toc[open] ol,html.glass details.disc[open] .ans{animation:none}
   html.glass .content{translate:none}
 }
+
+/* Water glass: every glass surface uses the same look as the theme pill
+   while it slides. A whisper of white, almost no blur, the backdrop bent
+   at the edges, a thin bright rim where light enters (top-left) and leaves
+   (bottom-right), and a soft shadow. The slider still moves it to tinted. */
+html.glass{--tint:0;
+  --water-fill:rgba(255,255,255,calc(.14 * (1 - var(--tint))));
+  --water-rim:inset 1.5px 1.5px 1px -.5px rgba(255,255,255,.95),inset -1px -1px 1px -.5px rgba(255,255,255,.62),inset 0 0 0 .5px rgba(255,255,255,.14)}
+html.glass:not([data-theme="dark"]){--water-fill:rgba(255,255,255,calc(.22 * (1 - var(--tint))))}
+html.glass .navbar,html.glass .sidebar,html.glass .search,html.glass .seg .thumb,html.glass .top-btn,html.glass .tabbar,
+html.glass .toc,html.glass .pager a,html.glass .glass-slider,html.glass .gl-search,html.glass .gl-filter button{
+  background:linear-gradient(var(--water-fill),var(--water-fill)),linear-gradient(rgba(var(--lg-rgb),calc(.82 * var(--tint))),rgba(var(--lg-rgb),calc(.82 * var(--tint))));
+  -webkit-backdrop-filter:blur(calc(.6px + 18px * var(--tint))) saturate(180%);
+  backdrop-filter:url(#lg-lens) blur(calc(.6px + 18px * var(--tint))) saturate(180%);
+  box-shadow:var(--water-rim),0 0 0 .5px var(--lg-outline),0 8px 22px -8px rgba(0,0,0,.35)}
+html.glass .sidebar,html.glass .navbar,html.glass .toc{
+  backdrop-filter:url(#lg-lens-soft) blur(calc(1px + 18px * var(--tint))) saturate(180%)}
+html.glass:not([data-theme="dark"]) .navbar,html.glass:not([data-theme="dark"]) .sidebar,html.glass:not([data-theme="dark"]) .tabbar,
+html.glass:not([data-theme="dark"]) .top-btn,html.glass:not([data-theme="dark"]) .toc,html.glass:not([data-theme="dark"]) .pager a{
+  box-shadow:var(--water-rim),0 0 0 .5px rgba(0,0,0,.12),0 10px 26px -10px rgba(20,30,70,.3)}
+/* the old overlay rim is replaced by the water rim, only a faint moving glint stays */
+html.glass .nav-btn::after,html.glass .seg::after,html.glass .top-btn::after,html.glass .tabbar::after,html.glass .toc::after,
+html.glass .pager a::after,html.glass .search::after,html.glass .glass-slider::after{
+  border:0;-webkit-mask:none;mask:none;background:radial-gradient(110px 70px at var(--mx,30%) var(--my,-30%),rgba(255,255,255,.18),rgba(255,255,255,0) 70%)}
+
+/* the theme pill keeps the water look all the time, not only while sliding */
+html.glass .seg .thumb,html.glass[data-theme="dark"] .seg .thumb,html.glass .seg .thumb.stretch{
+  background:rgba(255,255,255,.18);box-shadow:var(--water-rim),0 6px 16px -6px rgba(0,0,0,.35)}
+
+/* the navigation bar floats as a water-glass bar */
+html.glass .navbar{top:8px;margin:8px 12px 0;border-radius:22px;border-bottom:0;view-transition-name:none}
+html.glass .navbar::before{display:none}
+html.glass .navbar .nav-btn{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+html.glass .navbar .nav-btn::after{display:none}
+html.glass .navbar .nav-btn:hover{background:rgba(255,255,255,.14)}
+html.glass:not([data-theme="dark"]) .navbar .nav-btn:hover{background:rgba(0,0,0,.05)}
+html.glass .navbar .progress{left:20px;right:20px;width:auto}
+@media (max-width:640px){html.glass .navbar{margin:6px 8px 0;top:6px}}
+
+/* inside the sidebar, controls are thin fills so glass never sits on glass */
+html.glass .sidebar .search,html.glass .sidebar .glass-slider,html.glass .sidebar .seg{
+  background:rgba(120,120,128,.12);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14)}
+/* clear glass needs a soft halo behind text to stay readable */
+html.glass[data-theme="dark"] .sidebar,html.glass[data-theme="dark"] .navbar{text-shadow:0 1px 6px rgba(0,0,0,.5)}
+html.glass:not([data-theme="dark"]) .sidebar,html.glass:not([data-theme="dark"]) .navbar{text-shadow:0 1px 6px rgba(255,255,255,.7)}
+html.glass .side-list a.active{background:rgba(255,255,255,.16);box-shadow:var(--water-rim)}
+html.glass:not([data-theme="dark"]) .side-list a.active{background:rgba(255,255,255,.5)}
