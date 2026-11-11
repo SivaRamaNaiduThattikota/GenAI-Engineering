@@ -322,3 +322,16 @@ html.glass[data-theme="dark"] .sidebar,html.glass[data-theme="dark"] .navbar{tex
 html.glass:not([data-theme="dark"]) .sidebar,html.glass:not([data-theme="dark"]) .navbar{text-shadow:0 1px 6px rgba(255,255,255,.7)}
 html.glass .side-list a.active{background:rgba(255,255,255,.16);box-shadow:var(--water-rim)}
 html.glass:not([data-theme="dark"]) .side-list a.active{background:rgba(255,255,255,.5)}
+
+/* fully clear: no milky fill and no blur at all unless the slider asks for it */
+html.glass{--water-fill:rgba(255,255,255,calc(.03 * (1 - var(--tint))))}
+html.glass:not([data-theme="dark"]){--water-fill:rgba(255,255,255,calc(.05 * (1 - var(--tint))))}
+html.glass .navbar,html.glass .sidebar,html.glass .search,html.glass .seg .thumb,html.glass .top-btn,html.glass .tabbar,
+html.glass .toc,html.glass .pager a,html.glass .glass-slider,html.glass .gl-search,html.glass .gl-filter button{
+  -webkit-backdrop-filter:blur(calc(22px * var(--tint))) saturate(calc(100% + 60% * var(--tint)));
+  backdrop-filter:url(#lg-lens) blur(calc(22px * var(--tint))) saturate(calc(100% + 60% * var(--tint)))}
+html.glass .sidebar,html.glass .navbar,html.glass .toc{
+  backdrop-filter:url(#lg-lens-soft) blur(calc(22px * var(--tint))) saturate(calc(100% + 60% * var(--tint)))}
+html.glass .seg .thumb,html.glass[data-theme="dark"] .seg .thumb,html.glass .seg .thumb.stretch{background:rgba(255,255,255,.06)}
+html.glass .sidebar .search,html.glass .sidebar .glass-slider,html.glass .sidebar .seg{background:rgba(255,255,255,.04)}
+html.glass .side-list a.active,html.glass:not([data-theme="dark"]) .side-list a.active{background:rgba(255,255,255,.08)}

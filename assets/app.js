@@ -143,13 +143,13 @@ const COURSE = [
   new ResizeObserver(placeThumb).observe(seg);
   // iOS 27 style slider: from ultra-clear to fully tinted glass
   const tintInput = side.querySelector('#glass-tint');
-  const savedTint = localStorage.getItem('genai-glass-tint');
-  const defaultTint = 0.12;
+  const savedTint = localStorage.getItem('genai-glass-tint-v2');
+  const defaultTint = 0;
   tintInput.value = Math.round((savedTint === null ? defaultTint : +savedTint) * 100);
   tintInput.addEventListener('input', () => {
     const t = (tintInput.value / 100).toFixed(2);
     document.documentElement.style.setProperty('--tint', t);
-    localStorage.setItem('genai-glass-tint', t);
+    localStorage.setItem('genai-glass-tint-v2', t);
   });
   seg.addEventListener('click', e => { if (e.target.dataset.v) applyTheme(e.target.dataset.v); });
   mq.addEventListener('change', () => applyTheme(localStorage.getItem('genai-notes-theme') || 'auto'));
@@ -366,7 +366,7 @@ const COURSE = [
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   defs.setAttribute('width', '0'); defs.setAttribute('height', '0'); defs.setAttribute('aria-hidden', 'true');
   defs.style.position = 'absolute';
-  defs.innerHTML = lens('lg-lens', 48, 0.8) + lens('lg-lens-soft', 30, 2);
+  defs.innerHTML = lens('lg-lens', 48, 0) + lens('lg-lens-soft', 30, 0);
   document.body.appendChild(defs);
 
   // 2. Specular highlights that follow the pointer, like light moving over glass.
