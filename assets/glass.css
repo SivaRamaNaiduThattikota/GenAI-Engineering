@@ -96,15 +96,15 @@ html.glass .sidebar,html.glass .toc{background:rgba(var(--lg-rgb),calc(.05 + .8 
 
 /* floating tab bar (lesson pages): minimises while scrolling down */
 .tabbar{display:none}
-html.glass .tabbar{display:flex;gap:4px;left:50%;bottom:18px;z-index:45;padding:6px;border-radius:99px;
+html.glass .tabbar{display:flex;gap:4px;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));z-index:45;padding:6px;border-radius:99px;
   transform:translateX(-50%);transition:padding .45s var(--ios),gap .45s var(--ios),transform .45s var(--ios)}
 @media (min-width:1001px){html.glass .tabbar{left:calc(50% + 158px)}}
 html.glass .tabbar .tb{position:relative;z-index:2;display:flex;align-items:center;gap:6px;height:44px;padding:0 16px;border:0;border-radius:99px;
-  background:transparent;color:var(--label);font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  background:transparent;color:var(--label);font:inherit;font-size:0.9062rem;font-weight:600;cursor:pointer;white-space:nowrap;
   transition:background .25s,padding .45s var(--ios),height .45s var(--ios),transform .3s var(--ios)}
-html.glass .tabbar .tb:hover{background:rgba(var(--lg-rgb),.35)}
+@media (hover:hover){html.glass .tabbar .tb:hover{background:rgba(var(--lg-rgb),.35)}}
 html.glass .tabbar .tb:active{transform:scale(1.1)}
-html.glass .tabbar .tb .ic{font-size:18px;line-height:1}
+html.glass .tabbar .tb .ic{font-size:1.125rem;line-height:1}
 html.glass .tabbar .tb.primary{background:color-mix(in srgb,var(--accent) calc(70% + 20% * var(--tint)),transparent);color:#fff;
   box-shadow:inset 1px 1px 1px -.5px rgba(255,255,255,.7)}
 html.glass .tabbar .tl{max-width:90px;overflow:hidden;transition:max-width .45s var(--ios),opacity .3s}
@@ -129,7 +129,7 @@ html.glass .navbar::before{content:"";position:absolute;inset:0 0 -26px 0;z-inde
   opacity:0;transition:opacity .3s var(--ios)}
 html.glass .navbar.scrolled::before{opacity:1}
 html.glass .navbar .nav-btn{width:40px;height:40px;justify-content:center;padding:0;border-radius:50%;color:var(--label)}
-html.glass .navbar .nav-btn:hover{background:rgba(var(--lg-rgb),calc(.25 + .6 * var(--tint)))}
+@media (hover:hover){html.glass .navbar .nav-btn:hover{background:rgba(var(--lg-rgb),calc(.25 + .6 * var(--tint)))}}
 html.glass .navbar .nav-btn:active{transform:scale(1.08);opacity:1}
 html.glass .progress{height:2px;bottom:-1px;opacity:.85}
 
@@ -138,10 +138,10 @@ html.glass .progress{height:2px;bottom:-1px;opacity:.85}
   html.glass .shell{grid-template-columns:316px minmax(0,1fr)}
   html.glass .sidebar{margin:10px 0 10px 10px;top:10px;height:calc(100vh - 20px);border-radius:26px;border-right:0;padding:14px 10px 30px}
 }
-html.glass .side-list a:hover{background:rgba(var(--lg-rgb),.35)}
-html.glass .side-list a.active{background:rgba(var(--lg-rgb),calc(.45 + .4 * var(--tint)));color:var(--accent);font-weight:600;
+@media (hover:hover){html.glass .side-list a:hover{background:rgba(var(--lg-rgb),.35)}}
+html.glass .side-list a.active{background:rgba(var(--lg-rgb),calc(.45 + .4 * var(--tint)));color:var(--ink);font-weight:600;
   box-shadow:inset 0 1px 0 var(--lg-edge),0 4px 14px -6px rgba(0,0,0,.2)}
-html.glass .side-list a.active .num{color:var(--accent)}
+html.glass .side-list a.active .num{color:var(--ink)}
 html.glass .side-list a.active .dot{border-color:var(--accent)}
 html.glass .side-list a.active .dot.done{background:var(--green);border-color:var(--green);color:#fff}
 html.glass .search{border-radius:99px}
@@ -182,7 +182,7 @@ html.glass .switch:active input:checked+.track::after{transform:translateX(18px)
 /* the iOS 27 look slider: clear <-> tinted */
 .glass-slider{display:none;margin:12px 8px 0;padding:12px 14px;border-radius:18px}
 html.glass .glass-slider{display:block}
-.glass-slider .gs-top{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--label2);margin-bottom:6px}
+.glass-slider .gs-top{display:flex;justify-content:space-between;font-size:0.7812rem;font-weight:600;color:var(--label2);margin-bottom:6px}
 .glass-slider input{width:100%;-webkit-appearance:none;appearance:none;height:28px;background:transparent;cursor:pointer;margin:0}
 .glass-slider input::-webkit-slider-runnable-track{height:6px;border-radius:99px;
   background:linear-gradient(90deg,rgba(var(--lg-rgb),.3),color-mix(in srgb,var(--blue) 70%,transparent))}
@@ -192,7 +192,7 @@ html.glass .glass-slider{display:block}
   box-shadow:0 3px 8px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.06);transition:transform .25s var(--ios)}
 .glass-slider input::-moz-range-thumb{width:28px;height:28px;border:0;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.2)}
 .glass-slider input:active::-webkit-slider-thumb{transform:scale(1.25,1.12);background:rgba(255,255,255,.6)}
-.glass-slider .gs-cap{font-size:11.5px;color:var(--label2);margin-top:4px}
+.glass-slider .gs-cap{font-size:0.7188rem;color:var(--label2);margin-top:4px}
 
 /* accessibility. Glass is opt-in here, so Reduce Transparency (on Windows: Settings >
    Personalisation > Transparency effects off) starts the slider at a more opaque,
