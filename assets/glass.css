@@ -263,9 +263,7 @@ html.glass .tabbar.materialise{animation:lg-materialise .8s var(--gel-soft) both
 @keyframes lg-materialise{0%{scale:.6;opacity:0;filter:blur(6px)}30%{opacity:1}100%{scale:1;opacity:1;filter:blur(0)}}
 
 /* menus pop open like a bubble from where you tapped */
-html.glass .toc[open] ol{transform-origin:top left;animation:lg-pop .55s var(--gel-soft) both}
 @keyframes lg-pop{0%{opacity:0;scale:.9 .7}100%{opacity:1;scale:1 1}}
-html.glass details.disc[open] .ans{animation:lg-pop .5s var(--gel-soft) both;transform-origin:top center}
 
 /* water-like rubber band at the top and bottom of the page */
 html.glass .content{translate:0 var(--ob,0px);transition:translate .7s var(--gel-soft)}
@@ -282,7 +280,7 @@ html.glass .content.pulling{transition:none}
    a thin bevel, a deep soft shadow and a bright rim that turns toward the
    light. The slider still adds frost and body toward "Tinted".
    ===================================================================== */
-html.glass :is(.navbar,.sidebar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button){
+html.glass :is(.navbar,.sidebar,.tabbar,.top-btn,.toc,.nav-menu,.def-tip,.pager a,.gl-search,.gl-filter button){
   isolation:isolate;
   background:rgba(var(--lg-rgb),calc(.01 + .8 * var(--tint)));
   -webkit-backdrop-filter:blur(calc(.4px + 18px * var(--tint))) saturate(165%);
@@ -293,7 +291,7 @@ html.glass :is(.navbar,.sidebar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-fi
     inset 0 -2.4px 4.8px -3.6px rgba(0,0,0,.06),
     0 6px 16px -6px rgba(0,0,0,.9),
     0 0 0 .5px rgba(0,0,0,.15)}
-html.glass[data-theme="dark"] :is(.navbar,.sidebar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button){
+html.glass[data-theme="dark"] :is(.navbar,.sidebar,.tabbar,.top-btn,.toc,.nav-menu,.def-tip,.pager a,.gl-search,.gl-filter button){
   box-shadow:
     inset .45px .45px .3px -.15px rgba(255,255,255,.7),
     inset -.3px -.3px .3px -.15px rgba(255,255,255,.4),
@@ -307,13 +305,13 @@ html.glass .toc{background:rgba(var(--lg-rgb),calc(.03 + .8 * var(--tint)));
 html.glass .sidebar{background:rgba(var(--lg-rgb),calc(.04 + .8 * var(--tint)))}
 
 /* rim light: a bright arc on the edge that faces the pointer (or the tilt on phones) */
-html.glass :is(.navbar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button)::after{
+html.glass :is(.navbar,.tabbar,.top-btn,.toc,.nav-menu,.def-tip,.pager a,.gl-search,.gl-filter button)::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;border:0;padding:1.2px;
   background:conic-gradient(from var(--ang,-45deg),rgba(255,255,255,.95) 0deg,rgba(255,255,255,0) 70deg,rgba(255,255,255,0) 150deg,
     rgba(255,255,255,.5) 180deg,rgba(255,255,255,0) 230deg,rgba(255,255,255,0) 300deg,rgba(255,255,255,.95) 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-html.glass[data-theme="dark"] :is(.navbar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button)::after{opacity:.6}
+html.glass[data-theme="dark"] :is(.navbar,.tabbar,.top-btn,.toc,.nav-menu,.def-tip,.pager a,.gl-search,.gl-filter button)::after{opacity:.6}
 /* the sidebar scrolls, so its rim stays as inset light on the edge */
 html.glass .sidebar{box-shadow:
     inset 1px 1px 0 rgba(255,255,255,.9),inset -1px -1px 0 rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.16),
@@ -342,3 +340,8 @@ html.glass .lg-form{animation:lg-form .62s var(--gel-soft) both}
 html.glass:root :is(.tabbar,.top-btn){backdrop-filter:var(--lens,) blur(calc(3px + 18px*var(--tint))) saturate(165%);-webkit-backdrop-filter:blur(calc(3px + 18px*var(--tint))) saturate(165%)}
 html.glass .tabbar .tb{text-shadow:0 0 6px rgba(255,255,255,.9),0 0 2px rgba(255,255,255,.9)}
 html.glass[data-theme="dark"] .tabbar .tb{text-shadow:0 0 6px rgba(0,0,0,.8),0 0 2px rgba(0,0,0,.8)}
+/* the contents menu and word cards sit over page text, so they get a little more frost than the bars */
+html.glass:root :is(.nav-menu,.def-tip){background:rgba(var(--lg-rgb),calc(.08 + .8*var(--tint)));
+  -webkit-backdrop-filter:blur(calc(9px + 12px*var(--tint))) saturate(170%);
+  backdrop-filter:var(--lens,) blur(calc(9px + 12px*var(--tint))) saturate(170%)}
+html.glass .def-tip span{color:var(--label)}

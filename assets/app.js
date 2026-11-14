@@ -51,6 +51,7 @@ const COURSE = [
   if (lesson) document.body.dataset.stage = lesson.stage;
 
   const svg = {
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".6"/><circle cx="4.5" cy="12" r=".6"/><circle cx="4.5" cy="18" r=".6"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
     print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
@@ -357,6 +358,164 @@ const COURSE = [
 
   watch('.sec, .recap, .done-bar, .pager, .tile, .lcard, .content > .list, .term');
 
+  // ---------- springs: panels open with a slow, soft bounce ----------
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  const BOUNCE = 'linear(0,.04,.143,.285,.445,.606,.756,.886,.991,1.069,1.122,1.152,1.163,1.158,1.143,1.12,1.095,1.068,1.043,1.022,1.004,.99,.981,.976,.974,.974,.976,.98,.984,.988,.992,.996,.999,1.001,1.003,1.004,1.004,1.003,1.002,1.001,1)';
+  const SETTLE = 'linear(0,.048,.166,.32,.483,.637,.772,.882,.965,1.023,1.06,1.078,1.084,1.079,1.07,1.057,1.043,1.03,1.019,1.01,1.003,.998,.995,.993,.993,.993,.994,.995,.996,.997,.998,.999,1)';
+  function popIn(el, origin) {
+    if (still.matches) return;
+    el.style.transformOrigin = origin;
+    el.animate([{ opacity: 0, scale: '.82' }, { opacity: 1, offset: .3 }, { opacity: 1, scale: '1' }], { duration: 760, easing: BOUNCE });
+  }
+  function popOut(el) {
+    if (still.matches) { el.hidden = true; return; }
+    el.animate([{ opacity: 1, scale: '1' }, { opacity: 0, scale: '.92' }], { duration: 170, easing: 'ease-in' }).onfinish = () => { el.hidden = true; };
+  }
+
+  // Exercises and the contents box. Chrome keeps a closed <details> laid out, so a CSS
+  // animation on [open] only ever runs once. Animating the height here runs every time.
+  document.querySelectorAll('details.disc, details.toc').forEach(d => {
+    const sum = d.querySelector('summary');
+    sum.addEventListener('click', e => {
+      if (still.matches) return;
+      e.preventDefault();
+      const opening = !d.open || d.dataset.closing;
+      const from = d.offsetHeight;
+      d.anim?.cancel(); delete d.dataset.closing;
+      d.style.overflow = 'hidden';
+      if (opening) {
+        d.open = true;
+        const to = d.offsetHeight;
+        d.anim = d.animate({ height: [from + 'px', to + 'px'] }, { duration: 820, easing: SETTLE });
+        [...d.children].filter(c => c !== sum).forEach(c =>
+          c.animate([{ opacity: 0, translate: '0 -8px' }, { opacity: 1, translate: '0 0' }], { duration: 480, easing: 'cubic-bezier(.2,.8,.2,1)' }));
+      } else {
+        d.open = false; const to = d.offsetHeight; d.open = true;
+        d.dataset.closing = '1';
+        d.anim = d.animate({ height: [from + 'px', to + 'px'] }, { duration: 300, easing: 'cubic-bezier(.4,0,.2,1)' });
+      }
+      d.anim.onfinish = () => {
+        if (d.dataset.closing) { d.open = false; delete d.dataset.closing; }
+        d.style.overflow = ''; d.anim = null;
+      };
+    });
+  });
+
+  // ---------- contents menu in the nav bar (lesson pages) ----------
+  const tocEl = document.getElementById('toc');
+  if (lesson && tocEl && tocEl.querySelector('ol')) {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn'; btn.id = 'contents-btn'; btn.type = 'button'; btn.title = 'On this page';
+    btn.setAttribute('aria-label', 'On this page'); btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'nav-menu');
+    btn.innerHTML = svg.list;
+    nav.querySelector('.small-title').before(btn);
+    const menu = document.createElement('nav');
+    menu.className = 'nav-menu'; menu.id = 'nav-menu'; menu.hidden = true; menu.setAttribute('aria-label', 'On this page');
+    menu.innerHTML = '<b>On this page</b>' + tocEl.querySelector('ol').outerHTML;
+    document.body.appendChild(menu);
+    const toggle = open => {
+      if (open === !menu.hidden && !menu.getAnimations().length) return;
+      btn.setAttribute('aria-expanded', open);
+      if (!open) { popOut(menu); return; }
+      menu.getAnimations().forEach(a => a.cancel());
+      menu.querySelectorAll('a').forEach(a => a.classList.toggle('on', !!tocEl.querySelector(`a.on[href="${a.getAttribute('href')}"]`)));
+      menu.hidden = false;
+      const r = btn.getBoundingClientRect(), nb = nav.getBoundingClientRect();
+      const left = Math.max(8, Math.min(r.left - 6, innerWidth - menu.offsetWidth - 8));
+      menu.style.top = nb.bottom + 8 + 'px'; menu.style.left = left + 'px';
+      popIn(menu, `${r.left + r.width / 2 - left}px 0`);
+      if (glassOn()) materialise(menu, 560);
+      menu.querySelector('a.on')?.scrollIntoView({ block: 'nearest' });
+    };
+    btn.addEventListener('click', () => toggle(menu.hidden));
+    menu.addEventListener('click', e => { if (e.target.closest('a')) toggle(false); });
+    document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target)) toggle(false); });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { toggle(false); btn.focus(); } });
+    addEventListener('resize', () => { if (!menu.hidden) toggle(false); });
+  }
+
+  // ---------- tap a word: glossary terms in lessons show their definition ----------
+  if (lesson) {
+    const tag = document.createElement('script');
+    tag.src = root + 'assets/terms.js';
+    tag.onload = () => linkTerms(typeof TERMS !== 'undefined' ? TERMS : []);
+    document.head.appendChild(tag);
+  }
+  // too common to underline every lesson; they stay in the glossary
+  const PLAIN = new Set(['Context', 'Training', 'Inference', 'Decoding', 'Sampling', 'Streaming', 'Retrieval', 'Decode (phase)',
+    'Attention', 'Parameters', 'Stateless', 'Token', 'Generative AI', 'Machine learning', 'Artificial intelligence', 'Test set (eval set)']);
+  function linkTerms(terms) {
+    const esc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const alts = [];   // [text, term index]
+    terms.forEach(([name], i) => {
+      if (PLAIN.has(name)) return;
+      const acr = name.match(/\(([A-Z][A-Za-z]{1,5})\)/);
+      const base = name.replace(/\s*\(.*?\)/g, '');
+      base.split(' / ').concat(acr ? [acr[1]] : []).forEach(t => { if (t.trim().length > 2) alts.push([t.trim(), i]); });
+    });
+    alts.sort((a, b) => b[0].length - a[0].length);
+    const left = new Set(alts.map(a => a[1]));
+    const skip = 'code, pre, a, h1, h2, h3, h4, summary, button, svg, .tag, .code, .def-word, .chip, .kbd';
+    const walker = document.createTreeWalker(document.querySelector('.content') || document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => (n.parentElement.closest('.sec') && !n.parentElement.closest(skip) && n.data.trim().length > 2) ? 1 : 2 });
+    const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+    const regex = () => {
+      const live = alts.filter(a => left.has(a[1]));
+      return live.length ? new RegExp('\\b(' + live.map(a => esc(a[0])).join('|') + ')(s|es)?\\b', 'i') : null;
+    };
+    let re = regex();
+    for (let node of nodes) {
+      while (re && node) {
+        const m = re.exec(node.data);
+        if (!m) break;
+        const hit = alts.find(a => left.has(a[1]) && a[0].toLowerCase() === m[1].toLowerCase());
+        // short all-caps names (LLM, RAG, MoE) only match in the same case
+        // short names in capitals (LLM, RAG, MoE) only match in the same case
+        if (!hit || (!/\s/.test(hit[0]) && /[A-Z].*[A-Z]/.test(hit[0]) && m[1] !== hit[0])) { node = node.splitText(m.index + m[0].length); continue; }
+        const word = node.splitText(m.index);
+        const rest = word.splitText(m[0].length);
+        const span = document.createElement('span');
+        span.className = 'def-word'; span.tabIndex = 0; span.setAttribute('role', 'button'); span.dataset.i = hit[1];
+        span.textContent = word.data; word.replaceWith(span);
+        left.delete(hit[1]); re = regex(); node = rest;
+      }
+    }
+  }
+  const tip = document.createElement('div');
+  tip.className = 'def-tip'; tip.hidden = true; tip.setAttribute('role', 'dialog'); tip.setAttribute('aria-live', 'polite');
+  document.body.appendChild(tip);
+  let tipFor = null, tipY = 0;
+  function showTip(w) {
+    const [name, def, id] = TERMS[w.dataset.i];
+    const c = COURSE.find(x => x.id === id);
+    const from = c && c.id !== lesson.id ? `<a href="${root + c.file}">${c.stage === 0 ? 'From the preview' : 'From lesson ' + c.num} →</a>` : `<a href="${root}glossary.html">All terms →</a>`;
+    tip.innerHTML = `<b>${name}</b><span>${def}</span>${from}`;
+    tip.setAttribute('aria-label', name);
+    tipFor?.classList.remove('on'); tipFor = w; w.classList.add('on');
+    tip.getAnimations().forEach(a => a.cancel());
+    tip.hidden = false;
+    const r = w.getBoundingClientRect(), h = tip.offsetHeight, wd = tip.offsetWidth;
+    const below = r.bottom + 10 + h < innerHeight - 90;
+    const left = Math.max(8, Math.min(r.left + r.width / 2 - wd / 2, innerWidth - wd - 8));
+    tip.style.left = left + 'px';
+    tip.style.top = (below ? r.bottom + 10 : r.top - 10 - h) + 'px';
+    popIn(tip, `${r.left + r.width / 2 - left}px ${below ? 0 : h}px`);
+    if (glassOn()) materialise(tip, 520);
+    tipY = scrollY;
+  }
+  function hideTip() { if (tip.hidden) return; tipFor?.classList.remove('on'); tipFor = null; popOut(tip); }
+  document.addEventListener('click', e => {
+    const w = e.target.closest('.def-word');
+    if (w) { w === tipFor ? hideTip() : showTip(w); return; }
+    if (!tip.contains(e.target)) hideTip();
+  });
+  document.addEventListener('keydown', e => {
+    const w = e.target.closest?.('.def-word');
+    if (w && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); w === tipFor ? hideTip() : showTip(w); }
+    if (e.key === 'Escape' && tipFor) { const t = tipFor; hideTip(); t.focus(); }
+  });
+  addEventListener('scroll', () => { if (tipFor && Math.abs(scrollY - tipY) > 60) hideTip(); }, { passive: true });
+
   // ---------- Liquid Glass extras (only visible in the Glass theme) ----------
   // 1. Refraction. An SVG displacement map bends whatever is behind a glass
   //    control, strongest at the edges like a real lens. Chromium applies it via
@@ -388,7 +547,7 @@ const COURSE = [
   //     diagonally like a drop of water. Red, green and blue bend by slightly different
   //     amounts for a faint colour split.
   const LENS = { scale: 34, bezel: 18, chroma: 0.03, soft: 0.3 };
-  const lensSel = '.navbar, .sidebar, .tabbar, .top-btn, .toc, .pager a, .gl-search, .gl-filter button';
+  const lensSel = '.navbar, .sidebar, .tabbar, .top-btn, .toc, .nav-menu, .def-tip, .pager a, .gl-search, .gl-filter button';
   const glassOn = () => document.documentElement.classList.contains('glass');
   function shapeMap(w, h, r) {
     const c = document.createElement('canvas'); c.width = w; c.height = h;
