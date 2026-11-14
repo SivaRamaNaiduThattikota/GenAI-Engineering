@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.3 · Models vs applications</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/glass.css">
+</head>
+<body data-id="l1-3" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Stage 1 · Foundations</span></div>
+  <h1>1.3 Models vs applications: what you actually build</h1>
+  <p>The model remembers nothing between calls. Everything a GenAI product seems to "know" about you, your conversation and your data is put there by the application, on every single request. This lesson makes that split concrete, then shows why outputs vary and how you test something that varies.</p>
+  <div class="chips"><span class="chip">~30 min</span><span class="chip">Module 1</span><span class="chip">Python + engineering</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="stateless">
+  <h2><span class="n">1</span>The model is a stateless function</h2>
+  <p><strong>Definition:</strong> a component is <strong>stateless</strong> when it keeps nothing from one call to the next. Every call starts from zero, and the output depends only on what that call sends in.</p>
+  <p>An LLM in use is exactly that. You send it a sequence of tokens, it runs the predict → pick → append loop from Lesson 1.2, and it returns tokens. When the call ends, nothing about it is kept inside the model. Its <strong>weights</strong> (the learned numbers) were fixed when training finished, and they do not change while you use it.</p>
+  <div class="math">reply = model(everything in this request)<span class="cap">The only input is the request. There is no hidden second input called "what we talked about earlier".</span></div>
+
+  <h3>Two consequences matter</h3>
+  <p>Both follow directly from statelessness, and together they explain most of what an application has to do.</p>
+
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">The model does not remember your conversation</div>
+      <p>If you tell a chat model your name in one message and ask for it in the next, it seems to remember. It does not. The chat <strong>application</strong> stored your first message and sent it again, together with the new one. The model read the name in the request, the same way it would read it in any document.</p>
+      <p>It also does not <strong>learn</strong> from your conversation. Correcting it ("no, the balance is 1,250") changes the next reply only because the correction is now part of the request. Start a new conversation and the correction is gone. (Whether a provider later uses your conversations to train a future model is a separate data-policy question, decided by your contract and settings, not by the model.)</p>
+    </div>
+  </div>
+
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Everything the model knows about this situation must be in the request</div>
+      <p>The model has two sources of information only: what it absorbed during training (general knowledge, up to its training cutoff) and what is in the current request. Your customer's invoice, today's date, the user's permissions, the earlier messages: if any of these matter, the application must look them up and put them into the request.</p>
+      <p>This is why "the model" and "the application" are different jobs. The model turns a request into text. The application decides <strong>what goes into the request</strong> and <strong>what happens to the text that comes out</strong>.</p>
+    </div>
+  </div>
+
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 230" role="img" aria-label="Three calls to a model, each sending the whole conversation again">
+      <text x="0" y="16" class="h">What the application sends on each call</text>
+      <!-- call 1 -->
+      <text x="0" y="58" class="v">Call 1</text>
+      <rect x="70" y="42" width="44" height="24" rx="6" class="box p"/><text x="92" y="58" class="w mid">sys</text>
+      <rect x="118" y="42" width="44" height="24" rx="6" class="box a"/><text x="140" y="58" class="w mid">user</text>
+      <!-- call 2 -->
+      <text x="0" y="110" class="v">Call 2</text>
+      <rect x="70" y="94" width="44" height="24" rx="6" class="box p"/><text x="92" y="110" class="w mid">sys</text>
+      <rect x="118" y="94" width="44" height="24" rx="6" class="box a"/><text x="140" y="110" class="w mid">user</text>
+      <rect x="166" y="94" width="44" height="24" rx="6" class="box g"/><text x="188" y="110" class="w mid">reply</text>
+      <rect x="214" y="94" width="44" height="24" rx="6" class="box a"/><text x="236" y="110" class="w mid">user</text>
+      <!-- call 3 -->
+      <text x="0" y="162" class="v">Call 3</text>
+      <rect x="70" y="146" width="44" height="24" rx="6" class="box p"/><text x="92" y="162" class="w mid">sys</text>
+      <rect x="118" y="146" width="44" height="24" rx="6" class="box a"/><text x="140" y="162" class="w mid">user</text>
+      <rect x="166" y="146" width="44" height="24" rx="6" class="box g"/><text x="188" y="162" class="w mid">reply</text>
+      <rect x="214" y="146" width="44" height="24" rx="6" class="box a"/><text x="236" y="162" class="w mid">user</text>
+      <rect x="262" y="146" width="44" height="24" rx="6" class="box g"/><text x="284" y="162" class="w mid">reply</text>
+      <rect x="310" y="146" width="44" height="24" rx="6" class="box a"/><text x="332" y="162" class="w mid">user</text>
+      <!-- model -->
+      <rect x="430" y="40" width="84" height="132" rx="14" class="box b"/>
+      <text x="472" y="102" class="w mid">Model</text><text x="472" y="120" class="w mid" style="font-weight:500;font-size:11px">no memory</text>
+      <path d="M166 54 H424" class="arr dash"/><path d="M262 106 H424" class="arr dash"/><path d="M358 158 H424" class="arr dash"/>
+      <path d="M418 50 l6 4 -6 4" class="arr"/><path d="M418 102 l6 4 -6 4" class="arr"/><path d="M418 154 l6 4 -6 4" class="arr"/>
+      <path d="M520 106 H560" class="arr"/><path d="M554 102 l6 4 -6 4" class="arr"/>
+      <rect x="566" y="94" width="66" height="24" rx="6" class="box g"/><text x="599" y="110" class="w mid">reply</text>
+      <text x="0" y="214">The history lives in the application. Each request is longer than the last.</text>
+    </svg></div>
+    <figcaption>Purple = system instructions, blue = user messages, green = earlier model replies. Only the last box on each row is new.</figcaption>
+  </figure>
+
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">Power BI analogy</div><p>A DAX measure is evaluated fresh for every visual, using only the filter context it is given right now. It has no memory of what the previous visual showed. An LLM call works the same way: the request is its whole "filter context". If you want it to take something into account, you must put it in.</p></div></div>
+</section>
+
+<section class="sec" id="request">
+  <h2><span class="n">2</span>What one request contains</h2>
+  <p>A chat model's API does not take one long string. It takes a list of <strong>messages</strong>, each with a <strong>role</strong> that says who wrote it, plus some settings. The provider turns the list into one token sequence using the model's chat template (Lesson 2.1), with special tokens marking where each message starts and ends.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Role</th><th>Who writes it</th><th>Typical content</th></tr></thead>
+    <tbody>
+    <tr><td><code>system</code> (some APIs: <code>developer</code>)</td><td>You, the developer</td><td>Task, rules, tone, output format. The model is trained to give it high priority.</td></tr>
+    <tr><td><code>user</code></td><td>The end user (passed on by your app)</td><td>The question or instruction</td></tr>
+    <tr><td><code>assistant</code></td><td>The model, earlier in the conversation</td><td>Previous replies, sent back so the model can see them</td></tr>
+    <tr><td><code>tool</code></td><td>Your code</td><td>The result of a function the model asked to call (Stage 3)</td></tr>
+    </tbody></table></div>
+  <p>Besides the messages, a request carries <strong>settings</strong>: which model, the temperature from Lesson 1.2, and a <strong>maximum number of output tokens</strong>. On most APIs, input and output share the same <strong>context window</strong>, so a long input leaves less room for the answer.</p>
+
+  <h3>What an application typically assembles</h3>
+  <p>In a real product, the "user message" the model receives is rarely just what the user typed. The application builds the request from several sources, in a deliberate order:</p>
+  <div class="stack">
+    <div style="--c:var(--purple);--c-ink:var(--purple-ink)"><b>Instructions</b>System message: role, rules, output format, what to do when information is missing</div>
+    <div style="--c:var(--teal);--c-ink:var(--teal-ink)"><b>Retrieved data</b>Document passages or database rows fetched for this question (RAG, Stage 4)</div>
+    <div style="--c:var(--orange);--c-ink:var(--orange-ink)"><b>Tool results</b>Exact values from SQL queries or APIs the model asked for (Stages 3 and 5)</div>
+    <div style="--c:var(--green);--c-ink:var(--green-ink)"><b>History</b>Earlier messages, possibly trimmed or summarised (section 4)</div>
+    <div style="--c:var(--blue);--c-ink:var(--blue-ink)"><b>New message</b>What the user just asked</div>
+  </div>
+  <p>This assembly step is called <strong>context construction</strong> (or context engineering). It is where most GenAI engineering effort goes, because the model can only be as good as what it is shown.</p>
+  <div class="callout c-key"><div class="ci">i</div><div><div class="ct">Engineering principle #2</div><p>You do not program the model. You program the <strong>request</strong>. When an answer is wrong, the first question is: was the information it needed actually in the request?</p></div></div>
+</section>
+
+<section class="sec" id="memory">
+  <h2><span class="n">3</span>Chat memory is the application resending history</h2>
+  <p>Let us measure it. This script plays a six-turn conversation about an invoice. Before each model call it appends the new user message, counts the tokens in <em>everything</em> that will be sent, then appends the model's reply so the next call includes it. The replies are written by hand, so no API is needed; the token counts are real, from the <code>o200k_base</code> tokenizer.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">chat_history.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> tiktoken
+
+enc = tiktoken.get_encoding(<span class="tk-s">"o200k_base"</span>)
+
+<span class="tk-k">def</span> <span class="tk-f">count</span>(messages):
+    <span class="tk-c"># content tokens only; real requests add a few formatting tokens per message</span>
+    <span class="tk-k">return</span> <span class="tk-f">sum</span>(<span class="tk-f">len</span>(enc.encode(m[<span class="tk-s">"content"</span>])) <span class="tk-k">for</span> m <span class="tk-k">in</span> messages)
+
+system = {<span class="tk-s">"role"</span>: <span class="tk-s">"system"</span>, <span class="tk-s">"content"</span>: <span class="tk-s">"You are a helpful assistant for the finance team. Answer briefly and cite the invoice ID."</span>}
+turns = [
+    (<span class="tk-s">"What is the status of invoice INV-204?"</span>, <span class="tk-s">"INV-204 is unpaid. The balance is 1,250.00 EUR and it was due on 3 November."</span>),
+    (<span class="tk-s">"Who is the customer?"</span>, <span class="tk-s">"The customer on INV-204 is Nordwind Logistics GmbH."</span>),
+    (<span class="tk-s">"Have they paid late before?"</span>, <span class="tk-s">"Yes. Two of their last five invoices were paid after the due date, by 6 and 11 days."</span>),
+    (<span class="tk-s">"Draft a short reminder email."</span>, <span class="tk-s">"Subject: Reminder for INV-204. Dear Nordwind team, ..."</span>),
+    (<span class="tk-s">"Make it a bit more formal."</span>, <span class="tk-s">"Subject: Payment reminder, invoice INV-204. Dear Sir or Madam, ..."</span>),
+    (<span class="tk-s">"Thanks. What was the invoice number again?"</span>, <span class="tk-s">"It was INV-204."</span>),
+]
+
+messages = [system]
+total_billed = <span class="tk-n">0</span>
+<span class="tk-k">for</span> i, (user, reply) <span class="tk-k">in</span> <span class="tk-f">enumerate</span>(turns, start=<span class="tk-n">1</span>):
+    messages.append({<span class="tk-s">"role"</span>: <span class="tk-s">"user"</span>, <span class="tk-s">"content"</span>: user})
+    sent = count(messages)            <span class="tk-c"># everything goes in again</span>
+    total_billed += sent
+    messages.append({<span class="tk-s">"role"</span>: <span class="tk-s">"assistant"</span>, <span class="tk-s">"content"</span>: reply})
+    <span class="tk-f">print</span>(<span class="tk-s">f"call </span>{i}<span class="tk-s">: </span>{<span class="tk-f">len</span>(messages) - <span class="tk-n">1</span>:2d}<span class="tk-s"> messages sent, </span>{sent:3d}<span class="tk-s"> input tokens, running total </span>{total_billed}<span class="tk-s">"</span>)</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>call 1:  2 messages sent,  28 input tokens, running total 28
+call 2:  4 messages sent,  58 input tokens, running total 86
+call 3:  6 messages sent,  77 input tokens, running total 163
+call 4:  8 messages sent, 106 input tokens, running total 269
+call 5: 10 messages sent, 163 input tokens, running total 432
+call 6: 12 messages sent, 232 input tokens, running total 664</pre></div></div>
+  <p class="muted">The two email replies are shortened with "..." on this page to keep the listing readable. The run used the full email texts, which is why calls 5 and 6 jump.</p>
+  <p>Read the code in three steps:</p>
+  <ul>
+    <li><strong><code>count()</code></strong> encodes each message's text with the tokenizer and adds up the lengths. Real APIs add a few extra tokens per message for the role markers, so true counts are slightly higher.</li>
+    <li><strong>Inside the loop</strong>, the user message is appended <em>before</em> counting, because it is part of what gets sent. The reply is appended <em>after</em>, because it does not exist until the model has answered.</li>
+    <li><strong><code>len(messages) - 1</code></strong> is the number of messages in the request at that moment: everything except the reply that was just added.</li>
+  </ul>
+
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 262" role="img" aria-label="Input tokens per call grow from 28 to 232, the running total grows to 664">
+      <line x1="50" y1="47.1" x2="620" y2="47.1" class="grid"/><line x1="50" y1="101.4" x2="620" y2="101.4" class="grid"/><line x1="50" y1="155.7" x2="620" y2="155.7" class="grid"/>
+      <line x1="50" y1="210" x2="620" y2="210" class="ax"/>
+      <text x="42" y="214" text-anchor="end">0</text><text x="42" y="159.7" text-anchor="end">200</text><text x="42" y="105.4" text-anchor="end">400</text><text x="42" y="51.1" text-anchor="end">600</text>
+      <rect x="77.5" y="202.4" width="40" height="7.6" rx="4" class="box a grow"/>
+      <rect x="172.5" y="194.3" width="40" height="15.7" rx="4" class="box a grow"/>
+      <rect x="267.5" y="189.1" width="40" height="20.9" rx="4" class="box a grow"/>
+      <rect x="362.5" y="181.2" width="40" height="28.8" rx="4" class="box a grow"/>
+      <rect x="457.5" y="165.8" width="40" height="44.2" rx="5" class="box a grow"/>
+      <rect x="552.5" y="147" width="40" height="63" rx="5" class="box a grow"/>
+      <polyline points="97.5,202.4 192.5,186.7 287.5,165.8 382.5,137 477.5,92.7 572.5,29.8" class="ln"/>
+      <circle cx="97.5" cy="202.4" r="4" class="pt"/><circle cx="192.5" cy="186.7" r="4" class="pt"/><circle cx="287.5" cy="165.8" r="4" class="pt"/><circle cx="382.5" cy="137" r="4" class="pt"/><circle cx="477.5" cy="92.7" r="4" class="pt"/><circle cx="572.5" cy="29.8" r="4" class="pt"/>
+      <text x="552" y="22" class="v" text-anchor="end">664 in total</text>
+      <text x="97.5" y="230" class="mid">call 1</text><text x="192.5" y="230" class="mid">call 2</text><text x="287.5" y="230" class="mid">call 3</text><text x="382.5" y="230" class="mid">call 4</text><text x="477.5" y="230" class="mid">call 5</text><text x="572.5" y="230" class="mid">call 6</text>
+      <text x="97.5" y="248" class="v mid">28</text>
+      <text x="192.5" y="248" class="v mid">58</text>
+      <text x="287.5" y="248" class="v mid">77</text>
+      <text x="382.5" y="248" class="v mid">106</text>
+      <text x="477.5" y="248" class="v mid">163</text>
+      <text x="572.5" y="248" class="v mid">232</text>
+    </svg></div>
+    <div class="legend"><span><i style="--c:var(--accent)"></i>Input tokens sent in that call</span><span><i style="--c:var(--accent2)"></i>Running total you pay for</span></div>
+    <figcaption>Values from the real run above. The last question needed 9 new tokens, but the call sent 232, because the whole conversation went in again.</figcaption>
+  </figure>
+
+  <h3>Two details matter</h3>
+  <p>The chart shows two different problems. One is about money, the other is about a hard limit.</p>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Cost grows faster than the conversation</div>
+      <p>Each call pays for every earlier message again. If every turn adds roughly the same number of tokens, call <i>n</i> sends about <i>n</i> times that amount, so the <strong>total</strong> over a conversation grows roughly with the <strong>square</strong> of its length. Ten turns cost far more than twice five turns.</p>
+      <p>In the run above, the six calls together billed 664 input tokens, almost three times the 232 tokens of the final conversation. Long chat sessions, agents that loop many times, and big documents kept in the history are where GenAI bills come from.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">The context window is a ceiling, not a target</div>
+      <p>The growing request will eventually hit the model's context window. Before that, two softer problems appear: every call gets slower (more prefill, Lesson 1.2) and models tend to use information in the middle of a very long context less reliably than information near the start or end (the "lost in the middle" effect from the Preview lesson).</p>
+      <p>So applications do not just keep everything. They decide what to keep, which is the next section.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec extra" id="caching">
+  <h2><span class="n">+</span>Prompt caching: paying less for the repeated part <span class="tag-extra">Extra</span></h2>
+  <p>Since every call repeats the same beginning (system message, tool definitions, earlier messages), several providers offer <strong>prompt caching</strong>: the provider keeps the processed form of a prompt prefix for a short time, and if the next request starts with exactly the same tokens, that part is processed faster and billed at a lower rate.</p>
+  <ul>
+    <li><strong>The cache matches from the very first token.</strong> One changed character early in the prompt (a timestamp in the system message, for example) breaks the match for everything after it.</li>
+    <li><strong>Order the request from stable to variable:</strong> fixed instructions and tool definitions first, then reference documents, then history, then the new message.</li>
+    <li>Details differ by provider: some cache automatically above a minimum length, others need you to mark cache points. Check the pricing page of the API you use.</li>
+  </ul>
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Industry note</div><p>Caching does not change what the model sees; it only changes what you pay and how long prefill takes. The model is still stateless. The provider is caching computation, not memory.</p></div></div>
+</section>
+
+<section class="sec" id="manage">
+  <h2><span class="n">4</span>Managing memory: keep, trim, summarise, retrieve</h2>
+  <p>The simplest strategy is a <strong>sliding window</strong>: always keep the system message, then add the newest messages until a token budget is used up.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">trim.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> tiktoken
+
+enc = tiktoken.get_encoding(<span class="tk-s">"o200k_base"</span>)
+tokens = <span class="tk-k">lambda</span> m: <span class="tk-f">len</span>(enc.encode(m[<span class="tk-s">"content"</span>]))
+
+<span class="tk-k">def</span> <span class="tk-f">fit_to_budget</span>(messages, budget):
+    <span class="tk-s">"""Keep the system message, then as many of the newest messages as fit."""</span>
+    system, rest = messages[<span class="tk-n">0</span>], messages[<span class="tk-n">1</span>:]
+    kept, used = [], tokens(system)
+    <span class="tk-k">for</span> m <span class="tk-k">in</span> <span class="tk-f">reversed</span>(rest):
+        <span class="tk-k">if</span> used + tokens(m) &gt; budget:
+            <span class="tk-k">break</span>
+        kept.append(m)
+        used += tokens(m)
+    <span class="tk-k">return</span> [system] + kept[::-<span class="tk-n">1</span>], used
+
+messages = [
+    {<span class="tk-s">"role"</span>: <span class="tk-s">"system"</span>, <span class="tk-s">"content"</span>: <span class="tk-s">"You are a helpful assistant for the finance team."</span>},
+    {<span class="tk-s">"role"</span>: <span class="tk-s">"user"</span>, <span class="tk-s">"content"</span>: <span class="tk-s">"What is the status of invoice INV-204?"</span>},
+    {<span class="tk-s">"role"</span>: <span class="tk-s">"assistant"</span>, <span class="tk-s">"content"</span>: <span class="tk-s">"INV-204 is unpaid. The balance is 1,250.00 EUR and it was due on 3 November."</span>},
+    {<span class="tk-s">"role"</span>: <span class="tk-s">"user"</span>, <span class="tk-s">"content"</span>: <span class="tk-s">"Who is the customer?"</span>},
+    {<span class="tk-s">"role"</span>: <span class="tk-s">"assistant"</span>, <span class="tk-s">"content"</span>: <span class="tk-s">"The customer on INV-204 is Nordwind Logistics GmbH."</span>},
+    {<span class="tk-s">"role"</span>: <span class="tk-s">"user"</span>, <span class="tk-s">"content"</span>: <span class="tk-s">"What was the invoice number again?"</span>},
+]
+kept, used = fit_to_budget(messages, budget=<span class="tk-n">45</span>)
+<span class="tk-k">for</span> m <span class="tk-k">in</span> kept:
+    <span class="tk-f">print</span>(<span class="tk-s">f"</span>{m[<span class="tk-s">'role'</span>]:9}<span class="tk-s"> </span>{m[<span class="tk-s">'content'</span>]}<span class="tk-s">"</span>)
+<span class="tk-f">print</span>(<span class="tk-s">"tokens used:"</span>, used)</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>system    You are a helpful assistant for the finance team.
+user      Who is the customer?
+assistant The customer on INV-204 is Nordwind Logistics GmbH.
+user      What was the invoice number again?
+tokens used: 35</pre></div></div>
+  <ul>
+    <li>The loop walks the history <strong>backwards</strong> (<code>reversed</code>), so the newest messages are considered first.</li>
+    <li>It <strong>stops at the first message that does not fit</strong>, instead of skipping it and trying older ones. Skipping would leave gaps in the conversation, which confuses the model more than a clean cut.</li>
+    <li><code>kept[::-1]</code> flips the kept messages back into time order before they are sent.</li>
+  </ul>
+  <div class="callout c-warn"><div class="ci">!</div><div><div class="ct">Look at what was dropped</div><p>The first question and the first answer (the balance, 1,250.00 EUR) are gone. The last question still works only because the second reply happened to repeat "INV-204". Ask "what was the balance?" and this app would no longer have the answer in the request, so the model would either say it does not know or make a number up. <strong>Trimming silently deletes facts.</strong></p></div></div>
+
+  <h3>The main strategies</h3>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Sliding window</div>
+      <p>What you just saw. Simple and predictable, with cost capped per call. Its weakness is that old facts disappear, no matter how important they were.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Summarisation</div>
+      <p>When the history gets long, ask a model to summarise the older part, and send the summary instead of the original messages. It keeps the gist in far fewer tokens. The cost: an extra model call, and the summary can lose or distort details (exact amounts, dates, who said what).</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">3</div>
+    <div>
+      <div class="point-t">Structured state</div>
+      <p>Keep important facts as data, not as chat text: <code>{"invoice_id": "INV-204", "customer": "Nordwind Logistics GmbH"}</code>. The application updates this record and inserts it into every request. Exact values never get trimmed or paraphrased away. This is how serious assistants track "the current case".</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">4</div>
+    <div>
+      <div class="point-t">Retrieval from long-term memory</div>
+      <p>Store past conversations or notes outside the request, and fetch only the pieces relevant to the new question. It is the same machinery as RAG (Stage 4), applied to your own history. What products call "memory" across sessions is usually this.</p>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Strategy</th><th>Keeps</th><th>Loses</th><th>Typical use</th></tr></thead>
+    <tbody>
+    <tr><td>Sliding window</td><td>Recent turns, verbatim</td><td>Everything older</td><td>Short support chats</td></tr>
+    <tr><td>Summarisation</td><td>The gist of old turns</td><td>Exact details; costs a call</td><td>Long open conversations</td></tr>
+    <tr><td>Structured state</td><td>Key facts, exactly</td><td>Nothing you track</td><td>Case and workflow assistants</td></tr>
+    <tr><td>Retrieval</td><td>Relevant old pieces</td><td>What retrieval misses</td><td>Memory across sessions</td></tr>
+    </tbody></table></div>
+  <p>Real applications combine them: structured state for the facts that must not be lost, a window of recent turns for flow, and retrieval for anything older.</p>
+</section>
+
+<section class="sec extra" id="server-state">
+  <h2><span class="n">+</span>"But my API keeps the conversation for me" <span class="tag-extra">Extra</span></h2>
+  <p>Some APIs let you store a conversation on the provider's side and continue it by ID, so your code sends only the new message. That is a convenience in the <strong>API</strong>, not memory in the <strong>model</strong>. On each turn the provider rebuilds the full context from what it stored and runs the model on all of it.</p>
+  <ul>
+    <li>You still pay for the earlier tokens on each call (caching may reduce the price).</li>
+    <li>The context window still fills up, and the provider applies its own trimming rule when it does, which you then do not control.</li>
+    <li>Your conversation data now lives with the provider, which matters for retention and compliance.</li>
+  </ul>
+  <p>Knowing the mechanism lets you choose deliberately instead of trusting that "it remembers".</p>
+</section>
+
+<section class="sec" id="responsibilities">
+  <h2><span class="n">5</span>Who is responsible for what</h2>
+  <p>Put sections 1 to 4 together and the division of labour becomes clear. The model is one box in a pipeline; the application owns everything before and after it.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 196" role="img" aria-label="Request pipeline: user, application before the model, model, application after the model, user">
+      <rect x="0" y="62" width="70" height="56" rx="12" class="box"/><text x="35" y="95" class="v mid">User</text>
+      <rect x="92" y="20" width="200" height="140" rx="14" class="soft"/>
+      <text x="192" y="42" class="h mid">Application, before</text>
+      <text x="108" y="68">• check who the user is</text>
+      <text x="108" y="90">• fetch data, run tools</text>
+      <text x="108" y="112">• pick history and state</text>
+      <text x="108" y="134">• assemble the request</text>
+      <rect x="314" y="62" width="76" height="56" rx="12" class="box b"/><text x="352" y="95" class="w mid">Model</text>
+      <rect x="412" y="20" width="160" height="140" rx="14" class="soft"/>
+      <text x="492" y="42" class="h mid">Application, after</text>
+      <text x="426" y="68">• parse and validate</text>
+      <text x="426" y="90">• check permissions</text>
+      <text x="426" y="112">• store state, log</text>
+      <text x="426" y="134">• decide what to show</text>
+      <rect x="590" y="62" width="50" height="56" rx="12" class="box"/><text x="615" y="95" class="v mid">User</text>
+      <path d="M70 90 H86" class="arr"/><path d="M80 86 l6 4 -6 4" class="arr"/>
+      <path d="M292 90 H308" class="arr a"/><path d="M302 86 l6 4 -6 4" class="arr a"/>
+      <path d="M390 90 H406" class="arr a"/><path d="M400 86 l6 4 -6 4" class="arr a"/>
+      <path d="M572 90 H584" class="arr"/><path d="M578 86 l6 4 -6 4" class="arr"/>
+      <text x="320" y="186" class="mid">The model sees only what the "before" side gives it, and nothing it says reaches the user unchecked.</text>
+    </svg></div>
+    <figcaption>Most of the code, and most of the bugs, live in the two light boxes. Stages 3 to 6 of this course are about building them well.</figcaption>
+  </figure>
+  <div class="callout c-key"><div class="ci">i</div><div><div class="ct">The milestone of Stage 1, in one picture</div><p>A prediction pipeline is <em>features → model → label</em>, and the model is most of the work. A GenAI application is <em>data, tools, history → request → model → validation → action</em>, and the model is the one part you usually do not build yourself.</p></div></div>
+</section>
+
+<section class="sec" id="variance">
+  <h2><span class="n">6</span>Same input, different output</h2>
+  <p>Your sentiment classifier gives the same label every time you send the same review. A generative model often does not. To see why without an API, here is a tiny toy "model": a table that says which words can follow which, with probabilities. Generation walks the table exactly like the loop in Lesson 1.2.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">variance.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> numpy <span class="tk-k">as</span> np
+
+<span class="tk-c"># a toy "model": the next-token distribution depends only on the last token</span>
+table = {
+    <span class="tk-s">"&lt;start&gt;"</span>: ([<span class="tk-s">" The"</span>, <span class="tk-s">" Your"</span>, <span class="tk-s">" This"</span>], [<span class="tk-n">0.6</span>, <span class="tk-n">0.3</span>, <span class="tk-n">0.1</span>]),
+    <span class="tk-s">" The"</span>:    ([<span class="tk-s">" invoice"</span>, <span class="tk-s">" payment"</span>], [<span class="tk-n">0.7</span>, <span class="tk-n">0.3</span>]),
+    <span class="tk-s">" Your"</span>:   ([<span class="tk-s">" invoice"</span>, <span class="tk-s">" payment"</span>], [<span class="tk-n">0.5</span>, <span class="tk-n">0.5</span>]),
+    <span class="tk-s">" This"</span>:   ([<span class="tk-s">" invoice"</span>, <span class="tk-s">" payment"</span>], [<span class="tk-n">0.8</span>, <span class="tk-n">0.2</span>]),
+    <span class="tk-s">" invoice"</span>: ([<span class="tk-s">" is"</span>, <span class="tk-s">" remains"</span>], [<span class="tk-n">0.6</span>, <span class="tk-n">0.4</span>]),
+    <span class="tk-s">" payment"</span>: ([<span class="tk-s">" is"</span>, <span class="tk-s">" remains"</span>], [<span class="tk-n">0.7</span>, <span class="tk-n">0.3</span>]),
+    <span class="tk-s">" is"</span>:      ([<span class="tk-s">" overdue"</span>, <span class="tk-s">" open"</span>, <span class="tk-s">" late"</span>], [<span class="tk-n">0.5</span>, <span class="tk-n">0.3</span>, <span class="tk-n">0.2</span>]),
+    <span class="tk-s">" remains"</span>: ([<span class="tk-s">" overdue"</span>, <span class="tk-s">" open"</span>, <span class="tk-s">" late"</span>], [<span class="tk-n">0.4</span>, <span class="tk-n">0.5</span>, <span class="tk-n">0.1</span>]),
+}
+
+<span class="tk-k">def</span> <span class="tk-f">generate</span>(rng=<span class="tk-k">None</span>):
+    token, out = <span class="tk-s">"&lt;start&gt;"</span>, []
+    <span class="tk-k">while</span> token <span class="tk-k">in</span> table:
+        options, p = table[token]
+        token = options[<span class="tk-f">int</span>(np.argmax(p))] <span class="tk-k">if</span> rng <span class="tk-k">is</span> <span class="tk-k">None</span> <span class="tk-k">else</span> rng.choice(options, p=p)
+        out.append(<span class="tk-f">str</span>(token))
+    <span class="tk-k">return</span> <span class="tk-s">""</span>.join(out).strip()
+
+<span class="tk-f">print</span>(<span class="tk-s">"greedy, 3 runs:"</span>)
+<span class="tk-k">for</span> _ <span class="tk-k">in</span> <span class="tk-f">range</span>(<span class="tk-n">3</span>):
+    <span class="tk-f">print</span>(<span class="tk-s">"  "</span>, generate())
+<span class="tk-f">print</span>(<span class="tk-s">"sampling, 5 runs:"</span>)
+rng = np.random.default_rng(<span class="tk-n">7</span>)
+<span class="tk-k">for</span> _ <span class="tk-k">in</span> <span class="tk-f">range</span>(<span class="tk-n">5</span>):
+    <span class="tk-f">print</span>(<span class="tk-s">"  "</span>, generate(rng))</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>greedy, 3 runs:
+   The invoice is overdue
+   The invoice is overdue
+   The invoice is overdue
+sampling, 5 runs:
+   Your payment remains overdue
+   The payment is late
+   Your invoice is overdue
+   The invoice is open
+   This invoice remains late</pre></div></div>
+  <ul>
+    <li><code>table</code> maps the last token to its possible next tokens and their probabilities. A real LLM computes such a distribution with a neural network, over the whole vocabulary, from the whole context; the toy looks only at the last token.</li>
+    <li><code>generate()</code> loops until it reaches a token with no entry in the table, which plays the role of the end-of-sequence token.</li>
+    <li>Without a random generator it picks the most likely option every time (greedy). With one, it samples.</li>
+  </ul>
+  <p>Greedy gives the same sentence three times. Sampling gives five different sentences from the same "prompt". Note that "The invoice is open" and "The invoice is overdue" are not just different wording: they <strong>say different things</strong>. Variation is not only cosmetic.</p>
+
+  <h3>Two sources of variation matter</h3>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Sampling, which you control</div>
+      <p>With temperature above 0, every token is a random draw, and one different early token changes everything after it (there is no backspace, Lesson 1.2). For tasks with one right answer (extraction, classification, SQL generation) use a low temperature. For drafting and brainstorming, variety is the point.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Tiny numerical differences, which you do not control</div>
+      <p>Even at temperature 0, hosted models are usually not perfectly repeatable. On GPUs, the order in which floating-point numbers are added can change with how requests are batched together, and floating-point addition is not exactly associative: <code>(a + b) + c</code> can differ from <code>a + (b + c)</code> in the last digits. When two tokens have almost equal logits, that is enough to flip the choice, and the rest of the answer follows the flip. Providers also update models behind the same name.</p>
+    </div>
+  </div>
+  <div class="callout c-warn"><div class="ci">!</div><div><div class="ct">Consequence for testing</div><p>A test that compares the model's answer to an exact expected string will fail randomly even when nothing is wrong. GenAI tests must check <strong>properties</strong> of an answer, not its exact text. That is the next section.</p></div></div>
+</section>
+
+<section class="sec" id="testing">
+  <h2><span class="n">7</span>How you test something that varies</h2>
+  <p>Suppose the app asks the model to extract an invoice into JSON. You cannot predict the exact text, but you know what any <em>correct</em> answer must satisfy: it parses as JSON, it has the required fields, the ID has the right format, the amount is a number. Those are <strong>properties</strong>, and code can check them every time.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">checks.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> json
+
+<span class="tk-k">def</span> <span class="tk-f">check_invoice_reply</span>(text):
+    <span class="tk-s">"""Property checks for an extraction reply. Returns a list of failures."""</span>
+    <span class="tk-k">try</span>:
+        data = json.loads(text)
+    <span class="tk-k">except</span> json.JSONDecodeError:
+        <span class="tk-k">return</span> [<span class="tk-s">"not valid JSON"</span>]
+    problems = []
+    <span class="tk-k">for</span> field <span class="tk-k">in</span> (<span class="tk-s">"invoice_id"</span>, <span class="tk-s">"amount"</span>, <span class="tk-s">"currency"</span>):
+        <span class="tk-k">if</span> field <span class="tk-k">not in</span> data:
+            problems.append(<span class="tk-s">f"missing </span>{field}<span class="tk-s">"</span>)
+    <span class="tk-k">if</span> <span class="tk-s">"invoice_id"</span> <span class="tk-k">in</span> data <span class="tk-k">and not</span> <span class="tk-f">str</span>(data[<span class="tk-s">"invoice_id"</span>]).startswith(<span class="tk-s">"INV-"</span>):
+        problems.append(<span class="tk-s">"invoice_id has the wrong format"</span>)
+    <span class="tk-k">if</span> <span class="tk-s">"amount"</span> <span class="tk-k">in</span> data <span class="tk-k">and not</span> <span class="tk-f">isinstance</span>(data[<span class="tk-s">"amount"</span>], (<span class="tk-f">int</span>, <span class="tk-f">float</span>)):
+        problems.append(<span class="tk-s">"amount is not a number"</span>)
+    <span class="tk-k">return</span> problems
+
+replies = [
+    <span class="tk-s">'{"invoice_id": "INV-204", "amount": 1250.0, "currency": "EUR"}'</span>,
+    <span class="tk-s">'{"invoice_id": "INV-204", "amount": 1250, "currency": "EUR", "note": "due 3 Nov"}'</span>,
+    <span class="tk-s">'{"invoice": "204", "amount": "1,250.00", "currency": "EUR"}'</span>,
+    <span class="tk-s">'Sure! Here is the JSON: {"invoice_id": "INV-204"}'</span>,
+]
+<span class="tk-k">for</span> r <span class="tk-k">in</span> replies:
+    problems = check_invoice_reply(r)
+    <span class="tk-f">print</span>(<span class="tk-s">"PASS"</span> <span class="tk-k">if not</span> problems <span class="tk-k">else</span> <span class="tk-s">"FAIL"</span>, problems)</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>PASS []
+PASS []
+FAIL ['missing invoice_id', 'amount is not a number']
+FAIL ['not valid JSON']</pre></div></div>
+  <p>The four replies are the kinds a model really produces. The first two are worded differently and both pass, which is what you want: the test accepts every correct answer. The third used a different field name and a formatted string for the amount. The fourth wrapped the JSON in a friendly sentence, which breaks <code>json.loads</code>, a very common failure in practice.</p>
+  <p>The function returns a <strong>list of problems</strong> instead of just <code>True</code> or <code>False</code>. When you run it over hundreds of replies, the list tells you <em>which</em> property fails most often, and that tells you what to fix in the request.</p>
+
+  <h3>The layers of GenAI evaluation</h3>
+  <p>Property checks are the first layer. Each further layer catches more kinds of errors, but costs more per test:</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 210" role="img" aria-label="Four evaluation layers from cheap code checks to expensive human review">
+      <rect x="0" y="150" width="150" height="40" rx="10" class="box g grow"/><text x="75" y="175" class="w mid">Code checks</text>
+      <rect x="160" y="110" width="150" height="80" rx="10" class="box t grow"/><text x="235" y="155" class="w mid">Reference answers</text>
+      <rect x="320" y="70" width="150" height="120" rx="10" class="box a grow"/><text x="395" y="135" class="w mid">Model as judge</text>
+      <rect x="480" y="30" width="150" height="160" rx="10" class="box p grow"/><text x="555" y="115" class="w mid">Human review</text>
+      <text x="75" y="140" class="mid">format, fields, rules</text>
+      <text x="235" y="100" class="mid">compare to a known answer</text>
+      <text x="395" y="60" class="mid">a model grades quality</text>
+      <text x="555" y="20" class="mid">people grade a sample</text>
+      <text x="0" y="206">Cost per test case, and the range of problems each layer can catch, both rise to the right →</text>
+    </svg></div>
+    <figcaption>Bar heights show relative cost, not measured values. Teams run code checks on every reply, the middle layers on a test set before each release, and human review on a small sample.</figcaption>
+  </figure>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Code checks</div>
+      <p>Like <code>checks.py</code>: valid format, required fields, allowed values, no forbidden content. Free, instant, completely repeatable. Run them on every single reply in production too, not only in tests, and retry or fall back when they fail.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Reference answers (a test set)</div>
+      <p>A fixed set of inputs with known correct outputs, built from real cases: "for this invoice PDF, the amount is 1,250.00". Compare the extracted values, not the full text. This is your <strong>regression test</strong>: rerun it after every prompt or model change and see whether the score moved.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">3</div>
+    <div>
+      <div class="point-t">Model as judge</div>
+      <p>For open-ended answers (summaries, emails) there is no single reference. A second model call can grade the answer against a written rubric: "Does the reply mention the invoice ID? Is every number supported by the source?". Useful at scale, but the judge is itself a model, so check its grades against human grades before you trust it.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">4</div>
+    <div>
+      <div class="point-t">Human review</div>
+      <p>People grade a sample of real outputs. Slow and expensive, but it is the ground truth that calibrates the other layers, and it finds problems nobody thought to write a check for.</p>
+    </div>
+  </div>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">SQL / Power BI analogy</div><p>You already test reports this way. Code checks are like data-quality rules (no nulls in the key, totals reconcile). A reference test set is like comparing a report against figures finance has signed off. Human review is the business user looking at the dashboard. Nobody tests a report by comparing its pixels to a screenshot, and nobody should test an LLM by comparing exact strings.</p></div></div>
+</section>
+
+<section class="sec extra" id="misconceptions">
+  <h2><span class="n">+</span>Common misconceptions <span class="tag-extra">Extra</span></h2>
+  <div class="list plain" style="margin:12px 0">
+    <div class="row"><div class="icon bg-red">✕</div><div><div class="t">"The model learns from what I tell it."</div><div class="d">Not during use. The weights are fixed. A correction only affects replies while it is still in the request.</div></div></div>
+    <div class="row"><div class="icon bg-red">✕</div><div><div class="t">"Temperature 0 makes it deterministic."</div><div class="d">Much more repeatable, not guaranteed identical on hosted APIs (section 6). Design tests for properties anyway.</div></div></div>
+    <div class="row"><div class="icon bg-red">✕</div><div><div class="t">"A bigger context window means I can just send everything."</div><div class="d">You pay for every token on every call, latency grows, and models use long contexts less reliably. Select, don't dump.</div></div></div>
+    <div class="row"><div class="icon bg-red">✕</div><div><div class="t">"If the answer is wrong, we need a better model."</div><div class="d">Check the request first. Most wrong answers come from missing, outdated or buried information in the context.</div></div></div>
+    <div class="row"><div class="icon bg-red">✕</div><div><div class="t">"It worked on my five examples, so it works."</div><div class="d">Outputs vary and inputs vary more. You need a test set of realistic cases and a score you track over time.</div></div></div>
+  </div>
+</section>
+
+<section class="sec" id="check">
+  <h2><span class="n">?</span>Check yourself</h2>
+  <details class="disc"><summary><span class="tag q">Q1</span><span class="q">A user says "the bot remembered my order number from earlier". Where was the order number actually stored?</span><span class="chev"></span></summary>
+    <div class="ans"><p>In the application: in the stored conversation history (or a state record) that the app sent again with the new message. The model read it from the request. It stored nothing itself.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q2</span><span class="q">Every turn of a chat adds about 50 tokens. Roughly how do the input tokens of call 20 compare with call 10, and what about the total cost of 20 turns vs 10?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Call 20 sends about twice as many tokens as call 10 (about 1,000 vs 500). The total grows roughly with the square: the sum over 20 calls is about 50 × (1 + 2 + … + 20) = 10,500 tokens, against 50 × (1 + … + 10) = 2,750 for 10 calls. Twice the conversation, nearly four times the input cost.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q3</span><span class="q">Your sliding-window app forgets the customer's account number after a long chat. Which strategy fixes this properly, and why not just raise the budget?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Structured state: store the account number as a field and insert it into every request, so it can never be trimmed away. Raising the budget only delays the problem and raises cost and latency on every call.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q4</span><span class="q">Why would you put a timestamp at the end of the request rather than in the first line of the system message?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Prompt caching matches the request from the first token. A timestamp at the start changes on every call and breaks the cache for everything after it. At the end, the long stable part before it can still be cached.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q5</span><span class="q">A colleague's test asserts <code>reply == "The invoice is overdue."</code>. It passes on Monday and fails on Tuesday with no code change. What happened, and how should the test be written?</span><span class="chev"></span></summary>
+    <div class="ans"><p>The output varied (sampling, numerical differences or a model update), which is normal. Test properties instead: for example, the reply mentions the right invoice ID, states the correct status taken from the data, and stays under a length limit. For structured outputs, parse them and compare the fields.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q6</span><span class="q">Name two things the application must do <em>after</em> the model replies, before showing anything to the user.</span><span class="chev"></span></summary>
+    <div class="ans"><p>Any two of: parse and validate the output (format, fields); check the user is allowed to see or do what the reply contains; verify claims or numbers against the source data; store state and log the call for evaluation; decide on a fallback or retry if checks fail.</p></div></details>
+</section>
+
+<section class="recap">
+  <h2>What to retain from this lesson</h2>
+  <p>The model is a stateless function from a request to text. Memory, knowledge of your data, permissions and quality checks all live in the application around it. Building GenAI products mostly means building that application well.</p>
+  <ul>
+    <li>Stateless: the model keeps nothing between calls and its weights do not change during use.</li>
+    <li>Chat memory is the app resending history; input cost per call grows with the conversation, and the total grows roughly with its square.</li>
+    <li>Context construction (instructions, retrieved data, tool results, history, new message) is the main lever on answer quality.</li>
+    <li>Manage history with windows, summaries, structured state and retrieval; trimming silently drops facts.</li>
+    <li>Outputs vary because of sampling and small numerical effects, so test properties, not exact strings.</li>
+    <li>Evaluation has layers: code checks, reference test sets, model judges, human review.</li>
+  </ul>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>

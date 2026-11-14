@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.4 · The model landscape and how models are made</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/glass.css">
+</head>
+<body data-id="l1-4" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Stage 1 · Foundations</span></div>
+  <h1>1.4 The model landscape and how models are made</h1>
+  <p>"LLM" is one kind of model among several, and a chat model is the end of a long pipeline of training stages. This lesson maps the kinds of models you will meet, how a chat model is built, when you should change a model versus just change the request, and what size, open weights and licences mean in practice.</p>
+  <div class="chips"><span class="chip">~35 min</span><span class="chip">Module 1</span><span class="chip">Concepts + Python</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="families">
+  <h2><span class="n">1</span>The kinds of models you will meet</h2>
+  <p>Most models in GenAI work today are built from the <strong>Transformer</strong> architecture (Stage 2 takes it apart). What differs is <em>what</em> they are trained to do and <em>what comes out</em>. Six kinds cover nearly everything you will use at work:</p>
+  <div class="list plain" style="margin:14px 0">
+    <div class="row"><div class="icon bg-blue">D</div><div><div class="t">Decoder-only language models</div><div class="d">Generate text token by token, exactly the loop from Lesson 1.2. GPT, Claude, Gemini, Llama, Mistral and Qwen models are of this kind. When people say "LLM", they almost always mean this.</div></div></div>
+    <div class="row"><div class="icon bg-teal">E</div><div><div class="t">Encoder-only models</div><div class="d">Read a whole text at once and produce a representation of it, not new text. BERT (2018) is the classic example. Used for classification, named-entity extraction and as the basis of many embedding models.</div></div></div>
+    <div class="row"><div class="icon bg-indigo">ED</div><div><div class="t">Encoder-decoder models</div><div class="d">An encoder reads the input, a decoder writes the output. The original 2017 Transformer was built this way, for translation; T5 is a well-known later example. Still common for translation and some summarisation.</div></div></div>
+    <div class="row"><div class="icon bg-green">V</div><div><div class="t">Embedding models</div><div class="d">Turn a text (or an image) into a fixed-length list of numbers, a <strong>vector</strong>, so that similar meanings get nearby vectors. They power semantic search and RAG retrieval. Lesson 2.2 builds this idea from scratch.</div></div></div>
+    <div class="row"><div class="icon bg-orange">∿</div><div><div class="t">Diffusion models</div><div class="d">Generate images (also audio and video) by starting from random noise and removing noise step by step. Stable Diffusion and most image generators work this way.</div></div></div>
+    <div class="row"><div class="icon bg-purple">M</div><div><div class="t">Multimodal models</div><div class="d">Accept more than one kind of input, typically text plus images, sometimes audio, and some also produce images or speech. Most current frontier chat models are multimodal.</div></div></div>
+  </div>
+
+  <h3>Two details matter</h3>
+  <p>The first explains why encoders and decoders are good at different jobs. The second explains why image generation feels so different from text generation.</p>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Encoders look both ways, decoders look only back</div>
+      <p>In Lesson 1.2 you met the <strong>causal mask</strong>: in a decoder, each position may only see the tokens before it, because it is trained to predict the next one. An encoder has no such mask. Every token sees every other token, before and after it.</p>
+      <figure class="fig">
+        <div class="sv"><svg viewBox="0 0 640 200" role="img" aria-label="Encoder: every token sees every token. Decoder: each token sees only earlier tokens">
+          <text x="150" y="16" class="h mid">Encoder: sees both ways</text>
+          <text x="490" y="16" class="h mid">Decoder: sees only the past</text>
+          <g transform="translate(60,30)">
+            <text x="30" y="14" class="mid">The</text><text x="80" y="14" class="mid">bank</text><text x="130" y="14" class="mid">was</text><text x="180" y="14" class="mid">closed</text>
+            <rect x="8" y="24" width="44" height="32" rx="6" class="box a"/><rect x="58" y="24" width="44" height="32" rx="6" class="box a"/><rect x="108" y="24" width="44" height="32" rx="6" class="box a"/><rect x="158" y="24" width="44" height="32" rx="6" class="box a"/>
+            <rect x="8" y="60" width="44" height="32" rx="6" class="box a"/><rect x="58" y="60" width="44" height="32" rx="6" class="box a"/><rect x="108" y="60" width="44" height="32" rx="6" class="box a"/><rect x="158" y="60" width="44" height="32" rx="6" class="box a"/>
+            <rect x="8" y="96" width="44" height="32" rx="6" class="box a"/><rect x="58" y="96" width="44" height="32" rx="6" class="box a"/><rect x="108" y="96" width="44" height="32" rx="6" class="box a"/><rect x="158" y="96" width="44" height="32" rx="6" class="box a"/>
+            <rect x="8" y="132" width="44" height="32" rx="6" class="box a"/><rect x="58" y="132" width="44" height="32" rx="6" class="box a"/><rect x="108" y="132" width="44" height="32" rx="6" class="box a"/><rect x="158" y="132" width="44" height="32" rx="6" class="box a"/>
+          </g>
+          <g transform="translate(400,30)">
+            <text x="30" y="14" class="mid">The</text><text x="80" y="14" class="mid">bank</text><text x="130" y="14" class="mid">was</text><text x="180" y="14" class="mid">closed</text>
+            <rect x="8" y="24" width="44" height="32" rx="6" class="box b"/><rect x="58" y="24" width="44" height="32" rx="6" class="box"/><rect x="108" y="24" width="44" height="32" rx="6" class="box"/><rect x="158" y="24" width="44" height="32" rx="6" class="box"/>
+            <rect x="8" y="60" width="44" height="32" rx="6" class="box b"/><rect x="58" y="60" width="44" height="32" rx="6" class="box b"/><rect x="108" y="60" width="44" height="32" rx="6" class="box"/><rect x="158" y="60" width="44" height="32" rx="6" class="box"/>
+            <rect x="8" y="96" width="44" height="32" rx="6" class="box b"/><rect x="58" y="96" width="44" height="32" rx="6" class="box b"/><rect x="108" y="96" width="44" height="32" rx="6" class="box b"/><rect x="158" y="96" width="44" height="32" rx="6" class="box"/>
+            <rect x="8" y="132" width="44" height="32" rx="6" class="box b"/><rect x="58" y="132" width="44" height="32" rx="6" class="box b"/><rect x="108" y="132" width="44" height="32" rx="6" class="box b"/><rect x="158" y="132" width="44" height="32" rx="6" class="box b"/>
+          </g>
+        </svg></div>
+        <figcaption>Each row is one token; a coloured cell means that token can use the word in that column. Only the encoder lets "bank" use "closed", the word that tells you it is a building or a business, not a river bank.</figcaption>
+      </figure>
+      <p>So an encoder builds a better <strong>understanding</strong> of a text it already has, which is why it suits classification and embeddings. But it cannot generate text left to right, because it was never trained to predict what comes next. A decoder can generate, at the price of reading only one way. Large decoders have become so capable that they now also do many classic encoder jobs, but small encoder models are still much cheaper for high-volume classification and embedding.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Diffusion generates a whole image at once, many times over</div>
+      <p>A language model commits to one token at a time and never revisits it. A diffusion model is trained the other way round: take real images, add noise to them, and train a network to predict the noise so it can be removed. To generate, it starts from pure random noise and runs that denoising step many times. Every step refines the <strong>whole</strong> image a little, guided by your text prompt.</p>
+      <figure class="fig">
+        <div class="sv"><svg viewBox="0 0 640 150" role="img" aria-label="Five frames going from pure noise to a clear picture">
+          <defs>
+            <filter id="noise14" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="1 1"/></feComponentTransfer></filter>
+            <clipPath id="frame14"><rect width="96" height="96" rx="12"/></clipPath>
+          </defs>
+          <g transform="translate(8,10)"><g clip-path="url(#frame14)"><rect width="96" height="96" fill="#8FC9FF"/><circle cx="66" cy="30" r="14" fill="#FFCC00"/><path d="M0 96 L30 52 L52 76 L70 58 L96 96Z" fill="#34C759"/><rect width="96" height="96" filter="url(#noise14)" opacity="1"/></g></g>
+          <g transform="translate(136,10)"><g clip-path="url(#frame14)"><rect width="96" height="96" fill="#8FC9FF"/><circle cx="66" cy="30" r="14" fill="#FFCC00"/><path d="M0 96 L30 52 L52 76 L70 58 L96 96Z" fill="#34C759"/><rect width="96" height="96" filter="url(#noise14)" opacity=".8"/></g></g>
+          <g transform="translate(264,10)"><g clip-path="url(#frame14)"><rect width="96" height="96" fill="#8FC9FF"/><circle cx="66" cy="30" r="14" fill="#FFCC00"/><path d="M0 96 L30 52 L52 76 L70 58 L96 96Z" fill="#34C759"/><rect width="96" height="96" filter="url(#noise14)" opacity=".55"/></g></g>
+          <g transform="translate(392,10)"><g clip-path="url(#frame14)"><rect width="96" height="96" fill="#8FC9FF"/><circle cx="66" cy="30" r="14" fill="#FFCC00"/><path d="M0 96 L30 52 L52 76 L70 58 L96 96Z" fill="#34C759"/><rect width="96" height="96" filter="url(#noise14)" opacity=".25"/></g></g>
+          <g transform="translate(520,10)"><g clip-path="url(#frame14)"><rect width="96" height="96" fill="#8FC9FF"/><circle cx="66" cy="30" r="14" fill="#FFCC00"/><path d="M0 96 L30 52 L52 76 L70 58 L96 96Z" fill="#34C759"/></g></g>
+          <path d="M108 58 H130" class="arr"/><path d="M236 58 H258" class="arr"/><path d="M364 58 H386" class="arr"/><path d="M492 58 H514" class="arr"/>
+          <text x="56" y="130" class="mid">pure noise</text><text x="312" y="130" class="mid">denoising steps</text><text x="568" y="130" class="mid">final image</text>
+        </svg></div>
+        <figcaption>A schematic, not real model output. Real diffusion runs tens of steps, and each step is a full pass of a large network.</figcaption>
+      </figure>
+      <p>For an engineer, the practical differences are: image generation has no "tokens out" billing (you usually pay per image), outputs vary just as much as with text, and the same evaluation thinking applies (Lesson 1.3).</p>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Kind</th><th>Input → output</th><th>Typical job at work</th></tr></thead>
+    <tbody>
+    <tr><td>Decoder-only LLM</td><td>Text → text</td><td>Chat, drafting, extraction, code, agents</td></tr>
+    <tr><td>Encoder-only</td><td>Text → representation or label</td><td>Cheap high-volume classification, NER</td></tr>
+    <tr><td>Encoder-decoder</td><td>Text → text</td><td>Translation, some summarisation</td></tr>
+    <tr><td>Embedding model</td><td>Text or image → vector</td><td>Semantic search, RAG, clustering, deduplication</td></tr>
+    <tr><td>Diffusion</td><td>Noise + prompt → image, audio, video</td><td>Image generation and editing</td></tr>
+    <tr><td>Multimodal</td><td>Text + images (+ audio) → text, sometimes images</td><td>Reading scans, charts, screenshots</td></tr>
+    </tbody></table></div>
+  <div class="callout c-key"><div class="ci">i</div><div><div class="ct">A RAG app uses at least two models</div><p>An embedding model finds the relevant passages, and a decoder LLM writes the answer from them. They are chosen, priced and evaluated separately. You will build exactly this in Stage 4.</p></div></div>
+</section>
+
+<section class="sec" id="lifecycle">
+  <h2><span class="n">2</span>How a chat model is made</h2>
+  <p>Lesson 1.2 introduced pretraining and post-training in two sentences. Here is the full pipeline that turns raw text into the assistant you call through an API.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 178" role="img" aria-label="Pipeline: data, pretraining, base model, supervised fine-tuning, preference tuning, chat model, deployment">
+      <rect x="0" y="40" width="78" height="64" rx="12" class="box"/><text x="39" y="69" class="v mid">Text data</text><text x="39" y="87" class="mid" style="font-size:11px">web, code</text>
+      <rect x="96" y="40" width="96" height="64" rx="12" class="box a"/><text x="144" y="69" class="w mid">Pretraining</text><text x="144" y="87" class="w mid" style="font-size:11px;font-weight:500">next token</text>
+      <rect x="210" y="52" width="70" height="40" rx="20" class="box"/><text x="245" y="77" class="v mid">base</text>
+      <rect x="298" y="40" width="96" height="64" rx="12" class="box t"/><text x="346" y="69" class="w mid">SFT</text><text x="346" y="87" class="w mid" style="font-size:11px;font-weight:500">example answers</text>
+      <rect x="412" y="40" width="104" height="64" rx="12" class="box p"/><text x="464" y="69" class="w mid">Preferences</text><text x="464" y="87" class="w mid" style="font-size:11px;font-weight:500">RLHF / DPO</text>
+      <rect x="534" y="52" width="106" height="40" rx="20" class="box g"/><text x="587" y="77" class="w mid">chat model</text>
+      <path d="M78 72 H90" class="arr"/><path d="M84 68 l6 4 -6 4" class="arr"/>
+      <path d="M192 72 H204" class="arr"/><path d="M198 68 l6 4 -6 4" class="arr"/>
+      <path d="M280 72 H292" class="arr"/><path d="M286 68 l6 4 -6 4" class="arr"/>
+      <path d="M394 72 H406" class="arr"/><path d="M400 68 l6 4 -6 4" class="arr"/>
+      <path d="M516 72 H528" class="arr"/><path d="M522 68 l6 4 -6 4" class="arr"/>
+      <text x="144" y="128" class="mid">by far the most compute</text>
+      <rect x="96" y="136" width="96" height="8" rx="4" class="box a grow-x"/>
+      <rect x="298" y="136" width="14" height="8" rx="4" class="box t grow-x"/>
+      <rect x="412" y="136" width="18" height="8" rx="4" class="box p grow-x"/>
+      <text x="346" y="128" class="mid">much smaller</text><text x="464" y="128" class="mid">much smaller</text>
+      <text x="0" y="170">Optional extra stages: RL on checkable tasks (reasoning models), safety tuning, then deployment for inference.</text>
+    </svg></div>
+    <figcaption>The thin bars only show the order of magnitude: pretraining dominates the compute budget. Exact shares differ per model and are rarely published.</figcaption>
+  </figure>
+
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Pretraining: learn language and knowledge</div>
+      <p>The next-token objective from Lesson 1.2, run on an enormous text collection. Recent open models report training on more than ten trillion tokens (Meta, for example, reported over 15 trillion for Llama 3). This stage costs millions of GPU-hours and produces a <strong>base model</strong>: fluent, knowledgeable, but it only continues text.</p>
+      <p>It also fixes the <strong>knowledge cutoff</strong>: the model knows nothing published after its training data was collected, unless you supply it in the request.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Supervised fine-tuning (SFT): learn to answer</div>
+      <p>Training continues on a much smaller, carefully written set of <strong>(instruction, good answer)</strong> pairs, often tens of thousands to millions of examples. The loss is still next-token cross-entropy, but only on the answer part. The model learns the <em>behaviour</em> of an assistant: treat the text as a request, answer it, use the chat format with roles.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">3</div>
+    <div>
+      <div class="point-t">Preference tuning: learn which answers people prefer</div>
+      <p>Writing perfect answers is hard; <strong>comparing</strong> two answers is easy. So people (or a model following written principles) are shown two answers to the same prompt and pick the better one. Training then pushes the model toward the preferred kind of answer: more helpful, more honest about uncertainty, refusing harmful requests. The two main methods, RLHF and DPO, are explained in the Extra below.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">4</div>
+    <div>
+      <div class="point-t">Optional: reinforcement learning on checkable tasks</div>
+      <p>Since 2024, "reasoning" models add a stage where the model practises problems whose answers can be checked automatically, such as maths with known results or code with unit tests. Answers that turn out correct are rewarded. This teaches the model to write out longer intermediate reasoning before answering, which costs more output tokens per reply (Lesson 1.2: output tokens are the slow, expensive ones).</p>
+    </div>
+  </div>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">Analogy from your own work</div><p>Pretraining is like a new analyst reading every report, wiki page and SQL script in the company for a year. SFT is their onboarding, where a senior colleague shows worked examples of good answers. Preference tuning is feedback on real work: "this version is clearer than that one". After that, your requests are the daily tasks they are given.</p></div></div>
+</section>
+
+<section class="sec extra" id="rlhf-dpo">
+  <h2><span class="n">+</span>RLHF and DPO, precisely <span class="tag-extra">Extra</span></h2>
+  <p>Both start from the same data: prompts with two answers, one marked <strong>preferred</strong> (often written <i>y<sub>w</sub></i>, "winner") and one <strong>rejected</strong> (<i>y<sub>l</sub></i>, "loser").</p>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">RLHF: Reinforcement Learning from Human Feedback</div>
+      <p>Step one trains a separate <strong>reward model</strong>, a network that reads a prompt and an answer and outputs a score, so that preferred answers score higher than rejected ones. Step two uses reinforcement learning (classically an algorithm called PPO): the chat model generates answers, the reward model scores them, and the chat model is updated to earn higher scores.</p>
+      <p>A penalty keeps the model close to its SFT version. Without it, the model learns to exploit quirks of the reward model ("reward hacking"), for example by producing long, flattering answers the reward model happens to like. This approach was made widely known by OpenAI's InstructGPT work in 2022, the basis of ChatGPT.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">DPO: Direct Preference Optimization</div>
+      <p>Published in 2023, DPO showed that the same goal can be reached <strong>without</strong> a separate reward model and without reinforcement learning. It trains the chat model directly on the preference pairs with a loss that works much like a binary classifier: raise the probability of the preferred answer relative to the rejected one, again measured against the SFT version so the model does not drift too far.</p>
+      <p>It is simpler and cheaper to run, which is why it is popular for open-weight models and for companies doing their own preference tuning.</p>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>RLHF</th><th>DPO</th></tr></thead>
+    <tbody>
+    <tr><td>Data</td><td>Preference pairs</td><td>Preference pairs</td></tr>
+    <tr><td>Separate reward model</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Training loop</td><td>Generate, score, update (RL)</td><td>One supervised loss on the pairs</td></tr>
+    <tr><td>Complexity</td><td>High, sensitive to settings</td><td>Lower</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sec" id="change-what">
+  <h2><span class="n">3</span>Training, fine-tuning and inference: who changes what</h2>
+  <p>The stages above belong to the model provider. Your options as an application team are different, and the key question is simple: <strong>does it change the weights?</strong></p>
+  <div class="tbl"><table>
+    <thead><tr><th>Activity</th><th>Changes weights?</th><th>Who does it</th><th>Cost</th></tr></thead>
+    <tbody>
+    <tr><td>Pretraining</td><td>Yes, creates them</td><td>Model labs</td><td>Millions of dollars and up</td></tr>
+    <tr><td>Fine-tuning (full or LoRA)</td><td>Yes, adjusts them</td><td>Labs, and companies on their own data</td><td>Hundreds to thousands of dollars, plus data work</td></tr>
+    <tr><td>Prompting, RAG, tools</td><td>No</td><td>Every application team</td><td>Per-call token cost</td></tr>
+    <tr><td>Inference</td><td>No, only uses them</td><td>Every call to the model</td><td>Per token or per GPU-hour</td></tr>
+    </tbody></table></div>
+  <p class="muted">Costs are rough orders of magnitude to show the gaps between rows, not quotes.</p>
+  <p><strong>Fine-tuning</strong> means continuing training on your own examples, so the model's behaviour shifts in a lasting way. <strong>Full fine-tuning</strong> updates every weight. <strong>Parameter-efficient</strong> methods such as <strong>LoRA</strong> freeze the original weights and train a small set of extra ones, which is far cheaper and is what most companies actually do (Stage 6).</p>
+</section>
+
+<section class="sec" id="ladder">
+  <h2><span class="n">4</span>The engineer's ladder: try the cheap fixes first</h2>
+  <p>When a model does not do what you need, there is a standard order of things to try. Each rung costs more and is harder to undo than the one below it, so you climb only when the rung below has clearly failed.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 232" role="img" aria-label="Ladder of options from prompt to pretraining, rising in cost">
+      <rect x="0" y="182" width="120" height="34" rx="10" class="box g grow"/><text x="60" y="204" class="w mid">Better prompt</text>
+      <rect x="128" y="146" width="120" height="70" rx="10" class="box t grow"/><text x="188" y="186" class="w mid">Examples</text>
+      <rect x="256" y="104" width="120" height="112" rx="10" class="box a grow"/><text x="316" y="164" class="w mid">RAG and tools</text>
+      <rect x="384" y="56" width="120" height="160" rx="10" class="box p grow"/><text x="444" y="140" class="w mid">Fine-tuning</text>
+      <rect x="512" y="8" width="120" height="208" rx="10" class="box r grow"/><text x="572" y="116" class="w mid">Pretraining</text>
+      <text x="60" y="172" class="mid">minutes</text><text x="188" y="136" class="mid">hours</text><text x="316" y="94" class="mid">days to weeks</text><text x="444" y="46" class="mid">weeks, plus data</text>
+      <text x="0" y="230">Effort and cost of each option, rising to the right (relative, not measured) →</text>
+    </svg></div>
+    <figcaption>Almost all production GenAI systems stop at the third rung. Pretraining your own model is practically never the right call for an application team.</figcaption>
+  </figure>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Prompt and examples fix instructions and format</div>
+      <p>Most "the model is bad at this" problems are unclear requests. Clear instructions, a defined output format, and two or three worked examples in the request (<strong>few-shot prompting</strong>, Stage 3) fix a surprising share of them in minutes.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">RAG and tools fix missing knowledge</div>
+      <p>If the model lacks facts (your documents, your data, anything after its cutoff), supply them in the request. Retrieval and tools keep the facts current, let you show sources, and respect permissions, because the application decides what each user's request may contain.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">3</div>
+    <div>
+      <div class="point-t">Fine-tuning fixes behaviour, not knowledge</div>
+      <p>Fine-tuning is the right tool when you need a consistent style or format across thousands of calls, a narrow task done well by a smaller and cheaper model, or a behaviour that is hard to describe in a prompt. It is a poor way to add facts: facts learned in training cannot be updated without retraining, cannot be cited, and can still be misremembered. Teams that fine-tune to "teach the model our documents" usually end up adding RAG anyway.</p>
+    </div>
+  </div>
+  <div class="callout c-key"><div class="ci">i</div><div><div class="ct">Engineering principle #3</div><p>Knowledge goes in the request (RAG, tools). Behaviour can go in the weights (fine-tuning), but only after prompting has been tried and measured. "Measured" means a test set from Lesson 1.3, not a feeling.</p></div></div>
+</section>
+
+<section class="sec" id="size">
+  <h2><span class="n">5</span>Parameters: what model size means in practice</h2>
+  <p><strong>Definition:</strong> a model's <strong>parameters</strong> are its learned numbers, the weights adjusted during training. "An 8B model" has about 8 billion of them. More parameters can store more patterns and usually give better quality, but every one of them has to sit in memory and take part in computing every token.</p>
+  <p>Each parameter is stored as a number with a certain precision. Training usually uses 16-bit formats (<strong>fp16</strong> or <strong>bf16</strong>, 2 bytes each). <strong>Quantisation</strong> stores the weights in fewer bits after training, such as 8-bit or 4-bit, which saves memory at some cost in quality. The memory just to hold the weights is simple arithmetic:</p>
+  <div class="math">memory ≈ number of parameters × bytes per parameter</div>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">memory.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-c"># memory needed just to hold the weights (no KV cache, no activations)</span>
+bytes_per_param = {<span class="tk-s">"fp32"</span>: <span class="tk-n">4</span>, <span class="tk-s">"fp16/bf16"</span>: <span class="tk-n">2</span>, <span class="tk-s">"int8"</span>: <span class="tk-n">1</span>, <span class="tk-s">"int4"</span>: <span class="tk-n">0.5</span>}
+
+<span class="tk-k">for</span> billions <span class="tk-k">in</span> (<span class="tk-n">1</span>, <span class="tk-n">8</span>, <span class="tk-n">70</span>):
+    row = <span class="tk-s">", "</span>.join(<span class="tk-s">f"</span>{name}<span class="tk-s"> </span>{billions * b:g}<span class="tk-s"> GB"</span> <span class="tk-k">for</span> name, b <span class="tk-k">in</span> bytes_per_param.items())
+    <span class="tk-f">print</span>(<span class="tk-s">f"</span>{billions}<span class="tk-s">B params: </span>{row}<span class="tk-s">"</span>)</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>1B params: fp32 4 GB, fp16/bf16 2 GB, int8 1 GB, int4 0.5 GB
+8B params: fp32 32 GB, fp16/bf16 16 GB, int8 8 GB, int4 4 GB
+70B params: fp32 280 GB, fp16/bf16 140 GB, int8 70 GB, int4 35 GB</pre></div></div>
+  <p>The trick in the code: billions of parameters times bytes per parameter gives billions of bytes, which is gigabytes (using 1 GB = 10<sup>9</sup> bytes). The <code>:g</code> format drops pointless decimals, so <code>16.0</code> prints as <code>16</code>.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 250" role="img" aria-label="Weight memory for 8B and 70B models at different precisions compared with 24 GB and 80 GB GPUs">
+      <text x="0" y="14" class="h">8B model</text>
+      <text x="0" y="40">fp16</text><rect x="54" y="28" width="27.4" height="16" rx="4" class="box a grow-x"/><text x="88" y="41" class="v">16 GB</text>
+      <text x="0" y="64">int8</text><rect x="54" y="52" width="13.7" height="16" rx="4" class="box a grow-x"/><text x="74" y="65" class="v">8 GB</text>
+      <text x="0" y="88">int4</text><rect x="54" y="76" width="6.9" height="16" rx="4" class="box a grow-x"/><text x="68" y="89" class="v">4 GB</text>
+      <text x="0" y="122" class="h">70B model</text>
+      <text x="0" y="148">fp16</text><rect x="54" y="136" width="240" height="16" rx="4" class="box b grow-x"/><text x="300" y="149" class="v">140 GB</text>
+      <text x="0" y="172">int8</text><rect x="54" y="160" width="120" height="16" rx="4" class="box b grow-x"/><text x="180" y="173" class="v">70 GB</text>
+      <text x="0" y="196">int4</text><rect x="54" y="184" width="60" height="16" rx="4" class="box b grow-x"/><text x="120" y="197" class="v">35 GB</text>
+      <line x1="95.1" y1="20" x2="95.1" y2="206" class="arr dash" style="stroke:var(--green)"/>
+      <line x1="191.1" y1="20" x2="191.1" y2="206" class="arr dash" style="stroke:var(--orange)"/>
+      <text x="95.1" y="222" class="mid">24 GB</text><text x="191.1" y="222" class="mid">80 GB</text>
+      <text x="350" y="40">Green line: a high-end consumer GPU (24 GB)</text>
+      <text x="350" y="60">Orange line: one large data-centre GPU (80 GB)</text>
+      <text x="350" y="92">An 8B model fits on one consumer GPU,</text>
+      <text x="350" y="110">even at 16-bit.</text>
+      <text x="350" y="142">A 70B model at 16-bit needs at least</text>
+      <text x="350" y="160">two 80 GB GPUs; at 4-bit it fits on one.</text>
+      <text x="0" y="244">Bar length is proportional to gigabytes (same scale for all bars).</text>
+    </svg></div>
+    <figcaption>Weights only. Running the model needs more on top: the KV cache grows with the context length and the number of parallel requests (Stage 2), so real deployments leave a good margin.</figcaption>
+  </figure>
+
+  <h3>Two details matter</h3>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Mixture-of-experts: total vs active parameters</div>
+      <p>Some models are split into many "expert" sub-networks, and for each token a small router picks only a few of them. Mistral's Mixtral 8x7B, for example, has about 47 billion parameters in total but uses about 13 billion for each token. So it needs the memory of a 47B model but computes each token about as fast as a 13B one. When a model card lists two numbers, total and active, this is why.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Parameter count and context window are unrelated</div>
+      <p>The context window (how many tokens fit in one request) is a design and training choice, not a consequence of size. A small model can have a long window and a large model a short one. Check both separately when choosing a model.</p>
+    </div>
+  </div>
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Why it matters at work</div><p>Bigger is not automatically better for your task. A small model, sometimes fine-tuned, often matches a large one on a narrow job like classification or extraction, at a fraction of the cost and latency. Model selection (Stage 3) means testing a few sizes on your own test set.</p></div></div>
+</section>
+
+<section class="sec" id="open-closed">
+  <h2><span class="n">6</span>Open weights, closed models and licences</h2>
+  <p>Models reach you in one of two ways, and the choice shapes cost, privacy and how much control you have.</p>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Closed (hosted) models</div>
+      <p>You call the provider's API and never see the weights. Examples: OpenAI's GPT models, Anthropic's Claude, Google's Gemini. Usually the highest quality available, with no infrastructure to run. In exchange your data goes to the provider (under contract), you pay per token, and the provider decides when a model version is retired.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Open-weight models</div>
+      <p>The weights can be downloaded, so you can run the model on your own servers or cloud account and fine-tune it. Examples: Meta's Llama, Mistral, Qwen and Gemma families. Data can stay inside your network, cost at high volume can be lower, and the version never changes unless you change it. In exchange you run GPUs, serving software and monitoring yourself, and the best open models usually trail the best closed ones somewhat.</p>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Question</th><th>Closed / hosted</th><th>Open weights</th></tr></thead>
+    <tbody>
+    <tr><td>Top quality today</td><td>Usually ahead</td><td>Close behind</td></tr>
+    <tr><td>Data leaves your network</td><td>Yes, under contract</td><td>Not if you self-host</td></tr>
+    <tr><td>Operations work</td><td>Almost none</td><td>GPUs, serving, scaling, monitoring</td></tr>
+    <tr><td>Cost shape</td><td>Per token</td><td>Mostly fixed hardware cost</td></tr>
+    <tr><td>Fine-tuning</td><td>Only where the provider offers it</td><td>Full control</td></tr>
+    <tr><td>Version stability</td><td>Provider retires versions</td><td>Yours to keep</td></tr>
+    </tbody></table></div>
+  <div class="callout c-warn"><div class="ci">!</div><div><div class="ct">Open weights is not the same as open source</div><p>Most "open" models publish weights but not their training data or full training code. The Open Source Initiative's definition of open-source AI (2024) asks for much more than weights. More importantly for you: <strong>read the licence</strong>. Some models use permissive licences such as Apache 2.0 (Mistral 7B, for example). Others use custom licences with conditions, such as Meta's Llama licence, which adds rules on use and on very large companies. Your legal or procurement team decides what is allowed.</p></div></div>
+
+  <h3>Model cards: read before you choose</h3>
+  <p>A <strong>model card</strong> is the documentation published with a model, an idea proposed by Google researchers in 2019. A good one tells you:</p>
+  <ul>
+    <li>Intended uses, and uses the authors advise against.</li>
+    <li>Training data, at least in summary, and the knowledge cutoff.</li>
+    <li>Context window, languages supported, parameter count (total and active).</li>
+    <li>Evaluation results, and known limitations and biases.</li>
+    <li>The licence.</li>
+  </ul>
+  <p>Treat its benchmark numbers as a first filter only. The deciding test is always your own test set, on your own data (Lesson 1.3).</p>
+</section>
+
+<section class="sec" id="check">
+  <h2><span class="n">?</span>Check yourself</h2>
+  <details class="disc"><summary><span class="tag q">Q1</span><span class="q">You need to tag 5 million support tickets a day into 20 categories. Why might an encoder model beat a large chat LLM here?</span><span class="chev"></span></summary>
+    <div class="ans"><p>The task is understanding a text that already exists, not generating new text, which is what encoders are built for. A small fine-tuned encoder is far cheaper and faster per ticket, gives a fixed label instead of free text, and at 5 million a day the per-token cost of a large LLM adds up quickly. Test both on a labelled sample before deciding.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q2</span><span class="q">What does SFT teach that pretraining does not, and what does preference tuning add on top?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Pretraining teaches language and knowledge but only to continue text. SFT teaches assistant behaviour: treat input as a request and answer it in the chat format. Preference tuning then shifts the model toward the answers people prefer among several acceptable ones: more helpful, more honest, safer.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q3</span><span class="q">A team wants to fine-tune a model on the company handbook so it "knows the policies". What do you recommend, and why?</span><span class="chev"></span></summary>
+    <div class="ans"><p>RAG over the handbook instead. Policies change, answers should cite the exact section, and different users may be allowed to see different documents. Fine-tuned facts cannot be updated without retraining, cannot be cited and can be misremembered. Fine-tuning could be added later for tone or format, if a test set shows prompting is not enough.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q4</span><span class="q">Roughly how much memory do the weights of a 32B model need at bf16 and at 4-bit?</span><span class="chev"></span></summary>
+    <div class="ans"><p>32 × 2 = 64 GB at bf16, and 32 × 0.5 = 16 GB at 4-bit. Running it needs extra memory on top for the KV cache and activations.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q5</span><span class="q">A model card says "141B total parameters, 39B active". What does that tell you about memory and speed?</span><span class="chev"></span></summary>
+    <div class="ans"><p>It is a mixture-of-experts model. Memory must hold all 141B parameters, but each token only uses about 39B, so per-token compute is closer to a 39B dense model.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q6</span><span class="q">Give two reasons a regulated company might choose an open-weight model despite slightly lower quality.</span><span class="chev"></span></summary>
+    <div class="ans"><p>Any two of: data never leaves its own network; the model version stays fixed, which helps validation and audit; cost at very high volume; freedom to fine-tune; no dependency on a provider retiring a model. The licence still has to be approved.</p></div></details>
+</section>
+
+<section class="recap">
+  <h2>What to retain from this lesson</h2>
+  <p>A chat LLM is one kind of model, produced by a pipeline of pretraining, supervised fine-tuning and preference tuning. As an application engineer you mostly change the request, sometimes fine-tune, and practically never pretrain.</p>
+  <ul>
+    <li>Kinds of models: decoder LLMs generate, encoders understand, embedding models produce vectors for search, diffusion models denoise into images, multimodal models mix inputs.</li>
+    <li>Encoders see both directions; decoders see only the past, which is what lets them generate.</li>
+    <li>Pretraining (next token, trillions of tokens) → base model → SFT → preference tuning (RLHF or DPO) → chat model; reasoning models add RL on checkable tasks.</li>
+    <li>The ladder: prompt, examples, RAG and tools, then fine-tuning. Knowledge in the request, behaviour in the weights.</li>
+    <li>Weight memory ≈ parameters × bytes per parameter; quantisation trades quality for memory; MoE models have total and active counts.</li>
+    <li>Closed vs open weights trades quality and convenience against control and data location. Always check the licence and the model card.</li>
+  </ul>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>

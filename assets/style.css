@@ -492,3 +492,37 @@ details.disc .ans p{margin:6px 0}
   :root[data-theme="dark"]{--label2:rgba(235,235,245,.86);--sep:rgba(120,120,128,.8);--fill:rgba(118,118,128,.36)}
   .card,.lcard,.toc,.callout,pre,.out{outline:1px solid var(--sep)}
 }
+
+/* figures: inline SVG diagrams and charts, coloured from the theme */
+.fig{margin:18px 0;padding:16px 16px 12px;border-radius:16px;background:var(--card2);border:.5px solid var(--sep)}
+.fig .sv{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fig svg{display:block;width:100%;min-width:540px;height:auto;overflow:visible}
+.fig figcaption{font-size:0.8125rem;color:var(--label2);margin-top:10px;line-height:1.45}
+.fig text{font-family:var(--font);font-size:12.5px;fill:var(--label2)}
+.fig text.v{fill:var(--label);font-weight:650;paint-order:stroke;stroke:var(--card2);stroke-width:4px;stroke-linejoin:round}
+.fig text.h{fill:var(--label);font-weight:700;font-size:13.5px}
+.fig text.w{fill:#fff;font-weight:650}
+.fig text.mid{text-anchor:middle}
+.fig .ax{stroke:var(--sep);stroke-width:1}
+.fig .grid{stroke:var(--sep);stroke-width:.6;stroke-dasharray:3 4}
+.fig .box{fill:var(--fill2);stroke:var(--sep);stroke-width:1}
+.fig .box.a{fill:var(--accent);stroke:none}
+.fig .box.b{fill:var(--accent2);stroke:none}
+.fig .box.g{fill:var(--green);stroke:none}
+.fig .box.o{fill:var(--orange);stroke:none}
+.fig .box.p{fill:var(--purple);stroke:none}
+.fig .box.t{fill:var(--teal);stroke:none}
+.fig .box.r{fill:var(--red);stroke:none}
+.fig .soft{fill:color-mix(in srgb,var(--accent) 12%,transparent);stroke:color-mix(in srgb,var(--accent) 40%,transparent);stroke-width:1}
+.fig .arr{stroke:var(--label2);stroke-width:1.6;fill:none}
+.fig .arr.a{stroke:var(--accent)}
+.fig .arr.dash{stroke-dasharray:5 4}
+.fig .ln{fill:none;stroke:var(--accent2);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.fig .pt{fill:var(--accent2)}
+.fig .grow{transform-box:fill-box;transform-origin:50% 100%;transition:transform 1s var(--ios)}
+.fig .grow-x{transform-box:fill-box;transform-origin:0 50%;transition:transform 1s var(--ios)}
+.js .sec.reveal:not(.in) .fig .grow{transform:scaleY(0)}
+.js .sec.reveal:not(.in) .fig .grow-x{transform:scaleX(0)}
+.fig .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:0.8125rem;color:var(--label2);margin-top:8px}
+.fig .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+@media (prefers-reduced-motion:reduce){.fig .grow,.fig .grow-x{transition:none}}

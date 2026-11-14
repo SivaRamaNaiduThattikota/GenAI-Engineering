@@ -131,12 +131,12 @@ response = existing_model.generate(
   <h2><span class="n">+</span>The GenAI application stack <span class="tag-extra">Extra</span></h2>
   <p>A habit to build from day one: separate the <strong>model</strong> (a function from tokens to a next-token distribution) from the <strong>application</strong> around it. Most of the engineering in this course lives in the application layers.</p>
   <div class="stack">
-    <div style="--c:var(--blue)"><b>Interface</b>Chat UI, API endpoint, Slack bot, batch job</div>
-    <div style="--c:var(--indigo)"><b>Orchestration</b>Prompt assembly, workflows, agent loops, retries</div>
-    <div style="--c:var(--teal)"><b>Context and tools</b>Retrieval (RAG), databases, APIs the model can call</div>
+    <div style="--c:var(--blue);--c-ink:var(--blue-ink)"><b>Interface</b>Chat UI, API endpoint, Slack bot, batch job</div>
+    <div style="--c:var(--indigo);--c-ink:var(--indigo-ink)"><b>Orchestration</b>Prompt assembly, workflows, agent loops, retries</div>
+    <div style="--c:var(--teal);--c-ink:var(--teal-ink)"><b>Context and tools</b>Retrieval (RAG), databases, APIs the model can call</div>
     <div class="model"><b>Model</b>Hosted API or self-hosted open-weight LLM</div>
-    <div style="--c:var(--orange)"><b>Guardrails</b>Output validation, permissions, PII filtering, injection defence</div>
-    <div style="--c:var(--green)"><b>Evaluation and ops</b>Test sets, tracing, cost and latency monitoring, feedback</div>
+    <div style="--c:var(--orange);--c-ink:var(--orange-ink)"><b>Guardrails</b>Output validation, permissions, PII filtering, injection defence</div>
+    <div style="--c:var(--green);--c-ink:var(--green-ink)"><b>Evaluation and ops</b>Test sets, tracing, cost and latency monitoring, feedback</div>
   </div>
   <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">Power BI analogy</div><p>The model is like the DAX engine: powerful, but a report only works because of the data model, security roles, refresh pipeline and testing around it. Nobody ships "just the engine".</p></div></div>
 </section>

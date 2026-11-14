@@ -10,6 +10,9 @@ Live site: https://sivaramanaiduthattikota.github.io/GenAI-Engineering/
 - Preview: prompts, tokens and context
 - 1.1 How AI, ML, deep learning and GenAI fit together
 - 1.2 From prediction models to generative models
+- 1.3 Models vs applications
+- 1.4 The model landscape and how models are made
+- 1.5 How language models got here, and how they are measured
 - 2.1 Tokens and tokenization
 
 ## Running locally

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.5 · How language models got here, and how they are measured</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/glass.css">
+</head>
+<body data-id="l1-5" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Stage 1 · Foundations</span></div>
+  <h1>1.5 How language models got here, and how they are measured</h1>
+  <p>You will build a real language model in twenty lines of Python, see exactly where it breaks, and follow how each step of history fixed one of those breaks, up to today's Transformers. Then you will learn perplexity, the basic score for a language model, and why benchmarks are only a first filter.</p>
+  <div class="chips"><span class="chip">~30 min</span><span class="chip">Module 1</span><span class="chip">History + maths + Python</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="bigram">
+  <h2><span class="n">1</span>The simplest language model: count what follows what</h2>
+  <p><strong>Definition:</strong> a <strong>language model</strong> is anything that assigns probabilities to the next token given the tokens before it (Lesson 1.2). It does not have to be a neural network. The oldest kind just <strong>counts</strong>.</p>
+  <p>An <strong>n-gram model</strong> looks only at the last <i>n</i> − 1 words. With <i>n</i> = 2, a <strong>bigram</strong> model, the next word depends only on the one word before it. To train it, count how often each word follows each other word in some text, and turn the counts into fractions.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">bigram.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">from</span> collections <span class="tk-k">import</span> Counter, defaultdict
+<span class="tk-k">import</span> math
+
+corpus = [
+    <span class="tk-s">"the invoice is paid"</span>,
+    <span class="tk-s">"the invoice is late"</span>,
+    <span class="tk-s">"the payment is late"</span>,
+    <span class="tk-s">"the payment is paid"</span>,
+    <span class="tk-s">"the invoice is late"</span>,
+]
+
+<span class="tk-c"># count which word follows which</span>
+follows = defaultdict(Counter)
+<span class="tk-k">for</span> line <span class="tk-k">in</span> corpus:
+    words = [<span class="tk-s">"&lt;s&gt;"</span>] + line.split() + [<span class="tk-s">"&lt;/s&gt;"</span>]
+    <span class="tk-k">for</span> a, b <span class="tk-k">in</span> <span class="tk-f">zip</span>(words, words[<span class="tk-n">1</span>:]):
+        follows[a][b] += <span class="tk-n">1</span>
+
+<span class="tk-k">def</span> <span class="tk-f">p</span>(b, a):
+    <span class="tk-k">return</span> follows[a][b] / <span class="tk-f">sum</span>(follows[a].values())
+
+<span class="tk-f">print</span>(<span class="tk-s">"P(next | 'is'):"</span>, {w: <span class="tk-f">round</span>(p(w, <span class="tk-s">"is"</span>), <span class="tk-n">2</span>) <span class="tk-k">for</span> w <span class="tk-k">in</span> follows[<span class="tk-s">"is"</span>]})
+
+<span class="tk-k">def</span> <span class="tk-f">perplexity</span>(sentence):
+    words = [<span class="tk-s">"&lt;s&gt;"</span>] + sentence.split() + [<span class="tk-s">"&lt;/s&gt;"</span>]
+    logs = [math.log(p(b, a)) <span class="tk-k">for</span> a, b <span class="tk-k">in</span> <span class="tk-f">zip</span>(words, words[<span class="tk-n">1</span>:])]
+    <span class="tk-k">return</span> math.exp(-<span class="tk-f">sum</span>(logs) / <span class="tk-f">len</span>(logs))
+
+<span class="tk-k">for</span> s <span class="tk-k">in</span> [<span class="tk-s">"the invoice is late"</span>, <span class="tk-s">"the payment is paid"</span>]:
+    <span class="tk-f">print</span>(<span class="tk-s">f"perplexity of '</span>{s}<span class="tk-s">': </span>{perplexity(s):.3f}<span class="tk-s">"</span>)
+
+<span class="tk-c"># a sentence with an unseen pair</span>
+<span class="tk-f">print</span>(<span class="tk-s">"times 'was' followed 'invoice':"</span>, follows[<span class="tk-s">"invoice"</span>][<span class="tk-s">"was"</span>])
+<span class="tk-f">print</span>(<span class="tk-s">"so P('was' | 'invoice') ="</span>, p(<span class="tk-s">"was"</span>, <span class="tk-s">"invoice"</span>), <span class="tk-s">"and the whole sentence gets probability 0"</span>)</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>P(next | 'is'): {'paid': 0.4, 'late': 0.6}
+perplexity of 'the invoice is late': 1.227
+perplexity of 'the payment is paid': 1.443
+times 'was' followed 'invoice': 0
+so P('was' | 'invoice') = 0.0 and the whole sentence gets probability 0</pre></div></div>
+
+  <h3>Reading the code</h3>
+  <ul>
+    <li><strong><code>&lt;s&gt;</code> and <code>&lt;/s&gt;</code></strong> mark the start and end of a sentence. They let the model learn which words start sentences, and when to stop: the same idea as the special end-of-sequence token in Lesson 2.1.</li>
+    <li><strong><code>zip(words, words[1:])</code></strong> pairs each word with the next one: ("&lt;s&gt;", "the"), ("the", "invoice"), and so on.</li>
+    <li><strong><code>follows</code></strong> is a table of counts. <code>follows["is"]</code> ends up as <code>{"paid": 2, "late": 3}</code>, because "is" was followed by "paid" twice and by "late" three times.</li>
+    <li><strong><code>p(b, a)</code></strong> divides one count by the total for that row: <i>P</i>(late | is) = 3 / 5 = 0.6. That is the whole "training".</li>
+  </ul>
+  <div class="bars">
+    <div class="bh">"is" → next word? (from the counts)</div>
+    <div class="bar"><span class="lbl">late</span><span class="tr"><span class="fl" data-w="60%"></span></span><span class="pc">0.60</span></div>
+    <div class="bar"><span class="lbl">paid</span><span class="tr"><span class="fl" data-w="40%"></span></span><span class="pc">0.40</span></div>
+    <div class="bar"><span class="lbl">anything else</span><span class="tr"><span class="fl" data-w="0%" style="--c:var(--gray)"></span></span><span class="pc">0.00</span></div>
+  </div>
+  <p>This is a genuine language model: you could generate text from it with the exact loop from Lesson 1.2. Its two weaknesses are what the rest of this lesson's history is about.</p>
+
+  <h3>Two problems matter</h3>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Sparsity: anything unseen gets probability zero</div>
+      <p>"the invoice was late" is a perfectly normal sentence, but "was" never followed "invoice" in the training text, so the model gives it probability 0. One zero in the chain rule makes the whole product zero, and its log is undefined (which is why the code prints the count instead of computing a perplexity for that sentence).</p>
+      <p>The deeper issue: counting treats every word as an unrelated symbol. Seeing "the invoice is late" tells it nothing about "the bill is late", even though "invoice" and "bill" mean nearly the same. Classic fixes like <strong>smoothing</strong> (giving every unseen pair a small share of probability) hide the zeros but cannot create that understanding.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Short memory: only the last few words count</div>
+      <p>A bigram sees one word back. Making <i>n</i> bigger helps a little, but the number of possible word sequences explodes, so almost every 5-word sequence is unseen and sparsity gets far worse. In "The invoice that the customer from Hamburg sent last week <em>is</em> …", the word that decides "is" vs "are" is eight words back, out of reach.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="history">
+  <h2><span class="n">2</span>How each step fixed one problem</h2>
+  <p>Seventy years of language modelling in one line: each major step fixed a weakness of the step before. The years on the axis are evenly spaced for readability, not to scale.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 230" role="img" aria-label="Timeline from 1948 to 2024 of language modelling milestones">
+      <line x1="20" y1="115" x2="620" y2="115" class="ax" style="stroke-width:2"/>
+      <circle cx="30" cy="115" r="6" class="pt" style="fill:var(--gray)"/>
+      <circle cx="94" cy="115" r="6" class="pt" style="fill:var(--teal)"/>
+      <circle cx="158" cy="115" r="6" class="pt" style="fill:var(--teal)"/>
+      <circle cx="222" cy="115" r="6" class="pt" style="fill:var(--teal)"/>
+      <circle cx="286" cy="115" r="7" class="pt" style="fill:var(--blue)"/>
+      <circle cx="350" cy="115" r="6" class="pt" style="fill:var(--blue)"/>
+      <circle cx="414" cy="115" r="6" class="pt" style="fill:var(--indigo)"/>
+      <circle cx="478" cy="115" r="7" class="pt" style="fill:var(--purple)"/>
+      <circle cx="542" cy="115" r="6" class="pt" style="fill:var(--purple)"/>
+      <circle cx="606" cy="115" r="6" class="pt" style="fill:var(--pink)"/>
+      <text x="30" y="100" class="v mid">1948</text><text x="30" y="70" class="mid">Shannon:</text><text x="30" y="84" class="mid">n-grams</text>
+      <text x="94" y="140" class="v mid">2003</text><text x="94" y="156" class="mid">neural LM</text><text x="94" y="170" class="mid">(Bengio)</text>
+      <text x="158" y="100" class="v mid">2013</text><text x="158" y="70" class="mid">word2vec</text><text x="158" y="84" class="mid">embeddings</text>
+      <text x="222" y="140" class="v mid">2014</text><text x="222" y="156" class="mid">seq2seq,</text><text x="222" y="170" class="mid">attention</text>
+      <text x="286" y="100" class="v mid">2017</text><text x="286" y="84" class="mid">Transformer</text>
+      <text x="350" y="140" class="v mid">2018</text><text x="350" y="156" class="mid">GPT-1,</text><text x="350" y="170" class="mid">BERT</text>
+      <text x="414" y="100" class="v mid">2020</text><text x="414" y="70" class="mid">GPT-3,</text><text x="414" y="84" class="mid">scaling laws</text>
+      <text x="478" y="140" class="v mid">2022</text><text x="478" y="156" class="mid">InstructGPT,</text><text x="478" y="170" class="mid">ChatGPT</text>
+      <text x="542" y="100" class="v mid">2023</text><text x="542" y="70" class="mid">open weights</text><text x="542" y="84" class="mid">(Llama)</text>
+      <text x="606" y="140" class="v mid">2024</text><text x="606" y="156" class="mid">reasoning</text><text x="606" y="170" class="mid">models</text>
+      <text x="0" y="214">Grey = counting · teal = neural networks learn word meaning · blue to pink = the Transformer era</text>
+    </svg></div>
+    <figcaption>Milestones only; many important papers are left out. Each one is explained below.</figcaption>
+  </figure>
+
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">1948 · Counting (Shannon)</div>
+      <p>Claude Shannon's founding paper on information theory already generated "English-like" text from letter and word statistics: n-grams. Counting-based models then ran speech recognition and machine translation for decades. Weakness: sparsity and short memory, as you just saw.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">2003–2013 · Words become vectors</div>
+      <p>Bengio and colleagues (2003) trained a neural network to predict the next word, and in doing so it learned a vector for every word. Similar words got similar vectors, so seeing "the invoice is late" now also raised the probability of "the bill is late". That fixed the "unrelated symbols" half of sparsity. word2vec (2013) made learning such word vectors, <strong>embeddings</strong>, fast and popular. Lesson 2.2 is about them.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">3</div>
+    <div>
+      <div class="point-t">2014 · Longer memory with RNNs, and attention</div>
+      <p><strong>Recurrent neural networks</strong> (RNNs, especially the LSTM design from 1997) read text one token at a time while carrying a running summary, so in principle they could remember far back. In 2014, sequence-to-sequence RNNs reached strong translation quality, and <strong>attention</strong> was added: instead of squeezing the whole input into one summary, the model could look back at any input word when producing each output word. Remaining weakness: RNNs must process tokens strictly one after another, even during training, so they were slow to train on big data, and the running summary still faded over long texts.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">4</div>
+    <div>
+      <div class="point-t">2017 · The Transformer: attention only</div>
+      <p>The paper "Attention Is All You Need" dropped recurrence completely. Every position looks directly at every other allowed position through attention. That fixed both remaining problems at once: any word can use any earlier word directly, however far back, and training processes all positions <strong>in parallel</strong> (the causal-mask trick from Lesson 1.2), which suits GPUs perfectly. Every model in Lesson 1.4 descends from this design.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">5</div>
+    <div>
+      <div class="point-t">2018–2020 · Pretraining, then scale</div>
+      <p>GPT-1 and BERT (both 2018) showed the recipe of Lesson 1.4: pretrain one large model on lots of unlabelled text, then adapt it to many tasks. GPT-2 (2019, 1.5 billion parameters) and GPT-3 (2020, 175 billion) showed that simply making the same design bigger kept making it better, and that a big enough model could do new tasks from a few examples in the prompt.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">6</div>
+    <div>
+      <div class="point-t">2022 onwards · Assistants, open weights, reasoning</div>
+      <p>InstructGPT (early 2022) applied SFT and RLHF to make the model follow instructions, and ChatGPT (November 2022) put that in front of the public. In 2023, Meta's Llama started a wave of strong open-weight models. From 2024, reasoning models added RL on checkable tasks (Lesson 1.4). The core is still the 2017 Transformer trained on next-token prediction.</p>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>Fixed</th><th>Left open</th></tr></thead>
+    <tbody>
+    <tr><td>n-gram counting</td><td>Simple, fast baseline</td><td>Zeros for unseen text, very short memory</td></tr>
+    <tr><td>Neural LM, word vectors</td><td>Similar words share knowledge</td><td>Still a fixed, short window</td></tr>
+    <tr><td>RNN + attention</td><td>Longer memory, look back at input</td><td>Sequential, slow to train, memory fades</td></tr>
+    <tr><td>Transformer</td><td>Direct access to all context, parallel training</td><td>Cost grows with context length (Stage 2)</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="sec" id="scaling">
+  <h2><span class="n">3</span>Scaling laws: why bigger kept working</h2>
+  <p>In 2020, researchers at OpenAI (Kaplan and colleagues) measured something useful: a language model's test loss falls <strong>smoothly and predictably</strong> as you increase three things together: the number of parameters, the amount of training data, and the compute spent. The relationship is a <strong>power law</strong>, which looks like a straight line when both axes use a logarithmic scale.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 230" role="img" aria-label="Illustrative straight line on log-log axes: loss falls as compute grows">
+      <line x1="60" y1="190" x2="610" y2="190" class="ax"/><line x1="60" y1="20" x2="60" y2="190" class="ax"/>
+      <line x1="170" y1="20" x2="170" y2="190" class="grid"/><line x1="280" y1="20" x2="280" y2="190" class="grid"/><line x1="390" y1="20" x2="390" y2="190" class="grid"/><line x1="500" y1="20" x2="500" y2="190" class="grid"/>
+      <polyline points="80,40 190,68 300,96 410,124 520,152 590,170" class="ln"/>
+      <circle cx="80" cy="40" r="5" class="pt"/><circle cx="190" cy="68" r="5" class="pt"/><circle cx="300" cy="96" r="5" class="pt"/><circle cx="410" cy="124" r="5" class="pt"/><circle cx="520" cy="152" r="5" class="pt"/>
+      <text x="335" y="214" class="mid">training compute (log scale): each grid line = 10× more</text>
+      <text x="48" y="110" class="mid" transform="rotate(-90 48 110)">test loss (log scale)</text>
+      <text x="596" y="112" text-anchor="end" class="v">each 10× buys a predictable drop</text>
+    </svg></div>
+    <figcaption>Illustrative shape only, not measured values. The real curves were fitted over many orders of magnitude of compute.</figcaption>
+  </figure>
+  <h3>Two details matter</h3>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Predictable means plannable</div>
+      <p>Because the line is straight, a lab can train small models cheaply, fit the line, and predict how good a model ten times bigger will be before spending the money on it. This is a large part of why companies were willing to fund training runs that cost tens of millions of dollars.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Data matters as much as size (Chinchilla, 2022)</div>
+      <p>DeepMind's Chinchilla work found that many big models of the time were <strong>under-trained</strong>: for a fixed compute budget, it is better to use a smaller model on more data. Their rule of thumb was roughly <strong>20 training tokens per parameter</strong>. Chinchilla (70B parameters, 1.4 trillion tokens) beat their earlier 280B model. Since then, models are often trained far beyond 20 tokens per parameter, because a smaller model that is cheaper to run pays off over billions of inference calls.</p>
+    </div>
+  </div>
+  <div class="callout c-warn"><div class="ci">!</div><div><div class="ct">What scaling laws do not say</div><p>They predict <strong>loss</strong>, the next-token score. They do not promise that a specific skill, like correct arithmetic or following your company's rules, appears at a given size, and they say nothing about factual accuracy on your data. That is still measured task by task (section 5).</p></div></div>
+</section>
+
+<section class="sec" id="perplexity">
+  <h2><span class="n">4</span>Perplexity: the basic score of a language model</h2>
+  <p>The training loss from Lesson 1.2 is the average negative log-probability the model gives to the true next tokens. <strong>Perplexity</strong> is the same number made easier to read: take <i>e</i> to the power of the average loss.</p>
+  <div class="math">perplexity = exp( −(1/<i>N</i>) <span class="big">∑</span><sub><i>i</i>=1</sub><sup><i>N</i></sup> log <i>P</i>(<i>t<sub>i</sub></i> | <i>t</i><sub>&lt;<i>i</i></sub>) )<span class="cap"><i>N</i> = number of tokens scored · lower is better · the minimum is 1</span></div>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">ppl.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> math
+
+<span class="tk-c"># the per-token probabilities from Lesson 1.2's log-space example</span>
+step_probs = [<span class="tk-n">0.9</span>, <span class="tk-n">0.7</span>, <span class="tk-n">0.8</span>, <span class="tk-n">0.6</span>]
+nll = -<span class="tk-f">sum</span>(math.log(p) <span class="tk-k">for</span> p <span class="tk-k">in</span> step_probs) / <span class="tk-f">len</span>(step_probs)
+<span class="tk-f">print</span>(<span class="tk-s">"average negative log-likelihood:"</span>, <span class="tk-f">round</span>(nll, <span class="tk-n">3</span>))
+<span class="tk-f">print</span>(<span class="tk-s">"perplexity:"</span>, <span class="tk-f">round</span>(math.exp(nll), <span class="tk-n">3</span>))
+
+<span class="tk-c"># a model that knows nothing: uniform over a 200,000-token vocabulary</span>
+V = <span class="tk-n">200_000</span>
+<span class="tk-f">print</span>(<span class="tk-s">"uniform model perplexity:"</span>, <span class="tk-f">round</span>(math.exp(-math.log(<span class="tk-n">1</span> / V))))</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>average negative log-likelihood: 0.299
+perplexity: 1.349
+uniform model perplexity: 200000</pre></div></div>
+
+  <h3>Two ways to read the number</h3>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">The effective number of choices</div>
+      <p>A model that spreads its probability evenly over <i>k</i> options at every step has perplexity exactly <i>k</i>. So perplexity says: "on average, the model was as unsure as if it had to pick among this many equally likely tokens". A perplexity of 1.35 means it was nearly certain; the know-nothing uniform model, guessing among 200,000 tokens, scores 200,000. Our bigram scored 1.23 and 1.44 on sentences from its own tiny training text, which is easy; on new text it would score infinitely badly because of the zeros.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Only comparable under the same conditions</div>
+      <p>Perplexity is per token, so it depends on the <strong>tokenizer</strong>: a model with bigger tokens makes fewer, harder predictions per sentence, and its perplexity is not directly comparable to one with smaller tokens. It also depends on the <strong>test text</strong>. Compare perplexities only for the same tokenizer on the same held-out text, which in practice means comparing versions of your own model, such as before and after fine-tuning on your domain.</p>
+    </div>
+  </div>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">ML analogy</div><p>Perplexity is to a language model what log loss is to your classifiers: a good training and comparison signal, computed from probabilities, that says nothing directly about whether the business outcome is right. A model with lower perplexity on general web text can still be worse at extracting your invoice fields.</p></div></div>
+</section>
+
+<section class="sec extra" id="benchmarks">
+  <h2><span class="n">+</span>How models are compared today, and why your test set wins <span class="tag-extra">Extra</span></h2>
+  <p>For chat models, perplexity is rarely quoted. Comparisons use <strong>benchmarks</strong>: fixed sets of tasks with checkable answers.</p>
+  <div class="list plain" style="margin:12px 0">
+    <div class="row"><div class="icon bg-blue">K</div><div><div class="t">Knowledge and reasoning</div><div class="d">Multiple-choice exams across many subjects. MMLU (2020), 57 subjects from law to physics, was the standard for years.</div></div></div>
+    <div class="row"><div class="icon bg-green">C</div><div><div class="t">Code</div><div class="d">Write a function, run hidden unit tests. HumanEval (2021) started this style; newer sets use real repository issues.</div></div></div>
+    <div class="row"><div class="icon bg-purple">H</div><div><div class="t">Human preference</div><div class="d">People compare two anonymous answers and vote; votes become a rating, like a chess ranking. Chatbot Arena (2023, now LMArena) popularised this.</div></div></div>
+  </div>
+  <h3>Three limits matter</h3>
+  <div class="point">
+    <div class="point-n">1</div>
+    <div>
+      <div class="point-t">Contamination</div>
+      <p>Benchmark questions are published on the web, and the web is the training data. If a model has seen the test questions during pretraining, its score measures memory, not skill. Labs try to filter this, but it is hard to rule out.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">2</div>
+    <div>
+      <div class="point-t">Saturation</div>
+      <p>Once top models score above about 90%, a benchmark can no longer tell them apart, and the field moves to a harder one. A benchmark from three years ago may say little about today's models.</p>
+    </div>
+  </div>
+  <div class="point">
+    <div class="point-n">3</div>
+    <div>
+      <div class="point-t">It is not your task</div>
+      <p>No public benchmark contains your documents, your users' questions, or your definition of a good answer. A model that ranks third on a leaderboard can be the best for your extraction job, or the cheapest one that is good enough. The test set and checks from Lesson 1.3 are the only scores that decide what you ship.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="check">
+  <h2><span class="n">?</span>Check yourself</h2>
+  <details class="disc"><summary><span class="tag q">Q1</span><span class="q">In the bigram model, why does "the invoice was late" get probability 0, and which historical step addressed the deeper cause?</span><span class="chev"></span></summary>
+    <div class="ans"><p>"was" never followed "invoice" in the training text, so its count and probability are 0, and one zero makes the whole chain-rule product zero. The deeper cause is that counting treats words as unrelated symbols. Neural language models with word vectors (2003, then word2vec in 2013) fixed that: similar words get similar vectors and share what is learned about them.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q2</span><span class="q">What two limitations of RNNs did the Transformer remove?</span><span class="chev"></span></summary>
+    <div class="ans"><p>RNNs process tokens strictly in sequence, even in training, which is slow on large data; and their running summary fades over long distances. The Transformer lets every position attend directly to every allowed earlier position, and trains all positions in parallel using the causal mask.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q3</span><span class="q">A model assigns probability 0.25 to every true next token in a test text. What is its perplexity?</span><span class="chev"></span></summary>
+    <div class="ans"><p>4. The average negative log-probability is −log 0.25 = log 4, and exp(log 4) = 4. It is as unsure as choosing among four equally likely tokens at every step.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q4</span><span class="q">Model A has perplexity 8 on your text and model B has 11, but they use different tokenizers. Can you say A is better?</span><span class="chev"></span></summary>
+    <div class="ans"><p>No. Perplexity is per token, and different tokenizers cut the same text into different numbers of tokens of different difficulty. Compare them on the task instead, with your own test set.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q5</span><span class="q">What did Chinchilla change about how models are trained?</span><span class="chev"></span></summary>
+    <div class="ans"><p>It showed many large models were under-trained: for a fixed compute budget, a smaller model trained on more data does better, at roughly 20 tokens per parameter. Today models are often trained on even more tokens than that, because smaller models are cheaper to run at scale.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q6</span><span class="q">Your manager picks a model because it tops a public leaderboard. Give two reasons to test it on your own data first.</span><span class="chev"></span></summary>
+    <div class="ans"><p>Any two of: the benchmark may be contaminated or saturated; it does not contain your documents, questions or quality criteria; a cheaper or faster model may be good enough for your task; leaderboard tasks may not reflect your format or language requirements.</p></div></details>
+</section>
+
+<section class="recap">
+  <h2>What to retain from this lesson</h2>
+  <p>A language model is any next-token probability model. Counting models fail on unseen text and long-range context; word vectors, attention and finally the Transformer fixed those problems, and scaling the Transformer did the rest. Perplexity scores a language model; your own test set scores an application.</p>
+  <ul>
+    <li>n-gram models count what follows what; they assign zero to anything unseen and see only a few words back.</li>
+    <li>Neural LMs and word2vec gave words vectors; RNNs and attention extended memory; the Transformer gave direct access to all context and parallel training.</li>
+    <li>Scaling laws: loss falls predictably with parameters, data and compute; Chinchilla showed data matters as much as size.</li>
+    <li>Perplexity = exp(average negative log-likelihood) = the effective number of choices; compare only with the same tokenizer and test text.</li>
+    <li>Benchmarks are a first filter: contamination, saturation and task mismatch limit them. Your own test set decides.</li>
+  </ul>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>
