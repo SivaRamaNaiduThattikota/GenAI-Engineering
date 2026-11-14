@@ -12,7 +12,7 @@
      refraction, better contrast. Reduce Transparency and Increase
      Contrast are respected.
    ===================================================================== */
-html.glass{--tint:.12;--lg-outline:rgba(0,0,0,.10);--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
+html.glass{--tint:0;--lg-outline:rgba(0,0,0,.10);--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
   --lg-shadow:0 10px 30px -10px rgba(16,24,64,.28),0 2px 6px -2px rgba(16,24,64,.12);
   --mat:rgba(255,255,255,.74);--mat-edge:rgba(255,255,255,.7)}
 html.glass[data-theme="dark"]{--lg-outline:rgba(0,0,0,.5);--lg-rgb:38,38,44;--lg-edge:rgba(255,255,255,.22);--lg-edge2:rgba(255,255,255,.06);
@@ -275,3 +275,70 @@ html.glass .content.pulling{transition:none}
   html.glass .lg-glow::before,html.glass .tabbar.materialise,html.glass .toc[open] ol,html.glass details.disc[open] .ans{animation:none}
   html.glass .content{translate:none}
 }
+
+/* =====================================================================
+   Look 1, picked in the glass lab (2026-11-15). Clear water glass: almost
+   no fill (1%), a hint of blur, a per-piece lens from app.js (--lens),
+   a thin bevel, a deep soft shadow and a bright rim that turns toward the
+   light. The slider still adds frost and body toward "Tinted".
+   ===================================================================== */
+html.glass :is(.navbar,.sidebar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button){
+  isolation:isolate;
+  background:rgba(var(--lg-rgb),calc(.01 + .8 * var(--tint)));
+  -webkit-backdrop-filter:blur(calc(.4px + 18px * var(--tint))) saturate(165%);
+  backdrop-filter:var(--lens,) blur(calc(.4px + 18px * var(--tint))) saturate(165%);
+  box-shadow:
+    inset .45px .45px .3px -.15px rgba(255,255,255,.95),
+    inset -.3px -.3px .3px -.15px rgba(255,255,255,.62),
+    inset 0 -2.4px 4.8px -3.6px rgba(0,0,0,.06),
+    0 6px 16px -6px rgba(0,0,0,.9),
+    0 0 0 .5px rgba(0,0,0,.15)}
+html.glass[data-theme="dark"] :is(.navbar,.sidebar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button){
+  box-shadow:
+    inset .45px .45px .3px -.15px rgba(255,255,255,.7),
+    inset -.3px -.3px .3px -.15px rgba(255,255,255,.4),
+    0 6px 16px -6px rgba(0,0,0,.95),
+    0 0 0 .5px rgba(0,0,0,.6)}
+/* cards you read sentences on get a light frost, so the page text behind does not mix with theirs */
+html.glass .toc{background:rgba(var(--lg-rgb),calc(.03 + .8 * var(--tint)));
+  -webkit-backdrop-filter:blur(calc(6px + 14px * var(--tint))) saturate(165%);
+  backdrop-filter:var(--lens,) blur(calc(6px + 14px * var(--tint))) saturate(165%)}
+/* the sidebar holds a lot of text: a little more body than the bars */
+html.glass .sidebar{background:rgba(var(--lg-rgb),calc(.04 + .8 * var(--tint)))}
+
+/* rim light: a bright arc on the edge that faces the pointer (or the tilt on phones) */
+html.glass :is(.navbar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button)::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;border:0;padding:1.2px;
+  background:conic-gradient(from var(--ang,-45deg),rgba(255,255,255,.95) 0deg,rgba(255,255,255,0) 70deg,rgba(255,255,255,0) 150deg,
+    rgba(255,255,255,.5) 180deg,rgba(255,255,255,0) 230deg,rgba(255,255,255,0) 300deg,rgba(255,255,255,.95) 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+html.glass[data-theme="dark"] :is(.navbar,.tabbar,.top-btn,.toc,.pager a,.gl-search,.gl-filter button)::after{opacity:.6}
+/* the sidebar scrolls, so its rim stays as inset light on the edge */
+html.glass .sidebar{box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.9),inset -1px -1px 0 rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.16),
+    0 6px 16px -6px rgba(0,0,0,.9),0 0 0 .5px rgba(0,0,0,.15)}
+html.glass[data-theme="dark"] .sidebar{box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.35),inset -1px -1px 0 rgba(255,255,255,.16),
+    0 6px 16px -6px rgba(0,0,0,.95),0 0 0 .5px rgba(0,0,0,.6)}
+
+/* the nav bar is now one floating glass bar with its title on the glass */
+html.glass .navbar{top:10px;margin:10px 14px 0;height:54px;border-radius:27px;padding:0 7px;
+  border-bottom:0!important;view-transition-name:none}
+html.glass .navbar::before{display:none}
+html.glass .navbar .small-title{opacity:1;transform:none;text-shadow:0 0 8px rgba(255,255,255,.75)}
+html.glass[data-theme="dark"] .navbar .small-title{text-shadow:0 0 8px rgba(0,0,0,.6)}
+html.glass .navbar .nav-btn{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+html.glass .navbar .nav-btn::after{display:none}
+@media (hover:hover){html.glass .navbar .nav-btn:hover{background:rgba(120,120,128,.14)}}
+html.glass .navbar .progress{left:24px;right:24px;width:auto;bottom:0;border-radius:2px}
+@media (max-width:640px){html.glass .navbar{margin:8px 8px 0;top:8px}}
+
+/* materialise: a piece grows into place while its lens ramps up (app.js) */
+html.glass .lg-form{animation:lg-form .62s var(--gel-soft) both}
+@keyframes lg-form{0%{opacity:0;scale:.92}35%{opacity:1}100%{opacity:1;scale:1}}
+@media (prefers-reduced-motion:reduce){html.glass .lg-form{animation:none}}
+/* small bars sit right on body text: a light frost keeps their labels readable */
+html.glass:root :is(.tabbar,.top-btn){backdrop-filter:var(--lens,) blur(calc(3px + 18px*var(--tint))) saturate(165%);-webkit-backdrop-filter:blur(calc(3px + 18px*var(--tint))) saturate(165%)}
+html.glass .tabbar .tb{text-shadow:0 0 6px rgba(255,255,255,.9),0 0 2px rgba(255,255,255,.9)}
+html.glass[data-theme="dark"] .tabbar .tb{text-shadow:0 0 6px rgba(0,0,0,.8),0 0 2px rgba(0,0,0,.8)}

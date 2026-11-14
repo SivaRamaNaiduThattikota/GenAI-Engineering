@@ -141,6 +141,7 @@ const COURSE = [
     h.dataset.theme = dark ? 'dark' : 'light';
     h.classList.toggle('glass', v === 'glass');
     placeThumb();
+    dispatchEvent(new Event('genai-theme'));
   }
   // measure the selected button each time: widths change when the web font finishes
   // loading or the sidebar resizes, which used to leave the pill off-centre
@@ -155,13 +156,13 @@ const COURSE = [
   new ResizeObserver(placeThumb).observe(seg);
   // iOS 27 style slider: from ultra-clear to fully tinted glass
   const tintInput = side.querySelector('#glass-tint');
-  const savedTint = localStorage.getItem('genai-glass-tint');
-  const defaultTint = 0.12;
+  const savedTint = localStorage.getItem('genai-glass-tint-l1');
+  const defaultTint = 0;
   tintInput.value = Math.round((savedTint === null ? defaultTint : +savedTint) * 100);
   tintInput.addEventListener('input', () => {
     const t = (tintInput.value / 100).toFixed(2);
     document.documentElement.style.setProperty('--tint', t);
-    localStorage.setItem('genai-glass-tint', t);
+    localStorage.setItem('genai-glass-tint-l1', t);
   });
   seg.addEventListener('click', e => { if (e.target.dataset.v) applyTheme(e.target.dataset.v); });
   mq.addEventListener('change', () => applyTheme(localStorage.getItem('genai-notes-theme') || 'auto'));
@@ -381,8 +382,89 @@ const COURSE = [
   defs.innerHTML = lens('lg-lens', 48, 0.8) + lens('lg-lens-soft', 30, 2);
   document.body.appendChild(defs);
 
+  // 1b. "Look 1" (picked in the glass lab): every glass piece gets its own lens, drawn
+  //     for its exact size and rounded shape. In an 18px band at the rim the backdrop is
+  //     pulled inward, strongest right at the edge (a convex profile), so corners bend
+  //     diagonally like a drop of water. Red, green and blue bend by slightly different
+  //     amounts for a faint colour split.
+  const LENS = { scale: 34, bezel: 18, chroma: 0.03, soft: 0.3 };
+  const lensSel = '.navbar, .sidebar, .tabbar, .top-btn, .toc, .pager a, .gl-search, .gl-filter button';
+  const glassOn = () => document.documentElement.classList.contains('glass');
+  function shapeMap(w, h, r) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(w, h), d = img.data;
+    const hx = w / 2, hy = h / 2, b = Math.min(LENS.bezel, Math.min(w, h) * .28); r = Math.min(r, hx, hy);  // thin bars get a thin rim
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const px = x + .5 - hx, py = y + .5 - hy;
+      const qx = Math.abs(px) - (hx - r), qy = Math.abs(py) - (hy - r);
+      let dist, nx = 0, ny = 0;               // dist: how far inside the shape; n: outward direction
+      if (qx > 0 && qy > 0) { const l = Math.hypot(qx, qy); dist = r - l; nx = qx / l; ny = qy / l; }
+      else if (qx > qy) { dist = r - qx; nx = 1; } else { dist = r - qy; ny = 1; }
+      let m = 0;
+      if (dist < b) { const t = 1 - Math.max(dist, 0) / b; m = 1 - Math.sqrt(1 - t * t); }
+      const i = (y * w + x) * 4;
+      d[i] = 128 - Math.sign(px || 1) * nx * m * 127; d[i + 1] = 128 - Math.sign(py || 1) * ny * m * 127;
+      d[i + 2] = 128; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return c.toDataURL();
+  }
+  let lensCount = 0;
+  function buildLens(el, amount = 1) {
+    const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight);
+    if (w < 2 || h < 2) return;
+    const id = el.dataset.lens || (el.dataset.lens = 'lg-l' + (++lensCount));
+    const r = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    const s = LENS.scale * amount * Math.min(1, Math.min(w, h) / 64), k = LENS.chroma;  // and bend less
+    const ch = (scale, row, name) => `<feDisplacementMap in="soft" in2="m" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="d${name}"/>
+      <feColorMatrix in="d${name}" type="matrix" values="${row} 0 0 0 1 0" result="${name}"/>`;
+    defs.querySelector('#' + id)?.remove();
+    defs.insertAdjacentHTML('beforeend', `<filter id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feImage href="${shapeMap(w, h, r)}" x="0" y="0" width="${w}" height="${h}" result="m"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="${LENS.soft}" result="soft"/>
+      ${ch(s * (1 + k), '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0 ', 'r')}
+      ${ch(s, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0 ', 'g')}
+      ${ch(s * (1 - k), '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0 ', 'b')}
+      <feComposite in="r" in2="g" operator="arithmetic" k2="1" k3="1" result="rg"/>
+      <feComposite in="rg" in2="b" operator="arithmetic" k2="1" k3="1"/></filter>`);
+    el.style.setProperty('--lens', `url(#${id})`);
+  }
+  const lensDirty = new Set(); let lensRaf = 0;
+  const lensRO = new ResizeObserver(entries => {
+    entries.forEach(en => lensDirty.add(en.target));
+    if (!lensRaf) lensRaf = requestAnimationFrame(() => {
+      lensRaf = 0;
+      if (glassOn()) lensDirty.forEach(el => buildLens(el));
+      lensDirty.clear();
+    });
+  });
+  function watchLenses() {
+    document.querySelectorAll(lensSel).forEach(el => {
+      if (el.dataset.lensWatched) { if (glassOn()) buildLens(el); return; }
+      el.dataset.lensWatched = '1'; lensRO.observe(el);
+    });
+  }
+  addEventListener('genai-theme', () => { if (glassOn()) watchLenses(); });
+
+  // Materialise: glass forms by bending light more and more instead of fading in.
+  function materialise(el, dur = 620) {
+    if (!el || !glassOn() || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    buildLens(el, 0);
+    el.classList.remove('lg-form'); void el.offsetWidth; el.classList.add('lg-form');
+    el.addEventListener('animationend', () => el.classList.remove('lg-form'), { once: true });
+    const t0 = performance.now();
+    const ramp = now => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      const f = defs.querySelector('#' + el.dataset.lens);
+      if (f) f.querySelectorAll('feDisplacementMap').forEach((d, i) =>
+        d.setAttribute('scale', (LENS.scale * [1 + LENS.chroma, 1, 1 - LENS.chroma][i] * e).toFixed(2)));
+      if (k < 1) requestAnimationFrame(ramp);
+    };
+    requestAnimationFrame(ramp);
+  }
+
   // 2. Specular highlights that follow the pointer, like light moving over glass.
-  const shiny = () => document.querySelectorAll('html.glass .nav-btn, html.glass .top-btn, html.glass .tabbar, html.glass .seg, html.glass .search, html.glass .pager a, html.glass .toc, html.glass .sidebar, html.glass .glass-slider');
+  const shiny = () => document.querySelectorAll('html.glass .navbar, html.glass .gl-search, html.glass .gl-filter button, html.glass .top-btn, html.glass .tabbar, html.glass .seg, html.glass .search, html.glass .pager a, html.glass .toc, html.glass .sidebar, html.glass .glass-slider');
   let px = innerWidth * 0.3, py = -200, lightQueued = false;
   function moveLight() {
     lightQueued = false;
@@ -390,6 +472,8 @@ const COURSE = [
       const r = el.getBoundingClientRect();
       el.style.setProperty('--mx', ((px - r.left) / r.width * 100).toFixed(1) + '%');
       el.style.setProperty('--my', ((py - r.top) / r.height * 100).toFixed(1) + '%');
+      // the bright arc on the rim turns to face the light
+      el.style.setProperty('--ang', (Math.atan2(py - (r.top + r.height / 2), px - (r.left + r.width / 2)) * 180 / Math.PI + 55).toFixed(1) + 'deg');
     });
   }
   addEventListener('pointermove', e => {
@@ -431,20 +515,17 @@ const COURSE = [
   const isGlass = () => document.documentElement.classList.contains('glass');
   const calm = matchMedia('(prefers-reduced-motion: reduce)');
 
-  // 5. Materialise: the tab bar grows in as a lens, and its refraction ramps up with it.
-  const tabbar = document.querySelector('.tabbar');
-  if (tabbar && isGlass() && !calm.matches) {
-    tabbar.classList.add('materialise');
-    tabbar.addEventListener('animationend', () => tabbar.classList.remove('materialise'), { once: true });
-    const disp = document.querySelector('#lg-lens feDisplacementMap');
-    const t0 = performance.now(), full = +disp.getAttribute('scale');
-    const ramp = now => {
-      const k = Math.min(1, (now - t0) / 700);
-      disp.setAttribute('scale', (full * (1 - Math.pow(1 - k, 3))).toFixed(1));
-      if (k < 1) requestAnimationFrame(ramp);
-    };
-    disp.setAttribute('scale', '0'); requestAnimationFrame(ramp);
+  // 5. Lenses for every glass piece (the tab bar exists by now), then materialise:
+  //    the bars form one after another on the first page of a visit (not on every
+  //    page change, motion on frequent actions gets tiring), and the contents menu
+  //    forms each time it opens.
+  watchLenses();
+  if (isGlass() && !sessionStorage.getItem('genai-formed')) {
+    sessionStorage.setItem('genai-formed', '1');
+    ['.navbar', '.sidebar', '.tabbar'].forEach((sel, i) => setTimeout(() => materialise(document.querySelector(sel)), 60 + i * 110));
   }
+  const tocBox = document.getElementById('toc');
+  if (tocBox) tocBox.addEventListener('toggle', () => { if (tocBox.open) materialise(tocBox, 480); });
 
   // 6. Illuminate from within: a glow starts under the pointer and spreads through the glass.
   const glowSel = '.tabbar, .navbar .nav-btn, .top-btn, .pager a, .toc, .gl-filter button';
