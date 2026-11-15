@@ -503,6 +503,8 @@ details.disc .ans p{margin:6px 0}
 .fig text.h{fill:var(--label);font-weight:700;font-size:13.5px}
 .fig text.w{fill:#fff;font-weight:650}
 .fig text.mid{text-anchor:middle}
+.fig text.tk{font-family:var(--mono);font-size:12px;fill:var(--label);text-anchor:middle}
+.fig text.tk.w{fill:#fff;font-weight:600}
 .fig .ax{stroke:var(--sep);stroke-width:1}
 .fig .grid{stroke:var(--sep);stroke-width:.6;stroke-dasharray:3 4}
 .fig .box{fill:var(--fill2);stroke:var(--sep);stroke-width:1}

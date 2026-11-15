@@ -72,6 +72,22 @@
   <div class="point"><div class="point-n">3</div><div>
     <div class="point-t">Subword pieces (what modern LLMs use)</div>
     <p>Common words get a single token, while rare words are built from reusable pieces. "running" might be one token, while a rare word is split into a few familiar pieces. The downside is that boundaries can be unintuitive, and efficiency varies by input: plain English is cheap, while code, numbers and many other languages cost more.</p></div></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 152" role="img" aria-label="unbelievable! cut into characters, whole words and subwords">
+      <text x="0" y="22" class="h">Characters</text>
+      <rect x="110" y="6" width="22" height="24" rx="6" class="box"/><text x="121.0" y="22" class="tk">u</text><rect x="135" y="6" width="22" height="24" rx="6" class="box"/><text x="146.0" y="22" class="tk">n</text><rect x="160" y="6" width="22" height="24" rx="6" class="box"/><text x="171.0" y="22" class="tk">b</text><rect x="185" y="6" width="22" height="24" rx="6" class="box"/><text x="196.0" y="22" class="tk">e</text><rect x="210" y="6" width="22" height="24" rx="6" class="box"/><text x="221.0" y="22" class="tk">l</text><rect x="235" y="6" width="22" height="24" rx="6" class="box"/><text x="246.0" y="22" class="tk">i</text><rect x="260" y="6" width="22" height="24" rx="6" class="box"/><text x="271.0" y="22" class="tk">e</text><rect x="285" y="6" width="22" height="24" rx="6" class="box"/><text x="296.0" y="22" class="tk">v</text><rect x="310" y="6" width="22" height="24" rx="6" class="box"/><text x="321.0" y="22" class="tk">a</text><rect x="335" y="6" width="22" height="24" rx="6" class="box"/><text x="346.0" y="22" class="tk">b</text><rect x="360" y="6" width="22" height="24" rx="6" class="box"/><text x="371.0" y="22" class="tk">l</text><rect x="385" y="6" width="22" height="24" rx="6" class="box"/><text x="396.0" y="22" class="tk">e</text><rect x="410" y="6" width="22" height="24" rx="6" class="box"/><text x="421.0" y="22" class="tk">!</text>
+      <text x="443" y="22">13 units</text>
+      <text x="0" y="62" class="h">Whole words</text>
+      <rect x="110" y="46" width="101" height="24" rx="6" class="box"/><text x="160.5" y="62" class="tk">unbelievable</text><rect x="214" y="46" width="22" height="24" rx="6" class="box"/><text x="225.0" y="62" class="tk">!</text>
+      <text x="247" y="62">2 units, only if the word is in the list</text>
+      <text x="0" y="102" class="h">Subwords</text>
+      <rect x="110" y="86" width="27" height="24" rx="6" class="box a"/><text x="123.5" y="102" class="tk w">un</text><rect x="140" y="86" width="34" height="24" rx="6" class="box a"/><text x="157.0" y="102" class="tk w">bel</text><rect x="177" y="86" width="64" height="24" rx="6" class="box a"/><text x="209.0" y="102" class="tk w">ievable</text><rect x="244" y="86" width="22" height="24" rx="6" class="box a"/><text x="255.0" y="102" class="tk w">!</text>
+      <text x="277" y="102">4 units, real o200k_base output</text>
+      <text x="0" y="138" class="h">Typo</text>
+      <rect x="110" y="122" width="108" height="24" rx="6" class="box"/><text x="164.0" y="138" class="tk">unbelieveable</text><text x="229" y="138">whole words: no entry. Subwords: still known pieces.</text>
+    </svg></div>
+    <figcaption>The same text cut three ways. Characters never fail but make long sequences; whole words are short but break on anything new; subwords sit in between.</figcaption>
+  </figure>
   <p>Summary of the trade-off:</p>
   <div class="tbl"><table>
     <thead><tr><th>Representation</th><th>Advantage</th><th>Limitation</th></tr></thead>
@@ -113,6 +129,42 @@
     <li>Repeat thousands of times, until the vocabulary reaches the target size.</li>
   </ol>
   <p>The output is two things: the <strong>vocabulary</strong>, and the ordered list of <strong>merge rules</strong>. For example, repeated merges could build <code>"t" + "h" → "th"</code>, then <code>"th" + "e" → "the"</code>.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 292" role="img" aria-label="BPE merges step by step on the words newest and lower">
+      <text x="180" y="14" class="h">"newest"</text><text x="402" y="14" class="h">"lower"</text>
+      <text x="0" y="44" class="h">Start</text>
+      <rect x="180" y="28" width="22" height="24" rx="6" class="box"/><text x="191.0" y="44" class="tk">n</text><rect x="206" y="28" width="22" height="24" rx="6" class="box"/><text x="217.0" y="44" class="tk">e</text><rect x="232" y="28" width="22" height="24" rx="6" class="box"/><text x="243.0" y="44" class="tk">w</text><rect x="258" y="28" width="22" height="24" rx="6" class="box"/><text x="269.0" y="44" class="tk">e</text><rect x="284" y="28" width="22" height="24" rx="6" class="box"/><text x="295.0" y="44" class="tk">s</text><rect x="310" y="28" width="22" height="24" rx="6" class="box"/><text x="321.0" y="44" class="tk">t</text><rect x="336" y="28" width="42" height="24" rx="6" class="box"/><text x="357.0" y="44" class="tk">&lt;/w&gt;</text>
+      <rect x="402" y="28" width="22" height="24" rx="6" class="box"/><text x="413.0" y="44" class="tk">l</text><rect x="428" y="28" width="22" height="24" rx="6" class="box"/><text x="439.0" y="44" class="tk">o</text><rect x="454" y="28" width="22" height="24" rx="6" class="box"/><text x="465.0" y="44" class="tk">w</text><rect x="480" y="28" width="22" height="24" rx="6" class="box"/><text x="491.0" y="44" class="tk">e</text><rect x="506" y="28" width="22" height="24" rx="6" class="box"/><text x="517.0" y="44" class="tk">r</text><rect x="532" y="28" width="42" height="24" rx="6" class="box"/><text x="553.0" y="44" class="tk">&lt;/w&gt;</text>
+      <text x="0" y="76" class="h">Merge 1</text>
+      <text x="64" y="76">e + s · seen 9×</text>
+      <rect x="180" y="60" width="22" height="24" rx="6" class="box"/><text x="191.0" y="76" class="tk">n</text><rect x="206" y="60" width="22" height="24" rx="6" class="box"/><text x="217.0" y="76" class="tk">e</text><rect x="232" y="60" width="22" height="24" rx="6" class="box"/><text x="243.0" y="76" class="tk">w</text><rect x="258" y="60" width="27" height="24" rx="6" class="box a"/><text x="271.5" y="76" class="tk w">es</text><rect x="289" y="60" width="22" height="24" rx="6" class="box"/><text x="300.0" y="76" class="tk">t</text><rect x="315" y="60" width="42" height="24" rx="6" class="box"/><text x="336.0" y="76" class="tk">&lt;/w&gt;</text>
+      <rect x="402" y="60" width="22" height="24" rx="6" class="box"/><text x="413.0" y="76" class="tk">l</text><rect x="428" y="60" width="22" height="24" rx="6" class="box"/><text x="439.0" y="76" class="tk">o</text><rect x="454" y="60" width="22" height="24" rx="6" class="box"/><text x="465.0" y="76" class="tk">w</text><rect x="480" y="60" width="22" height="24" rx="6" class="box"/><text x="491.0" y="76" class="tk">e</text><rect x="506" y="60" width="22" height="24" rx="6" class="box"/><text x="517.0" y="76" class="tk">r</text><rect x="532" y="60" width="42" height="24" rx="6" class="box"/><text x="553.0" y="76" class="tk">&lt;/w&gt;</text>
+      <text x="0" y="108" class="h">Merge 2</text>
+      <text x="64" y="108">es + t · 9×</text>
+      <rect x="180" y="92" width="22" height="24" rx="6" class="box"/><text x="191.0" y="108" class="tk">n</text><rect x="206" y="92" width="22" height="24" rx="6" class="box"/><text x="217.0" y="108" class="tk">e</text><rect x="232" y="92" width="22" height="24" rx="6" class="box"/><text x="243.0" y="108" class="tk">w</text><rect x="258" y="92" width="34" height="24" rx="6" class="box a"/><text x="275.0" y="108" class="tk w">est</text><rect x="296" y="92" width="42" height="24" rx="6" class="box"/><text x="317.0" y="108" class="tk">&lt;/w&gt;</text>
+      <rect x="402" y="92" width="22" height="24" rx="6" class="box"/><text x="413.0" y="108" class="tk">l</text><rect x="428" y="92" width="22" height="24" rx="6" class="box"/><text x="439.0" y="108" class="tk">o</text><rect x="454" y="92" width="22" height="24" rx="6" class="box"/><text x="465.0" y="108" class="tk">w</text><rect x="480" y="92" width="22" height="24" rx="6" class="box"/><text x="491.0" y="108" class="tk">e</text><rect x="506" y="92" width="22" height="24" rx="6" class="box"/><text x="517.0" y="108" class="tk">r</text><rect x="532" y="92" width="42" height="24" rx="6" class="box"/><text x="553.0" y="108" class="tk">&lt;/w&gt;</text>
+      <text x="0" y="140" class="h">Merge 3</text>
+      <text x="64" y="140">est + &lt;/w&gt; · 9×</text>
+      <rect x="180" y="124" width="22" height="24" rx="6" class="box"/><text x="191.0" y="140" class="tk">n</text><rect x="206" y="124" width="22" height="24" rx="6" class="box"/><text x="217.0" y="140" class="tk">e</text><rect x="232" y="124" width="22" height="24" rx="6" class="box"/><text x="243.0" y="140" class="tk">w</text><rect x="258" y="124" width="64" height="24" rx="6" class="box a"/><text x="290.0" y="140" class="tk w">est&lt;/w&gt;</text>
+      <rect x="402" y="124" width="22" height="24" rx="6" class="box"/><text x="413.0" y="140" class="tk">l</text><rect x="428" y="124" width="22" height="24" rx="6" class="box"/><text x="439.0" y="140" class="tk">o</text><rect x="454" y="124" width="22" height="24" rx="6" class="box"/><text x="465.0" y="140" class="tk">w</text><rect x="480" y="124" width="22" height="24" rx="6" class="box"/><text x="491.0" y="140" class="tk">e</text><rect x="506" y="124" width="22" height="24" rx="6" class="box"/><text x="517.0" y="140" class="tk">r</text><rect x="532" y="124" width="42" height="24" rx="6" class="box"/><text x="553.0" y="140" class="tk">&lt;/w&gt;</text>
+      <text x="0" y="172" class="h">Merge 4</text>
+      <text x="64" y="172">l + o · 7×</text>
+      <rect x="180" y="156" width="22" height="24" rx="6" class="box"/><text x="191.0" y="172" class="tk">n</text><rect x="206" y="156" width="22" height="24" rx="6" class="box"/><text x="217.0" y="172" class="tk">e</text><rect x="232" y="156" width="22" height="24" rx="6" class="box"/><text x="243.0" y="172" class="tk">w</text><rect x="258" y="156" width="64" height="24" rx="6" class="box"/><text x="290.0" y="172" class="tk">est&lt;/w&gt;</text>
+      <rect x="402" y="156" width="27" height="24" rx="6" class="box a"/><text x="415.5" y="172" class="tk w">lo</text><rect x="433" y="156" width="22" height="24" rx="6" class="box"/><text x="444.0" y="172" class="tk">w</text><rect x="459" y="156" width="22" height="24" rx="6" class="box"/><text x="470.0" y="172" class="tk">e</text><rect x="485" y="156" width="22" height="24" rx="6" class="box"/><text x="496.0" y="172" class="tk">r</text><rect x="511" y="156" width="42" height="24" rx="6" class="box"/><text x="532.0" y="172" class="tk">&lt;/w&gt;</text>
+      <text x="0" y="204" class="h">Merge 5</text>
+      <text x="64" y="204">lo + w · 7×</text>
+      <rect x="180" y="188" width="22" height="24" rx="6" class="box"/><text x="191.0" y="204" class="tk">n</text><rect x="206" y="188" width="22" height="24" rx="6" class="box"/><text x="217.0" y="204" class="tk">e</text><rect x="232" y="188" width="22" height="24" rx="6" class="box"/><text x="243.0" y="204" class="tk">w</text><rect x="258" y="188" width="64" height="24" rx="6" class="box"/><text x="290.0" y="204" class="tk">est&lt;/w&gt;</text>
+      <rect x="402" y="188" width="34" height="24" rx="6" class="box a"/><text x="419.0" y="204" class="tk w">low</text><rect x="440" y="188" width="22" height="24" rx="6" class="box"/><text x="451.0" y="204" class="tk">e</text><rect x="466" y="188" width="22" height="24" rx="6" class="box"/><text x="477.0" y="204" class="tk">r</text><rect x="492" y="188" width="42" height="24" rx="6" class="box"/><text x="513.0" y="204" class="tk">&lt;/w&gt;</text>
+      <text x="0" y="236" class="h">Merge 6</text>
+      <text x="64" y="236">n + e · 6×</text>
+      <rect x="180" y="220" width="27" height="24" rx="6" class="box a"/><text x="193.5" y="236" class="tk w">ne</text><rect x="211" y="220" width="22" height="24" rx="6" class="box"/><text x="222.0" y="236" class="tk">w</text><rect x="237" y="220" width="64" height="24" rx="6" class="box"/><text x="269.0" y="236" class="tk">est&lt;/w&gt;</text>
+      <rect x="402" y="220" width="34" height="24" rx="6" class="box"/><text x="419.0" y="236" class="tk">low</text><rect x="440" y="220" width="22" height="24" rx="6" class="box"/><text x="451.0" y="236" class="tk">e</text><rect x="466" y="220" width="22" height="24" rx="6" class="box"/><text x="477.0" y="236" class="tk">r</text><rect x="492" y="220" width="42" height="24" rx="6" class="box"/><text x="513.0" y="236" class="tk">&lt;/w&gt;</text>
+      <line x1="0" y1="256" x2="640" y2="256" class="ax"/>
+      <text x="0" y="276" class="h">Merge rules learned, in this order:</text>
+      <rect x="236" y="262" width="34" height="24" rx="6" class="box"/><text x="253.0" y="278" class="tk">e+s</text><rect x="276" y="262" width="42" height="24" rx="6" class="box"/><text x="297.0" y="278" class="tk">es+t</text><rect x="324" y="262" width="71" height="24" rx="6" class="box"/><text x="359.5" y="278" class="tk">est+&lt;/w&gt;</text><rect x="401" y="262" width="34" height="24" rx="6" class="box"/><text x="418.0" y="278" class="tk">l+o</text><rect x="441" y="262" width="42" height="24" rx="6" class="box"/><text x="462.0" y="278" class="tk">lo+w</text><rect x="489" y="262" width="34" height="24" rx="6" class="box"/><text x="506.0" y="278" class="tk">n+e</text>
+    </svg></div>
+    <figcaption>Real output of the toy trainer below (corpus: low ×5, lower ×2, newest ×6, widest ×3). Blue is the piece that the merge just created. "e + s" wins first because pairs are counted over the whole corpus: 6 times in newest plus 3 in widest.</figcaption>
+  </figure>
   <h3>Run BPE yourself</h3>
   <p>This is a complete, simplified BPE trainer in plain Python, no libraries needed. The corpus is four words with how often each appears; <code>&lt;/w&gt;</code> marks the end of a word, so the trainer can learn word endings.</p>
   <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">bpe_toy.py</span><button class="copy">Copy</button></div>
@@ -174,6 +226,34 @@ merge 6: 'n' + 'e' (seen 6x)
     <li>Now "low" is a single token, while "lower" is <code>low</code> + <code>e</code> + <code>r</code>. With more merges, <code>er</code> would eventually form too.</li>
   </ul>
   <p>Frequent pieces become single tokens; rare words stay split. That is exactly the subword behaviour from section 3, emerging from a dozen lines of code.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 214" role="img" aria-label="Tokenizer training happens once; encoding applies the frozen merge rules to every request">
+      <defs><marker id="ah21" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">Training the tokenizer: once, before the model is trained</text>
+      <rect x="0" y="28" width="110" height="40" rx="9" class="box "/><text x="55.0" y="45.0" class="mid v">Large text</text><text x="55.0" y="60.0" class="mid v">corpus</text>
+      <path d="M112 48 L136 48" class="arr " marker-end="url(#ah21)"/>
+      <rect x="138" y="28" width="140" height="40" rx="9" class="box "/><text x="208.0" y="45.0" class="mid v">Count neighbouring</text><text x="208.0" y="60.0" class="mid v">pairs</text>
+      <path d="M280 48 L304 48" class="arr " marker-end="url(#ah21)"/>
+      <rect x="306" y="28" width="140" height="40" rx="9" class="box "/><text x="376.0" y="45.0" class="mid v">Merge the most</text><text x="376.0" y="60.0" class="mid v">frequent pair</text>
+      <path d="M376 70 C376 92 208 92 208 72" class="arr dash" marker-end="url(#ah21)"/>
+      <text x="292" y="100" class="mid">repeat until the vocabulary is big enough</text>
+      <path d="M448 48 L472 48" class="arr " marker-end="url(#ah21)"/>
+      <rect x="474" y="28" width="166" height="40" rx="9" class="box a"/><text x="557.0" y="45.0" class="mid w">Vocabulary +</text><text x="557.0" y="60.0" class="mid w">ordered merge rules</text>
+      <path d="M557 70 L557 154 L323 154 L323 168" class="arr a dash" marker-end="url(#ah21)"/>
+      <text x="550" y="128" style="text-anchor:end">frozen, shipped</text><text x="550" y="142" style="text-anchor:end">with the model</text>
+      <text x="0" y="140" class="h">Encoding: every request, nothing is learned</text>
+      <rect x="0" y="170" width="100" height="40" rx="9" class="box "/><text x="50.0" y="194.0" class="mid v">Your prompt</text>
+      <path d="M102 190 L120 190" class="arr " marker-end="url(#ah21)"/>
+      <rect x="122" y="170" width="104" height="40" rx="9" class="box "/><text x="174.0" y="187.0" class="mid v">Split into</text><text x="174.0" y="202.0" class="mid v">bytes</text>
+      <path d="M228 190 L246 190" class="arr " marker-end="url(#ah21)"/>
+      <rect x="248" y="170" width="150" height="40" rx="9" class="box "/><text x="323.0" y="187.0" class="mid v">Apply the merge rules</text><text x="323.0" y="202.0" class="mid v">in the same order</text>
+      <path d="M400 190 L418 190" class="arr " marker-end="url(#ah21)"/>
+      <rect x="420" y="170" width="90" height="40" rx="9" class="box b"/><text x="465.0" y="194.0" class="mid w">Tokens</text>
+      <path d="M512 190 L530 190" class="arr " marker-end="url(#ah21)"/>
+      <rect x="532" y="170" width="108" height="40" rx="9" class="box b"/><text x="586.0" y="194.0" class="mid w">Token IDs</text>
+    </svg></div>
+    <figcaption>The rules are learned once from a corpus. After that, encoding your text is fixed string processing: the same text always gives the same tokens.</figcaption>
+  </figure>
   <div class="point"><div class="point-n">!</div><div>
     <div class="point-t">Training the tokenizer happens once; encoding just applies the rules</div>
     <p>When you send a prompt, the tokenizer <strong>does not learn anything</strong>. It applies its fixed merge rules to your text. The vocabulary is frozen together with the model, which is why a model's tokenizer can never be swapped for another one.</p></div></div>
@@ -202,6 +282,105 @@ merge 6: 'n' + 'e' (seen 6x)
   </ul>
   <h3>From ID to vector: the embedding table</h3>
   <p>The model holds an <strong>embedding table</strong>: a matrix with one learned vector per vocabulary entry. Looking up a token means taking its row:</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 235" role="img" aria-label="Token ID 12650 selects one row of the embedding table, which is the token vector">
+      <defs><marker id="ah21d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <rect x="0" y="86" width="80" height="40" rx="9" class="box "/><text x="40.0" y="110.0" class="mid v">" Paris"</text>
+      <path d="M82 106 L128 106" class="arr" marker-end="url(#ah21d)"/><text x="105" y="78" class="mid">tokenizer</text>
+      <rect x="132" y="86" width="76" height="40" rx="9" class="box b"/><text x="170.0" y="110.0" class="mid w">12650</text>
+      <text x="170" y="144" class="mid">token ID</text>
+      <text x="282" y="33" style="text-anchor:end">0</text>
+      <rect x="290" y="20" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="20" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="20" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="20" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="20" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="20" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="20" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="20" width="20" height="18" rx="3" class="box"/>
+      <text x="282" y="54" style="text-anchor:end">1</text>
+      <rect x="290" y="41" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="41" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="41" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="41" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="41" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="41" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="41" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="41" width="20" height="18" rx="3" class="box"/>
+      <text x="282" y="75" style="text-anchor:end">2</text>
+      <rect x="290" y="62" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="62" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="62" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="62" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="62" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="62" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="62" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="62" width="20" height="18" rx="3" class="box"/>
+      <text x="282" y="96" style="text-anchor:end">…</text>
+      <rect x="290" y="83" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="83" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="83" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="83" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="83" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="83" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="83" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="83" width="20" height="18" rx="3" class="box"/>
+      <text x="282" y="117" style="text-anchor:end">12649</text>
+      <rect x="290" y="104" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="104" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="104" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="104" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="104" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="104" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="104" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="104" width="20" height="18" rx="3" class="box"/>
+      <text x="282" y="138" class="v" style="text-anchor:end">12650</text>
+      <rect x="290" y="125" width="20" height="18" rx="3" class="box a"/>
+      <rect x="312" y="125" width="20" height="18" rx="3" class="box a"/>
+      <rect x="334" y="125" width="20" height="18" rx="3" class="box a"/>
+      <rect x="356" y="125" width="20" height="18" rx="3" class="box a"/>
+      <rect x="378" y="125" width="20" height="18" rx="3" class="box a"/>
+      <rect x="400" y="125" width="20" height="18" rx="3" class="box a"/>
+      <rect x="422" y="125" width="20" height="18" rx="3" class="box a"/>
+      <rect x="444" y="125" width="20" height="18" rx="3" class="box a"/>
+      <text x="282" y="159" style="text-anchor:end">12651</text>
+      <rect x="290" y="146" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="146" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="146" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="146" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="146" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="146" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="146" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="146" width="20" height="18" rx="3" class="box"/>
+      <text x="282" y="180" style="text-anchor:end">…</text>
+      <rect x="290" y="167" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="167" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="167" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="167" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="167" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="167" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="167" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="167" width="20" height="18" rx="3" class="box"/>
+      <text x="282" y="201" style="text-anchor:end">200,018</text>
+      <rect x="290" y="188" width="20" height="18" rx="3" class="box"/>
+      <rect x="312" y="188" width="20" height="18" rx="3" class="box"/>
+      <rect x="334" y="188" width="20" height="18" rx="3" class="box"/>
+      <rect x="356" y="188" width="20" height="18" rx="3" class="box"/>
+      <rect x="378" y="188" width="20" height="18" rx="3" class="box"/>
+      <rect x="400" y="188" width="20" height="18" rx="3" class="box"/>
+      <rect x="422" y="188" width="20" height="18" rx="3" class="box"/>
+      <rect x="444" y="188" width="20" height="18" rx="3" class="box"/>
+      <path d="M210 106 C230 106 222 134 240 134" class="arr a" marker-end="url(#ah21d)"/>
+      <text x="378" y="225" class="mid">embedding table: 200,019 rows × d columns</text>
+      <path d="M470 134 L500 134" class="arr a" marker-end="url(#ah21d)"/>
+      <rect x="506" y="121" width="32" height="26" rx="5" class="soft"/><text x="522" y="138" class="mid" style="font-size:10.5px">0.12</text>
+      <rect x="539" y="121" width="32" height="26" rx="5" class="soft"/><text x="555" y="138" class="mid" style="font-size:10.5px">−0.40</text>
+      <rect x="572" y="121" width="32" height="26" rx="5" class="soft"/><text x="588" y="138" class="mid" style="font-size:10.5px">…</text>
+      <rect x="605" y="121" width="32" height="26" rx="5" class="soft"/><text x="621" y="138" class="mid" style="font-size:10.5px">0.31</text>
+      <text x="571" y="168" class="mid">one vector, length d</text>
+    </svg></div>
+    <figcaption>Looking up a token takes one row of the table. The ID is only a row number; the numbers in the row are learned during training. The values shown are made up.</figcaption>
+  </figure>
   <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">conceptual shapes</span><button class="copy">Copy</button></div>
 <pre><code>embedding_table.shape == (vocabulary_size, embedding_dimension)
 
