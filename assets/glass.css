@@ -14,10 +14,10 @@
    ===================================================================== */
 html.glass{--tint:0;--lg-outline:rgba(0,0,0,.10);--lg-rgb:255,255,255;--lg-edge:rgba(255,255,255,.62);--lg-edge2:rgba(255,255,255,.18);
   --lg-shadow:0 10px 30px -10px rgba(16,24,64,.28),0 2px 6px -2px rgba(16,24,64,.12);
-  --mat:rgba(255,255,255,.74);--mat-edge:rgba(255,255,255,.7)}
+  --mat:rgba(var(--card-rgb,255,255,255),var(--gc,.4));--mat-edge:rgba(255,255,255,.55)}
 html.glass[data-theme="dark"]{--lg-outline:rgba(0,0,0,.5);--lg-rgb:38,38,44;--lg-edge:rgba(255,255,255,.22);--lg-edge2:rgba(255,255,255,.06);
   --lg-shadow:0 12px 34px -10px rgba(0,0,0,.7),0 2px 6px -2px rgba(0,0,0,.5);
-  --mat:rgba(28,28,32,.72);--mat-edge:rgba(255,255,255,.08)}
+  --mat:rgba(var(--card-rgb,28,28,30),var(--gc,.6));--mat-edge:rgba(255,255,255,.08)}
 
 /* a visually rich wallpaper, so the glass has something to pick colour up from */
 html.glass body{background:
@@ -345,3 +345,13 @@ html.glass:root :is(.nav-menu,.def-tip){background:rgba(var(--lg-rgb),calc(.08 +
   -webkit-backdrop-filter:blur(calc(9px + 12px*var(--tint))) saturate(170%);
   backdrop-filter:var(--lens,) blur(calc(9px + 12px*var(--tint))) saturate(170%)}
 html.glass .def-tip span{color:var(--label)}
+
+/* see-through content panels still blur what is behind them */
+html.glass .sec,html.glass .tile,html.glass .list,html.glass .lcard:not(.soon),html.glass .done-bar{
+  -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%)}
+/* light / dark choice inside Liquid Glass */
+.gm{display:flex;gap:4px;margin-top:10px;padding:3px;border-radius:12px;background:var(--fill2)}
+.gm button{flex:1;border:0;background:none;font:inherit;font-size:0.75rem;font-weight:650;color:var(--label2);padding:6px 0;border-radius:9px;cursor:pointer;
+  transition:background .45s var(--spring),color .3s,box-shadow .45s var(--spring)}
+.gm button.on{background:var(--card);color:var(--label);box-shadow:0 3px 10px rgba(0,0,0,.14)}
+html[data-theme="dark"] .gm button.on{background:rgba(255,255,255,.16)}

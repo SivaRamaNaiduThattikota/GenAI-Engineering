@@ -53,6 +53,7 @@ const COURSE = [
   const svg = {
     list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".6"/><circle cx="4.5" cy="12" r=".6"/><circle cx="4.5" cy="18" r=".6"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
     print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
@@ -70,11 +71,7 @@ const COURSE = [
     <button class="side-toggle in-side" type="button" aria-label="Hide sidebar" title="Hide sidebar (Ctrl + B)">${svg.sidebar}</button></div>
     <label class="search">${svg.search}<input id="q" type="search" placeholder="Search lessons" autocomplete="off"></label>
     <div id="side-groups"></div><p class="side-empty" id="side-empty">No lessons match.</p>
-    <div class="side-group" style="margin-top:20px"><h4>Appearance</h4></div>
-    <div class="seg" id="theme-seg"><span class="thumb"></span><button data-v="auto">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button><button data-v="glass" title="Liquid Glass">Glass</button></div>
-    <div class="glass-slider"><div class="gs-top"><span>Clear</span><span>Liquid Glass</span><span>Tinted</span></div>
-      <input type="range" id="glass-tint" min="0" max="100" step="1" aria-label="Liquid Glass look, from clear to tinted">
-      <div class="gs-cap">Follows your system light or dark mode.</div></div>
+    <button class="side-settings" type="button" id="side-settings">${svg.gear}<span><b>Settings</b><small>Theme, lightness, progress</small></span></button>
     <p class="side-foot">Progress is saved in this browser.<br>Ctrl / ⌘ + K to search.</p>`;
   shell.insertBefore(side, main);
 
@@ -86,6 +83,7 @@ const COURSE = [
     <button class="nav-btn side-toggle in-nav" type="button" aria-label="Show sidebar" title="Show sidebar (Ctrl + B)">${svg.sidebar}</button>
     ${pageId !== 'home' ? `<a class="nav-btn" href="${root}index.html" aria-label="Home">${svg.home}</a>` : ''}
     <div class="small-title">${title}</div>
+    <button class="nav-btn" id="settings-btn" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings" title="Settings">${svg.gear}</button>
     <button class="nav-btn" id="print-btn" aria-label="Print or save as PDF" title="Print / save as PDF">${svg.print}</button>
     <div class="progress" id="read-progress"></div>`;
   main.insertBefore(nav, main.firstChild);
@@ -132,15 +130,45 @@ const COURSE = [
     }
   });
 
+  // ---------- settings panel: theme, lightness, glass, progress ----------
+  const panel = document.createElement('div');
+  panel.className = 'settings'; panel.id = 'settings'; panel.hidden = true;
+  panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Settings');
+  const slider = (id, label, lo, hi, info) => `<div class="st-group st-${id}"><div class="st-label">${label}<span class="st-active">in use now</span></div>
+      <input type="range" id="st-${id}" min="0" max="100" step="1" aria-label="${label}">
+      <div class="st-ends"><span>${lo}</span><b class="st-val" id="st-${id}-val"></b><span>${hi}</span></div>
+      <p class="st-info">${info}</p><p class="st-now" id="st-${id}-now"></p></div>`;
+  panel.innerHTML = `<div class="st-head"><b>Settings</b><button class="st-reset" type="button" id="st-reset" title="Put every slider back to the standard value">Reset to standard</button></div>
+    <div class="st-group"><div class="st-label">Theme</div>
+      <div class="seg" id="theme-seg"><span class="thumb"></span><button data-v="auto">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button><button data-v="glass" title="Liquid Glass">Glass</button></div>
+      <p class="st-info">Auto follows your system setting.</p></div>
+    <div class="st-group st-glass"><div class="st-label">Liquid Glass</div>
+      <div class="gm" id="glass-mode" role="group" aria-label="Liquid Glass light or dark"><button type="button" data-m="auto">Auto</button><button type="button" data-m="light">Light</button><button type="button" data-m="dark">Dark</button></div>
+      <div class="st-sub">Bars and buttons</div>
+      <input type="range" id="glass-tint" min="0" max="100" step="1" aria-label="Glass bars, from clear to tinted">
+      <div class="st-ends"><span>Clear</span><b class="st-val" id="glass-tint-val"></b><span>Tinted</span></div>
+      <div class="st-sub">Content panels</div>
+      <input type="range" id="st-body" min="10" max="100" step="1" aria-label="Glass content panels, from see-through to solid">
+      <div class="st-ends"><span>See-through</span><b class="st-val" id="st-body-val"></b><span>Solid</span></div>
+      <p class="st-info">Standard: bars <b>0</b>, Apple's clear glass. Panels <b>40</b> in light and <b>60</b> in dark. <b>100</b> makes panels fully solid, the way Apple keeps content.</p></div>
+    ${slider('light', 'Light mode brightness', 'Soft', 'Bright', 'Standard is <b>100</b>: Apple iOS light, a <code>#F2F2F7</code> page with white cards. Go lower to cut glare on a bright screen. Around 50 is a calm grey.')}
+    ${slider('dark', 'Dark mode depth', 'Dim grey', 'True black', 'Standard is <b>100</b>: Apple iOS dark, a true black <code>#000000</code> page with <code>#1C1C1E</code> cards. <b>57</b> gives <code>#121212</code>, the Material Design dark grey. Lower is easier on the eyes on screens that are not OLED.')}
+    <div class="st-group"><div class="st-label">Progress</div><div id="st-progress"></div>
+      <p class="st-info">Lessons you mark as done are saved in this browser only. Export to keep a copy or to move to another browser.</p></div>`;
+  document.body.appendChild(panel);
+
   // ---------- theme ----------
-  const seg = side.querySelector('#theme-seg'), thumb = seg.querySelector('.thumb');
+  const seg = panel.querySelector('#theme-seg'), thumb = seg.querySelector('.thumb');
   const mq = matchMedia('(prefers-color-scheme: dark)');
   function applyTheme(v) {
     localStorage.setItem('genai-notes-theme', v);
-    const dark = v === 'dark' || ((v === 'auto' || v === 'glass') && mq.matches);
+    const gm = localStorage.getItem('genai-glass-mode') || 'auto';
+    const dark = v === 'dark' || (v === 'auto' && mq.matches) || (v === 'glass' && (gm === 'dark' || (gm === 'auto' && mq.matches)));
+    panel.querySelectorAll('#glass-mode button').forEach(b => b.classList.toggle('on', b.dataset.m === gm));
     const h = document.documentElement;
     h.dataset.theme = dark ? 'dark' : 'light';
     h.classList.toggle('glass', v === 'glass');
+    showLook();
     placeThumb();
     dispatchEvent(new Event('genai-theme'));
   }
@@ -156,7 +184,46 @@ const COURSE = [
   if (document.fonts) document.fonts.ready.then(placeThumb);
   new ResizeObserver(placeThumb).observe(seg);
   // iOS 27 style slider: from ultra-clear to fully tinted glass
-  const tintInput = side.querySelector('#glass-tint');
+  // lightness sliders. The colour maths lives in boot.js (genaiLook) so it also runs before the first paint.
+  const STD = { light: 100, dark: 100 };
+  function showLook() {
+    const now = window.genaiLook();
+    const dk = document.documentElement.dataset.theme === 'dark';
+    ['light', 'dark'].forEach(m => {
+      const v = +(localStorage.getItem('genai-' + m) || STD[m]);
+      const inp = panel.querySelector('#st-' + m);
+      if (document.activeElement !== inp) inp.value = v;
+      panel.querySelector(`#st-${m}-val`).textContent = v === STD[m] ? v + ' · standard' : v;
+      const on = (m === 'dark') === dk;
+      panel.querySelector('.st-' + m).classList.toggle('active', on);
+      panel.querySelector(`#st-${m}-now`).innerHTML = on ? `Now: page <code>${now.bg}</code>, cards <code>${now.card}</code>` : 'Drag it to switch to this mode and see it.';
+    });
+    const gb = localStorage.getItem('genai-glass-body'), gstd = dk ? 60 : 40;
+    const gv = gb === null ? gstd : +gb, body = panel.querySelector('#st-body');
+    if (document.activeElement !== body) body.value = gv;
+    panel.querySelector('#st-body-val').textContent = gv === gstd ? gv + ' · standard' : gv;
+    const tv = Math.round(+(localStorage.getItem('genai-glass-tint-l1') || 0) * 100);
+    panel.querySelector('#glass-tint-val').textContent = tv === 0 ? '0 · standard' : tv;
+  }
+  ['light', 'dark'].forEach(m => panel.querySelector('#st-' + m).addEventListener('input', e => {
+    localStorage.setItem('genai-' + m, e.target.value);
+    // dragging one mode's slider switches to that mode, so you see what you change
+    const dk = document.documentElement.dataset.theme === 'dark';
+    if ((m === 'dark') !== dk) {
+      if ((localStorage.getItem('genai-notes-theme') || 'auto') === 'glass') localStorage.setItem('genai-glass-mode', m);
+      else localStorage.setItem('genai-notes-theme', m);
+      applyTheme(localStorage.getItem('genai-notes-theme'));
+    } else showLook();
+  }));
+  panel.querySelector('#st-body').addEventListener('input', e => { localStorage.setItem('genai-glass-body', e.target.value); showLook(); });
+  panel.querySelector('#st-reset').addEventListener('click', () => {
+    ['genai-light', 'genai-dark', 'genai-glass-body', 'genai-glass-tint-l1'].forEach(k => localStorage.removeItem(k));
+    document.documentElement.style.setProperty('--tint', '0'); tintInput.value = 0;
+    showLook();
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+      panel.querySelectorAll('input[type=range]').forEach(i => i.animate([{ scale: '1' }, { scale: '1.04 .9' }, { scale: '1' }], { duration: 520, easing: 'cubic-bezier(.3,1.6,.5,1)' }));
+  });
+  const tintInput = panel.querySelector('#glass-tint');
   const savedTint = localStorage.getItem('genai-glass-tint-l1');
   const defaultTint = 0;
   tintInput.value = Math.round((savedTint === null ? defaultTint : +savedTint) * 100);
@@ -164,8 +231,17 @@ const COURSE = [
     const t = (tintInput.value / 100).toFixed(2);
     document.documentElement.style.setProperty('--tint', t);
     localStorage.setItem('genai-glass-tint-l1', t);
+    showLook();
   });
   seg.addEventListener('click', e => { if (e.target.dataset.v) applyTheme(e.target.dataset.v); });
+  panel.querySelector('#glass-mode').addEventListener('click', e => {
+    const m = e.target.dataset.m;
+    if (!m) return;
+    localStorage.setItem('genai-glass-mode', m);
+    applyTheme('glass');
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+      e.target.animate([{ scale: '1' }, { scale: '.86' }, { scale: '1.06' }, { scale: '1' }], { duration: 520, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+  });
   mq.addEventListener('change', () => applyTheme(localStorage.getItem('genai-notes-theme') || 'auto'));
   applyTheme(localStorage.getItem('genai-notes-theme') || 'auto');
 
@@ -434,6 +510,60 @@ const COURSE = [
     addEventListener('resize', () => { if (!menu.hidden) toggle(false); });
   }
 
+  // progress: how many lessons are done, plus export / import of everything this site saves
+  const stp = panel.querySelector('#st-progress');
+  const showProgress = () => {
+    let d = []; try { d = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (_) {}
+    const real_ = COURSE.filter(c => !c.soon);
+    stp.querySelector('.st-count').textContent = `${real_.filter(c => d.includes(c.id)).length} of ${real_.length} lessons marked done`;
+  };
+  stp.innerHTML = `<p class="st-now st-count"></p><div class="io-row"><button class="copy" type="button" id="st-exp">Export progress</button>
+    <label class="copy" tabindex="0">Import<input type="file" accept="application/json" id="st-imp" hidden></label></div>`;
+  stp.querySelector('#st-exp').onclick = () => {
+    const data = {};
+    Object.keys(localStorage).filter(k => k.startsWith('genai-')).forEach(k => data[k] = localStorage.getItem(k));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
+    a.download = 'genai-course-progress.json'; a.click();
+  };
+  stp.querySelector('#st-imp').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      Object.entries(data).forEach(([k, v]) => { if (k.startsWith('genai-')) localStorage.setItem(k, v); });
+      location.reload();
+    } catch (_) { alert('That file is not a progress export.'); }
+  };
+  // ---------- settings: opens from the gear in the nav bar or from the sidebar ----------
+  const setBtn = nav.querySelector('#settings-btn');
+  function toggleSettings(open, from) {
+    if (open === !panel.hidden) return;
+    setBtn.setAttribute('aria-expanded', open);
+    if (!open) { popOut(panel); return; }
+    panel.getAnimations().forEach(a => a.cancel());
+    panel.hidden = false;
+    placeThumb(); showLook(); showProgress();
+    if (innerWidth > 640) {
+      const side_ = from && from !== setBtn;
+      const r = (from || setBtn).getBoundingClientRect(), nb = nav.getBoundingClientRect();
+      const left = side_ ? r.right + 10 : Math.max(8, Math.min(r.right - panel.offsetWidth, innerWidth - panel.offsetWidth - 8));
+      panel.style.left = left + 'px';
+      panel.style.top = (side_ ? Math.max(8, innerHeight - panel.offsetHeight - 16) : nb.bottom + 8) + 'px';
+      popIn(panel, side_ ? '0 100%' : `${r.left + r.width / 2 - left}px 0`);
+    } else { panel.style.top = panel.style.left = ''; popIn(panel, '50% 100%'); }
+    if (glassOn()) materialise(panel, 600);
+    if (!still.matches) [...panel.children].forEach((c, i) => c.animate([{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }],
+      { duration: 560, delay: 40 + i * 50, easing: SETTLE, fill: 'backwards' }));
+  }
+  setBtn.addEventListener('click', () => toggleSettings(panel.hidden));
+  side.querySelector('#side-settings').addEventListener('click', e => {
+    const desk = innerWidth > 1000;
+    if (!desk) openSheet(false);
+    toggleSettings(panel.hidden, desk ? e.currentTarget : null);
+  });
+  document.addEventListener('pointerdown', e => { if (!panel.hidden && !panel.contains(e.target) && !e.target.closest('#settings-btn, #side-settings')) toggleSettings(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { toggleSettings(false); setBtn.focus(); } });
+
   // ---------- tap a word: glossary terms in lessons show their definition ----------
   if (lesson) {
     const tag = document.createElement('script');
@@ -547,7 +677,7 @@ const COURSE = [
   //     diagonally like a drop of water. Red, green and blue bend by slightly different
   //     amounts for a faint colour split.
   const LENS = { scale: 34, bezel: 18, chroma: 0.03, soft: 0.3 };
-  const lensSel = '.navbar, .sidebar, .tabbar, .top-btn, .toc, .nav-menu, .def-tip, .pager a, .gl-search, .gl-filter button';
+  const lensSel = '.settings, .navbar, .sidebar, .tabbar, .top-btn, .toc, .nav-menu, .def-tip, .pager a, .gl-search, .gl-filter button';
   const glassOn = () => document.documentElement.classList.contains('glass');
   function shapeMap(w, h, r) {
     const c = document.createElement('canvas'); c.width = w; c.height = h;
