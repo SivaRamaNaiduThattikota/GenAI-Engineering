@@ -65,6 +65,28 @@ reserved_output = <span class="tk-n">2_000</span>
 
 total = instructions_and_history + python_file + reserved_output
 <span class="tk-f">print</span>(total &lt;= context_limit)  <span class="tk-c"># True, but with zero headroom</span></code></pre></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 160" style="overflow:hidden" role="img" aria-label="Context window budget: 8,000 tokens shared by instructions, the file and the reserved output">
+      <text x="150" y="14">0</text><text x="590" y="14" style="text-anchor:end">8,000 tokens</text>
+      <line x1="590" y1="20" x2="590" y2="150" class="arr dash" style="stroke:var(--red)"/>
+      <text x="596" y="40" style="fill:var(--red)">limit</text>
+      <text x="0" y="46" class="h">Fits, just</text>
+      <rect x="150.0" y="28" width="55.0" height="28" rx="6" class="box o"/>
+      <text x="177.5" y="46" class="mid w">1,000</text>
+      <rect x="205.0" y="28" width="275.0" height="28" rx="6" class="box a"/>
+      <text x="342.5" y="46" class="mid w">python_file 5,000</text>
+      <rect x="480.0" y="28" width="110.0" height="28" rx="6" class="box b"/>
+      <text x="535.0" y="46" class="mid w">output 2,000</text>
+      <text x="150" y="74">Total 8,000: it fits, with no room left over.</text>
+      <text x="0" y="110" class="h">Whole document</text>
+      <rect x="150.0" y="92" width="55.0" height="28" rx="6" class="box o"/>
+      <text x="177.5" y="110" class="mid w">1,000</text>
+      <rect x="205" y="92" width="460" height="28" rx="6" class="box a"/>
+      <text x="390" y="110" class="mid w">20,000-token document, runs far past the limit →</text>
+      <text x="150" y="138">Needs 21,000 before the answer even starts: the request fails or gets cut.</text>
+    </svg></div>
+    <figcaption>The budget from budget.py, drawn to scale. Everything in one request shares the same window, including the space reserved for the answer.</figcaption>
+  </figure>
   <p>A long file can exceed the window even when the upload itself succeeded. The <strong>application</strong>, not the model, decides what goes in.</p>
   <h3>Why the chat "remembers"</h3>
   <p>The model keeps no memory between calls. A chat app re-sends the earlier messages every turn, so long chats slowly fill the window. When it is full, the app must drop, summarise or retrieve older parts. That is an application design decision.</p>
@@ -83,6 +105,30 @@ total = instructions_and_history + python_file + reserved_output
     <div class="row"><div><div class="t">Retrieval</div><div class="d">Finding the chunks most relevant to a question, typically by keyword search, vector similarity, or both.</div></div></div>
     <div class="row"><div><div class="t">RAG · Retrieval-Augmented Generation</div><div class="d">Retrieve relevant information first, put it in the prompt, then let the model generate an answer grounded in it.</div></div></div>
   </div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 212" role="img" aria-label="RAG: documents are chunked ahead of time; for each question the best chunks are retrieved into the prompt">
+      <defs><marker id="ahpa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">Ahead of time</text>
+      <rect x="0" y="26" width="110" height="40" rx="9" class="box "/><text x="55.0" y="50.0" class="mid v">Documents</text>
+      <path d="M112 46 L136 46" class="arr " marker-end="url(#ahpa)"/>
+      <rect x="138" y="26" width="100" height="40" rx="9" class="box "/><text x="188.0" y="42.5" class="mid v">Split into</text><text x="188.0" y="57.5" class="mid v">chunks</text>
+      <path d="M240 46 L264 46" class="arr " marker-end="url(#ahpa)"/>
+      <rect x="266" y="26" width="110" height="40" rx="9" class="box o"/><text x="321.0" y="50.0" class="mid w">Stored chunks</text>
+      <text x="0" y="104" class="h">For each question</text>
+      <rect x="0" y="116" width="110" height="40" rx="9" class="box "/><text x="55.0" y="140.0" class="mid v">Question</text>
+      <path d="M112 136 L136 136" class="arr " marker-end="url(#ahpa)"/>
+      <rect x="138" y="116" width="100" height="40" rx="9" class="box a"/><text x="188.0" y="132.5" class="mid w">Retrieve</text><text x="188.0" y="147.5" class="mid w">best chunks</text>
+      <path d="M321 68 C321 100 188 92 188 114" class="arr dash" marker-end="url(#ahpa)"/>
+      <path d="M240 136 L264 136" class="arr " marker-end="url(#ahpa)"/>
+      <rect x="266" y="116" width="140" height="40" rx="9" class="box "/><text x="336.0" y="132.5" class="mid v">Prompt: rules</text><text x="336.0" y="147.5" class="mid v">+ chunks + question</text>
+      <path d="M408 136 L432 136" class="arr " marker-end="url(#ahpa)"/>
+      <rect x="434" y="116" width="80" height="40" rx="9" class="box b"/><text x="474.0" y="140.0" class="mid w">Model</text>
+      <path d="M516 136 L540 136" class="arr " marker-end="url(#ahpa)"/>
+      <rect x="542" y="116" width="98" height="40" rx="9" class="box g"/><text x="591.0" y="132.5" class="mid w">Grounded</text><text x="591.0" y="147.5" class="mid w">answer</text>
+      <text x="266" y="186">A needed chunk left out means the model has to guess.</text>
+    </svg></div>
+    <figcaption>RAG in one picture. The model is unchanged; the quality of the answer depends on which chunks the retrieval step puts in the prompt.</figcaption>
+  </figure>
   <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">manual_retrieval.py</span><button class="copy">Copy</button></div>
 <pre><code>question = <span class="tk-s">"How does calculate_discount work?"</span>
 

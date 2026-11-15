@@ -48,6 +48,29 @@
     <div class="point-t">Machine learning: a training process learns the patterns from examples</div>
     <p>You give the model thousands of past transactions with the correct label (fraud or not). Training adjusts its parameters until its predictions match those labels as closely as possible. Nobody writes the rule; the model finds combinations of features that separate the classes, including ones a person might never think of.</p>
     <p>The trade-off: the learned behaviour is only as good as the data, and it is harder to explain than a written rule.</p></div></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 214" role="img" aria-label="Rule-based systems take rules written by a person; machine learning learns them from labelled examples">
+      <defs><marker id="ah11a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">Rule-based: a person writes the rules</text>
+      <rect x="0" y="28" width="120" height="40" rx="9" class="box o"/><text x="60.0" y="44.5" class="mid w">Rules</text><text x="60.0" y="59.5" class="mid w">written by hand</text>
+      <rect x="0" y="76" width="120" height="40" rx="9" class="box "/><text x="60.0" y="100.0" class="mid v">New transaction</text>
+      <path d="M122 48 C150 48 150 70 176 70" class="arr " marker-end="url(#ah11a)"/>
+      <path d="M122 96 C150 96 150 74 176 74" class="arr " marker-end="url(#ah11a)"/>
+      <rect x="178" y="52" width="120" height="40" rx="9" class="box "/><text x="238.0" y="76.0" class="mid v">Program</text>
+      <path d="M300 72 L330 72" class="arr " marker-end="url(#ah11a)"/>
+      <rect x="332" y="52" width="110" height="40" rx="9" class="box "/><text x="387.0" y="76.0" class="mid v">Decision</text>
+      <line x1="0" y1="128" x2="640" y2="128" class="grid"/>
+      <text x="0" y="148" class="h">Machine learning: training finds the rules from examples</text>
+      <rect x="0" y="162" width="140" height="40" rx="9" class="box "/><text x="70.0" y="178.5" class="mid v">Past transactions</text><text x="70.0" y="193.5" class="mid v">+ correct labels</text>
+      <path d="M142 182 L170 182" class="arr " marker-end="url(#ah11a)"/>
+      <rect x="172" y="162" width="100" height="40" rx="9" class="box a"/><text x="222.0" y="186.0" class="mid w">Training</text>
+      <path d="M274 182 L302 182" class="arr " marker-end="url(#ah11a)"/>
+      <rect x="304" y="162" width="120" height="40" rx="9" class="box b"/><text x="364.0" y="178.5" class="mid w">Learned model</text><text x="364.0" y="193.5" class="mid w">(parameters)</text>
+      <path d="M426 182 L454 182" class="arr " marker-end="url(#ah11a)"/>
+      <rect x="456" y="162" width="90" height="40" rx="9" class="box "/><text x="501.0" y="186.0" class="mid v">Decision</text>
+    </svg></div>
+    <figcaption>Same task, two sources of behaviour. With rules, a person supplies the logic. With machine learning, you supply examples with answers and training produces the logic.</figcaption>
+  </figure>
   <p>Summary of the comparison:</p>
   <div class="tbl"><table>
     <thead><tr><th></th><th>Rule-based</th><th>Machine learning</th></tr></thead>
@@ -116,6 +139,31 @@ response = existing_model.generate(
     <div class="point-t">Inference: using a trained model to produce an output</div>
     <p>The parameters do not change. You send input (your instructions, the question, any documents) and get output back. It is the equivalent of <code>model.predict()</code>. Every API call you make to an LLM is inference.</p>
     <p>This is why pasting a Python file into a prompt does not teach the model anything permanent: it is inference, so the file is only context for that one call. Fine-tuning, by contrast, is a form of training and does update the parameters.</p></div></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 196" role="img" aria-label="Training updates parameters in a loop; inference uses the frozen parameters">
+      <defs><marker id="ah11b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">Training: parameters change</text>
+      <rect x="0" y="30" width="96" height="40" rx="9" class="box "/><text x="48.0" y="46.5" class="mid v">Huge</text><text x="48.0" y="61.5" class="mid v">dataset</text>
+      <path d="M98 50 L122 50" class="arr " marker-end="url(#ah11b)"/>
+      <rect x="124" y="30" width="90" height="40" rx="9" class="box a"/><text x="169.0" y="54.0" class="mid w">Model</text>
+      <path d="M216 50 L240 50" class="arr " marker-end="url(#ah11b)"/>
+      <rect x="242" y="30" width="76" height="40" rx="9" class="box "/><text x="280.0" y="54.0" class="mid v">Loss</text>
+      <path d="M280 72 C280 104 170 104 170 74" class="arr dash" marker-end="url(#ah11b)"/>
+      <text x="225" y="120" class="mid">update parameters, repeat</text>
+      <path d="M320 50 L352 50" class="arr a dash" marker-end="url(#ah11b)"/>
+      <text x="336" y="40" class="mid">save</text>
+      <rect x="354" y="30" width="120" height="40" rx="9" class="box b"/><text x="414.0" y="46.5" class="mid w">Frozen</text><text x="414.0" y="61.5" class="mid w">parameters</text>
+      <line x1="0" y1="138" x2="640" y2="138" class="grid"/>
+      <text x="0" y="158" class="h">Inference: every API call</text>
+      <rect x="150" y="150" width="120" height="40" rx="9" class="box "/><text x="210.0" y="166.5" class="mid v">Your prompt</text><text x="210.0" y="181.5" class="mid v">+ documents</text>
+      <path d="M272 170 L300 170" class="arr " marker-end="url(#ah11b)"/>
+      <rect x="302" y="150" width="120" height="40" rx="9" class="box b"/><text x="362.0" y="166.5" class="mid w">Same frozen</text><text x="362.0" y="181.5" class="mid w">model</text>
+      <path d="M424 170 L452 170" class="arr " marker-end="url(#ah11b)"/>
+      <rect x="454" y="150" width="100" height="40" rx="9" class="box "/><text x="504.0" y="174.0" class="mid v">Output</text>
+      <path d="M414 72 L414 146" class="arr a dash" marker-end="url(#ah11b)"/>
+    </svg></div>
+    <figcaption>Training happens once, at the lab, and ends with saved parameters. Inference reuses those parameters unchanged, so anything you put in the prompt only affects that one call.</figcaption>
+  </figure>
   <p>The full life of a model, from first training to your API call:</p>
   <div class="tbl"><table>
     <thead><tr><th>Activity</th><th>What happens</th><th>Who usually does it</th></tr></thead>

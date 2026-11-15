@@ -59,6 +59,25 @@
     <div class="step"><span class="ctx">…</span><span class="nx" style="background:var(--gray)">⟨end⟩</span></div>
   </div>
   <p class="muted">Token boundaries are illustrative, not from a specific tokenizer. Generation stops at a special end-of-sequence token or a length limit.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 232" role="img" aria-label="Autoregressive generation loop: context, model, probabilities, decoding, append, repeat">
+      <defs><marker id="ah12a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <rect x="0" y="90" width="150" height="40" rx="9" class="box "/><text x="75.0" y="106.5" class="mid v">Context so far</text><text x="75.0" y="121.5" class="mid v">prompt + output</text>
+      <path d="M152 110 L180 110" class="arr " marker-end="url(#ah12a)"/>
+      <rect x="182" y="90" width="90" height="40" rx="9" class="box a"/><text x="227.0" y="114.0" class="mid w">Model</text>
+      <path d="M274 110 L302 110" class="arr " marker-end="url(#ah12a)"/>
+      <rect x="304" y="90" width="150" height="40" rx="9" class="box "/><text x="379.0" y="106.5" class="mid v">Probability for</text><text x="379.0" y="121.5" class="mid v">every vocabulary token</text>
+      <path d="M456 110 L484 110" class="arr " marker-end="url(#ah12a)"/>
+      <rect x="486" y="90" width="154" height="40" rx="9" class="box b"/><text x="563.0" y="106.5" class="mid w">Decoding picks</text><text x="563.0" y="121.5" class="mid w">one token</text>
+      <path d="M563 132 C563 200 75 200 75 134" class="arr a" marker-end="url(#ah12a)"/>
+      <text x="320" y="196" class="mid v">append the token, then run again</text>
+      <path d="M563 88 L563 52" class="arr dash" marker-end="url(#ah12a)"/>
+      <rect x="486" y="8" width="154" height="40" rx="9" class="box "/><text x="563.0" y="24.5" class="mid v">Stop at ⟨end⟩</text><text x="563.0" y="39.5" class="mid v">or a length limit</text>
+      <text x="0" y="40" class="h">One loop per token</text>
+      <text x="0" y="58">"Overfitting occurs when…" took</text><text x="0" y="74">one full pass for each piece.</text>
+    </svg></div>
+    <figcaption>A long answer is this loop run hundreds of times. Each new token becomes part of the context for the next one, which is why an early mistake carries forward.</figcaption>
+  </figure>
   <p>At every step the model computes a distribution over the next token:</p>
   <div class="math"><i>P</i>(<i>t<sub>i</sub></i> | <i>t</i><sub>1</sub>, <i>t</i><sub>2</sub>, …, <i>t</i><sub><i>i</i>−1</sub>)</div>
   <p>A <strong>decoding</strong> procedure picks one token from it, and that token joins the context for the next step. This is <strong>autoregressive generation</strong>: each prediction is conditioned on everything before it, including the model's own earlier output.</p>
@@ -92,6 +111,35 @@
     <tr><td>The cat sat</td><td>on</td></tr>
     <tr><td>The cat sat on</td><td>the</td></tr>
     </tbody></table></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 172" role="img" aria-label="Inputs The cat sat on the, with targets shifted by one: cat sat on the mat">
+      <defs><marker id="ah12b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
+      <text x="0" y="24" class="h">Must predict</text>
+      <text x="0" y="124" class="h">Sees (input)</text>
+      <rect x="110" y="100" width="80" height="36" rx="9" class="box "/><text x="150.0" y="122.0" class="mid v">The</text>
+      <rect x="110" y="8" width="80" height="36" rx="9" class="box a"/><text x="150.0" y="30.0" class="mid w">cat</text>
+      <path d="M150.0 98 L150.0 48" class="arr a" marker-end="url(#ah12b)"/>
+      <text x="157.0" y="78">pos 1</text>
+      <rect x="202" y="100" width="80" height="36" rx="9" class="box "/><text x="242.0" y="122.0" class="mid v">cat</text>
+      <rect x="202" y="8" width="80" height="36" rx="9" class="box a"/><text x="242.0" y="30.0" class="mid w">sat</text>
+      <path d="M242.0 98 L242.0 48" class="arr a" marker-end="url(#ah12b)"/>
+      <text x="249.0" y="78">pos 2</text>
+      <rect x="294" y="100" width="80" height="36" rx="9" class="box "/><text x="334.0" y="122.0" class="mid v">sat</text>
+      <rect x="294" y="8" width="80" height="36" rx="9" class="box a"/><text x="334.0" y="30.0" class="mid w">on</text>
+      <path d="M334.0 98 L334.0 48" class="arr a" marker-end="url(#ah12b)"/>
+      <text x="341.0" y="78">pos 3</text>
+      <rect x="386" y="100" width="80" height="36" rx="9" class="box "/><text x="426.0" y="122.0" class="mid v">on</text>
+      <rect x="386" y="8" width="80" height="36" rx="9" class="box a"/><text x="426.0" y="30.0" class="mid w">the</text>
+      <path d="M426.0 98 L426.0 48" class="arr a" marker-end="url(#ah12b)"/>
+      <text x="433.0" y="78">pos 4</text>
+      <rect x="478" y="100" width="80" height="36" rx="9" class="box "/><text x="518.0" y="122.0" class="mid v">the</text>
+      <rect x="478" y="8" width="80" height="36" rx="9" class="box a"/><text x="518.0" y="30.0" class="mid w">mat</text>
+      <path d="M518.0 98 L518.0 48" class="arr a" marker-end="url(#ah12b)"/>
+      <text x="525.0" y="78">pos 5</text>
+      <text x="110" y="160">Each position sees only the tokens to its left. One sentence, five predictions.</text>
+    </svg></div>
+    <figcaption>The targets are the same sentence shifted one place to the left. Training scores all positions at once, and the loss adds up −log P of each true next token.</figcaption>
+  </figure>
   <p>The loss is the negative log-likelihood of the true next tokens:</p>
   <div class="math">𝓛(<i>θ</i>) = − <span class="big">∑</span><sub><i>i</i></sub> log <i>P<sub>θ</sub></i>(<i>t<sub>i</sub></i> | <i>t</i><sub>&lt;<i>i</i></sub>)
     <span class="cap"><i>θ</i> = parameters · <i>t<sub>i</sub></i> = the true next token · <i>t</i><sub>&lt;<i>i</i></sub> = all tokens before position <i>i</i></span></div>
