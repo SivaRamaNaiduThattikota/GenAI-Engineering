@@ -422,6 +422,7 @@ const COURSE = [
       const ta = document.createElement('textarea'); ta.value = code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
     }
     b.textContent = 'Copied'; b.classList.add('ok');
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) b.animate([{ scale: '.7' }, { scale: '1.08', offset: .5 }, { scale: '1' }], { duration: 520, easing: 'cubic-bezier(.3,1.6,.5,1)' });
     setTimeout(() => { b.textContent = 'Copy'; b.classList.remove('ok'); }, 1400);
   }));
 
@@ -460,18 +461,21 @@ const COURSE = [
       d.anim?.cancel(); delete d.dataset.closing;
       d.style.overflow = 'hidden';
       if (opening) {
+        [...d.children].forEach(c => c.getAnimations().forEach(a => a.cancel()));
         d.open = true;
         const to = d.offsetHeight;
-        d.anim = d.animate({ height: [from + 'px', to + 'px'] }, { duration: 820, easing: SETTLE });
+        d.anim = d.animate({ height: [from + 'px', to + 'px'] }, { duration: 900, easing: BOUNCE });
         [...d.children].filter(c => c !== sum).forEach(c =>
-          c.animate([{ opacity: 0, translate: '0 -8px' }, { opacity: 1, translate: '0 0' }], { duration: 480, easing: 'cubic-bezier(.2,.8,.2,1)' }));
+          c.animate([{ opacity: 0, translate: '0 -10px', scale: '.97', filter: 'blur(3px)' }, { opacity: 1, translate: '0 0', scale: '1', filter: 'blur(0)' }], { duration: 620, easing: SETTLE }));
+        sum.animate([{ scale: '1' }, { scale: '1.012' }, { scale: '1' }], { duration: 520, easing: SETTLE });
       } else {
         d.open = false; const to = d.offsetHeight; d.open = true;
         d.dataset.closing = '1';
-        d.anim = d.animate({ height: [from + 'px', to + 'px'] }, { duration: 300, easing: 'cubic-bezier(.4,0,.2,1)' });
+        d.anim = d.animate({ height: [from + 'px', to + 'px'] }, { duration: 560, easing: SETTLE });
+        [...d.children].filter(c => c !== sum).forEach(c => c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }));
       }
       d.anim.onfinish = () => {
-        if (d.dataset.closing) { d.open = false; delete d.dataset.closing; }
+        if (d.dataset.closing) { d.open = false; delete d.dataset.closing; [...d.children].forEach(c => c.getAnimations().forEach(a => a.cancel())); }
         d.style.overflow = ''; d.anim = null;
       };
     });

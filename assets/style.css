@@ -598,3 +598,16 @@ html.glass .side-settings{background:rgba(var(--lg-rgb),calc(.25 + .4 * var(--ti
 }
 .io-row{display:flex;gap:8px;margin-top:8px}
 .io-row .copy{display:inline-flex;align-items:center;cursor:pointer}
+
+/* springy presses and lifts (same motion as the Python practice site) */
+.lcard,.pager a,.tile{transition:box-shadow .45s var(--ease),translate .55s var(--spring),scale .55s var(--spring)}
+.lcard:hover,.pager a:hover{translate:0 -4px}
+.lcard:active,.pager a:active{scale:.97}
+details.disc summary,.toc summary{transition:background .25s,scale .5s var(--spring)}
+details.disc summary:hover{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+details.disc summary:active,.toc summary:active{scale:.985}
+.tabs button{transition:background .25s,box-shadow .25s,scale .5s var(--spring)}
+.tabs button:active,.cta:active{scale:.92}
+.cta{transition:scale .55s var(--spring),box-shadow .45s var(--ease)}
+.cta:hover{scale:1.04}
+@media (prefers-reduced-motion: reduce){.lcard,.pager a,.tile,.cta,details.disc summary{transition:none}.lcard:hover,.pager a:hover{translate:none}.cta:hover{scale:none}}
