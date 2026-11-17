@@ -611,3 +611,43 @@ details.disc summary:active,.toc summary:active{scale:.985}
 .cta{transition:scale .55s var(--spring),box-shadow .45s var(--ease)}
 .cta:hover{scale:1.04}
 @media (prefers-reduced-motion: reduce){.lcard,.pager a,.tile,.cta,details.disc summary{transition:none}.lcard:hover,.pager a:hover{translate:none}.cta:hover{scale:none}}
+
+/* ---------- scroll-driven motion: parallax + heading and diagram reveals ----------
+   Uses CSS scroll timelines, so it runs smoothly with no scroll handlers. Browsers
+   without them, print, and "reduce motion" all just get the normal static page.
+   Prose, code and problems never move: you read and solve those. */
+@supports (animation-timeline: scroll()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    /* parallax: the banner content drifts slower than the page and fades out */
+    .l-hero>*:not(.chips),.hero>*:not(.cta){animation:px-drift linear both;animation-timeline:scroll(root);animation-range:0 460px}
+    .l-hero>h1:not(.chips),.hero>h1:not(.cta){animation-name:px-drift-title}
+    @keyframes px-drift{to{translate:0 46px;opacity:.35}}
+    @keyframes px-drift-title{to{translate:0 70px;opacity:.15}}
+    /* the glow in the banner moves the other way, for depth */
+    .l-hero::after{animation:px-glow linear both;animation-timeline:scroll(root);animation-range:0 460px}
+    .hero::before{animation:float 14s ease-in-out infinite alternate,px-glow linear both;animation-timeline:auto,scroll(root);animation-range:normal,0 460px}
+    @keyframes px-glow{to{translate:-40px 120px}}
+    /* Glass: the coloured wallpaper scrolls slower than the content */
+    html.glass body{animation:px-wall linear both;animation-timeline:scroll(root)}
+    @keyframes px-wall{from{background-position:0 0}to{background-position:0 -18vh}}
+
+    /* headings: words rise, sharpen and settle as the section comes in */
+    .sec h2 .w{display:inline-block;animation:word-in linear both;animation-timeline:view();
+      animation-range:entry calc(4% + var(--i) * 5%) entry calc(60% + var(--i) * 5%)}
+    @keyframes word-in{from{opacity:0;translate:0 .55em;filter:blur(5px)}to{opacity:1;translate:0 0;filter:blur(0)}}
+    .sec h2 .n{animation:num-in linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+    @keyframes num-in{from{scale:.4;rotate:-25deg;opacity:0}70%{scale:1.12}to{scale:1;rotate:0deg;opacity:1}}
+
+    /* diagrams draw themselves: lines and arrows trace in, boxes pop, labels fade */
+    .fig{view-timeline-name:--fig}
+    .fig svg .dr{stroke-dasharray:1;animation:draw linear both;animation-timeline:--fig;
+      animation-range:entry calc(15% + var(--k) * 4%) contain calc(var(--k) * 1.2%)}
+    @keyframes draw{0%{stroke-dashoffset:1;opacity:0}12%{opacity:1}100%{stroke-dashoffset:0;opacity:1}}
+    .fig svg .pp{transform-box:fill-box;transform-origin:center;animation:fig-pop linear both;animation-timeline:--fig;
+      animation-range:entry calc(10% + var(--k) * 4%) contain calc(var(--k) * 1%)}
+    @keyframes fig-pop{from{scale:.6;opacity:0}75%{scale:1.06}to{scale:1;opacity:1}}
+    .fig svg .fd{animation:fig-fade linear both;animation-timeline:--fig;
+      animation-range:entry calc(25% + var(--k) * 4%) contain calc(5% + var(--k) * 1.2%)}
+    @keyframes fig-fade{from{opacity:0;translate:0 4px}to{opacity:1;translate:0 0}}
+  }
+}

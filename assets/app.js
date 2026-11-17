@@ -922,4 +922,38 @@ const COURSE = [
     if (!gliding) { gliding = true; lastT = 0; document.documentElement.style.scrollBehavior = 'auto'; requestAnimationFrame(glide); }
   }, { passive: false });
   addEventListener('scroll', () => { if (!gliding) target = current = scrollY; }, { passive: true });
+
+  // ---------- scroll reveals (the motion itself is CSS scroll timelines) ----------
+  // Section headings: each word gets its own span so the words can rise one after another.
+  document.querySelectorAll('.sec > h2').forEach(h => {
+    let i = 0;
+    [...h.childNodes].forEach(n => {
+      if (n.nodeType !== 3 || !n.data.trim()) return;
+      // one wrapper, so a flex heading sees a single item and keeps normal word spacing
+      const frag = document.createElement('span');
+      frag.className = 'ws';
+      n.data.split(/(\s+)/).forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { frag.append(part); return; }
+        const w = document.createElement('span');
+        w.className = 'w'; w.style.setProperty('--i', Math.min(i++, 10)); w.textContent = part;
+        frag.append(w);
+      });
+      n.replaceWith(frag);
+    });
+  });
+  // Diagrams: strokes are drawn in (pathLength 1 makes the dash maths the same for every
+  // shape), filled shapes pop, labels fade. Dashed lines keep their dashes and just pop.
+  document.querySelectorAll('.fig svg').forEach(svgEl => {
+    let k = 0;
+    svgEl.querySelectorAll('line, path, polyline, rect, circle, ellipse, polygon, text').forEach(el => {
+      if (el.closest('defs, marker, clipPath, mask') || el.matches('.grow, .grow-x')) return;
+      const cs = getComputedStyle(el), tag = el.tagName.toLowerCase();
+      el.style.setProperty('--k', Math.min(k++, 16));
+      const strokeOnly = cs.stroke !== 'none' && (tag === 'line' || cs.fill === 'none') && cs.strokeDasharray === 'none';
+      if (tag === 'text') el.classList.add('fd');
+      else if (strokeOnly && /^(line|path|polyline)$/.test(tag)) { el.setAttribute('pathLength', '1'); el.classList.add('dr'); }
+      else el.classList.add('pp');
+    });
+  });
 })();
