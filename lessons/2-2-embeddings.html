@@ -95,6 +95,148 @@
 <section class="sec" id="lookup">
   <h2><span class="n">2</span>The lookup: taking one row of the table</h2>
   <p>All the embeddings live in one matrix, the <strong>embedding table</strong>, with one row per vocabulary entry and one column per dimension: shape <span class="im">(V, d)</span>. Turning a token into its embedding means reading row number <span class="im">id</span>. Nothing is computed; it is a read.</p>
+  <p>Here is a real table: rows from the one you train yourself in section 4, with V = 70 words and d = 12 numbers each.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 420" role="img" aria-label="An embedding table with token IDs as rows and 12 numeric columns">
+      <text x="0" y="14" class="h">ID</text><text x="44" y="14" class="h">token</text>
+      <text x="372.0" y="14" class="mid h">d = 12 columns: the embedding of each token</text>
+      <text x="150.5" y="32" class="mid" style="font-size:10.5px">1</text>
+      <text x="190.5" y="32" class="mid" style="font-size:10.5px">2</text>
+      <text x="230.5" y="32" class="mid" style="font-size:10.5px">3</text>
+      <text x="270.5" y="32" class="mid" style="font-size:10.5px">4</text>
+      <text x="310.5" y="32" class="mid" style="font-size:10.5px">5</text>
+      <text x="350.5" y="32" class="mid" style="font-size:10.5px">6</text>
+      <text x="390.5" y="32" class="mid" style="font-size:10.5px">7</text>
+      <text x="430.5" y="32" class="mid" style="font-size:10.5px">8</text>
+      <text x="470.5" y="32" class="mid" style="font-size:10.5px">9</text>
+      <text x="510.5" y="32" class="mid" style="font-size:10.5px">10</text>
+      <text x="550.5" y="32" class="mid" style="font-size:10.5px">11</text>
+      <text x="590.5" y="32" class="mid" style="font-size:10.5px">12</text>
+      <text x="0" y="56" class="v">8</text><text x="44" y="56" class="v">bus</text>
+      <rect x="132" y="40" width="37" height="21" rx="4" class="box"/><rect x="132" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.47"/><text x="150.5" y="54.5" class="mid v" style="font-size:10.5px">-1.2</text>
+      <rect x="172" y="40" width="37" height="21" rx="4" class="box"/><rect x="172" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.84"/><text x="190.5" y="54.5" class="mid w" style="font-size:10.5px">-2.2</text>
+      <rect x="212" y="40" width="37" height="21" rx="4" class="box"/><rect x="212" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.01"/><text x="230.5" y="54.5" class="mid v" style="font-size:10.5px">+0.0</text>
+      <rect x="252" y="40" width="37" height="21" rx="4" class="box"/><rect x="252" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.42"/><text x="270.5" y="54.5" class="mid v" style="font-size:10.5px">-1.1</text>
+      <rect x="292" y="40" width="37" height="21" rx="4" class="box"/><rect x="292" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.62"/><text x="310.5" y="54.5" class="mid w" style="font-size:10.5px">-1.6</text>
+      <rect x="332" y="40" width="37" height="21" rx="4" class="box"/><rect x="332" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.30"/><text x="350.5" y="54.5" class="mid v" style="font-size:10.5px">+0.8</text>
+      <rect x="372" y="40" width="37" height="21" rx="4" class="box"/><rect x="372" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.04"/><text x="390.5" y="54.5" class="mid v" style="font-size:10.5px">+0.1</text>
+      <rect x="412" y="40" width="37" height="21" rx="4" class="box"/><rect x="412" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.41"/><text x="430.5" y="54.5" class="mid v" style="font-size:10.5px">-1.1</text>
+      <rect x="452" y="40" width="37" height="21" rx="4" class="box"/><rect x="452" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.63"/><text x="470.5" y="54.5" class="mid w" style="font-size:10.5px">+1.6</text>
+      <rect x="492" y="40" width="37" height="21" rx="4" class="box"/><rect x="492" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.36"/><text x="510.5" y="54.5" class="mid v" style="font-size:10.5px">+0.9</text>
+      <rect x="532" y="40" width="37" height="21" rx="4" class="box"/><rect x="532" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.28"/><text x="550.5" y="54.5" class="mid v" style="font-size:10.5px">-0.7</text>
+      <rect x="572" y="40" width="37" height="21" rx="4" class="box"/><rect x="572" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.21"/><text x="590.5" y="54.5" class="mid v" style="font-size:10.5px">-0.6</text>
+      <text x="0" y="80" class="v">9</text><text x="44" y="80" class="v">car</text>
+      <rect x="132" y="64" width="37" height="21" rx="4" class="box"/><rect x="132" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.80"/><text x="150.5" y="78.5" class="mid w" style="font-size:10.5px">-2.1</text>
+      <rect x="172" y="64" width="37" height="21" rx="4" class="box"/><rect x="172" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.63"/><text x="190.5" y="78.5" class="mid w" style="font-size:10.5px">-1.6</text>
+      <rect x="212" y="64" width="37" height="21" rx="4" class="box"/><rect x="212" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.06"/><text x="230.5" y="78.5" class="mid v" style="font-size:10.5px">+0.2</text>
+      <rect x="252" y="64" width="37" height="21" rx="4" class="box"/><rect x="252" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.04"/><text x="270.5" y="78.5" class="mid v" style="font-size:10.5px">-0.1</text>
+      <rect x="292" y="64" width="37" height="21" rx="4" class="box"/><rect x="292" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.85"/><text x="310.5" y="78.5" class="mid w" style="font-size:10.5px">-2.2</text>
+      <rect x="332" y="64" width="37" height="21" rx="4" class="box"/><rect x="332" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.05"/><text x="350.5" y="78.5" class="mid v" style="font-size:10.5px">+0.1</text>
+      <rect x="372" y="64" width="37" height="21" rx="4" class="box"/><rect x="372" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.70"/><text x="390.5" y="78.5" class="mid w" style="font-size:10.5px">-1.8</text>
+      <rect x="412" y="64" width="37" height="21" rx="4" class="box"/><rect x="412" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="430.5" y="78.5" class="mid v" style="font-size:10.5px">-0.2</text>
+      <rect x="452" y="64" width="37" height="21" rx="4" class="box"/><rect x="452" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.55"/><text x="470.5" y="78.5" class="mid v" style="font-size:10.5px">+1.4</text>
+      <rect x="492" y="64" width="37" height="21" rx="4" class="box"/><rect x="492" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.07"/><text x="510.5" y="78.5" class="mid v" style="font-size:10.5px">-0.2</text>
+      <rect x="532" y="64" width="37" height="21" rx="4" class="box"/><rect x="532" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.24"/><text x="550.5" y="78.5" class="mid v" style="font-size:10.5px">+0.6</text>
+      <rect x="572" y="64" width="37" height="21" rx="4" class="box"/><rect x="572" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="590.5" y="78.5" class="mid v" style="font-size:10.5px">-0.2</text>
+      <text x="0" y="104" class="v">10</text><text x="44" y="104" class="h">cat</text>
+      <rect x="132" y="88" width="37" height="21" rx="4" class="box"/><rect x="132" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.73"/><text x="150.5" y="102.5" class="mid w" style="font-size:10.5px">+1.9</text>
+      <rect x="172" y="88" width="37" height="21" rx="4" class="box"/><rect x="172" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.22"/><text x="190.5" y="102.5" class="mid v" style="font-size:10.5px">-0.6</text>
+      <rect x="212" y="88" width="37" height="21" rx="4" class="box"/><rect x="212" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.05"/><text x="230.5" y="102.5" class="mid v" style="font-size:10.5px">-0.1</text>
+      <rect x="252" y="88" width="37" height="21" rx="4" class="box"/><rect x="252" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.41"/><text x="270.5" y="102.5" class="mid v" style="font-size:10.5px">+1.1</text>
+      <rect x="292" y="88" width="37" height="21" rx="4" class="box"/><rect x="292" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.08"/><text x="310.5" y="102.5" class="mid v" style="font-size:10.5px">+0.2</text>
+      <rect x="332" y="88" width="37" height="21" rx="4" class="box"/><rect x="332" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.69"/><text x="350.5" y="102.5" class="mid w" style="font-size:10.5px">+1.8</text>
+      <rect x="372" y="88" width="37" height="21" rx="4" class="box"/><rect x="372" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.52"/><text x="390.5" y="102.5" class="mid v" style="font-size:10.5px">+1.4</text>
+      <rect x="412" y="88" width="37" height="21" rx="4" class="box"/><rect x="412" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.23"/><text x="430.5" y="102.5" class="mid v" style="font-size:10.5px">-0.6</text>
+      <rect x="452" y="88" width="37" height="21" rx="4" class="box"/><rect x="452" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.07"/><text x="470.5" y="102.5" class="mid v" style="font-size:10.5px">+0.2</text>
+      <rect x="492" y="88" width="37" height="21" rx="4" class="box"/><rect x="492" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.16"/><text x="510.5" y="102.5" class="mid v" style="font-size:10.5px">-0.4</text>
+      <rect x="532" y="88" width="37" height="21" rx="4" class="box"/><rect x="532" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.45"/><text x="550.5" y="102.5" class="mid v" style="font-size:10.5px">+1.2</text>
+      <rect x="572" y="88" width="37" height="21" rx="4" class="box"/><rect x="572" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:1.00"/><text x="590.5" y="102.5" class="mid w" style="font-size:10.5px">-3.0</text>
+      <rect x="128" y="85" width="485" height="27" rx="7" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+      <text x="14" y="124" class="mid">⋮</text><text x="372.0" y="124" class="mid">⋮ rows 11 to 12 ⋮</text>
+      <text x="0" y="146" class="v">13</text><text x="44" y="146" class="v">coffee</text>
+      <rect x="132" y="130" width="37" height="21" rx="4" class="box"/><rect x="132" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.48"/><text x="150.5" y="144.5" class="mid v" style="font-size:10.5px">-1.3</text>
+      <rect x="172" y="130" width="37" height="21" rx="4" class="box"/><rect x="172" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.07"/><text x="190.5" y="144.5" class="mid v" style="font-size:10.5px">+0.2</text>
+      <rect x="212" y="130" width="37" height="21" rx="4" class="box"/><rect x="212" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="230.5" y="144.5" class="mid v" style="font-size:10.5px">-0.2</text>
+      <rect x="252" y="130" width="37" height="21" rx="4" class="box"/><rect x="252" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.55"/><text x="270.5" y="144.5" class="mid v" style="font-size:10.5px">-1.4</text>
+      <rect x="292" y="130" width="37" height="21" rx="4" class="box"/><rect x="292" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.39"/><text x="310.5" y="144.5" class="mid v" style="font-size:10.5px">+1.0</text>
+      <rect x="332" y="130" width="37" height="21" rx="4" class="box"/><rect x="332" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.67"/><text x="350.5" y="144.5" class="mid w" style="font-size:10.5px">+1.7</text>
+      <rect x="372" y="130" width="37" height="21" rx="4" class="box"/><rect x="372" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.33"/><text x="390.5" y="144.5" class="mid v" style="font-size:10.5px">+0.9</text>
+      <rect x="412" y="130" width="37" height="21" rx="4" class="box"/><rect x="412" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.13"/><text x="430.5" y="144.5" class="mid v" style="font-size:10.5px">+0.3</text>
+      <rect x="452" y="130" width="37" height="21" rx="4" class="box"/><rect x="452" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.24"/><text x="470.5" y="144.5" class="mid v" style="font-size:10.5px">-0.6</text>
+      <rect x="492" y="130" width="37" height="21" rx="4" class="box"/><rect x="492" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:1.00"/><text x="510.5" y="144.5" class="mid w" style="font-size:10.5px">-2.6</text>
+      <rect x="532" y="130" width="37" height="21" rx="4" class="box"/><rect x="532" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.20"/><text x="550.5" y="144.5" class="mid v" style="font-size:10.5px">-0.5</text>
+      <rect x="572" y="130" width="37" height="21" rx="4" class="box"/><rect x="572" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.40"/><text x="590.5" y="144.5" class="mid v" style="font-size:10.5px">+1.0</text>
+      <text x="14" y="166" class="mid">⋮</text><text x="372.0" y="166" class="mid">⋮ row 14 ⋮</text>
+      <text x="0" y="188" class="v">15</text><text x="44" y="188" class="v">dog</text>
+      <rect x="132" y="172" width="37" height="21" rx="4" class="box"/><rect x="132" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.98"/><text x="150.5" y="186.5" class="mid w" style="font-size:10.5px">+2.6</text>
+      <rect x="172" y="172" width="37" height="21" rx="4" class="box"/><rect x="172" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.15"/><text x="190.5" y="186.5" class="mid v" style="font-size:10.5px">+0.4</text>
+      <rect x="212" y="172" width="37" height="21" rx="4" class="box"/><rect x="212" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.61"/><text x="230.5" y="186.5" class="mid w" style="font-size:10.5px">-1.6</text>
+      <rect x="252" y="172" width="37" height="21" rx="4" class="box"/><rect x="252" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.62"/><text x="270.5" y="186.5" class="mid w" style="font-size:10.5px">+1.6</text>
+      <rect x="292" y="172" width="37" height="21" rx="4" class="box"/><rect x="292" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.52"/><text x="310.5" y="186.5" class="mid v" style="font-size:10.5px">+1.4</text>
+      <rect x="332" y="172" width="37" height="21" rx="4" class="box"/><rect x="332" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.43"/><text x="350.5" y="186.5" class="mid v" style="font-size:10.5px">+1.1</text>
+      <rect x="372" y="172" width="37" height="21" rx="4" class="box"/><rect x="372" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.24"/><text x="390.5" y="186.5" class="mid v" style="font-size:10.5px">-0.6</text>
+      <rect x="412" y="172" width="37" height="21" rx="4" class="box"/><rect x="412" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.19"/><text x="430.5" y="186.5" class="mid v" style="font-size:10.5px">-0.5</text>
+      <rect x="452" y="172" width="37" height="21" rx="4" class="box"/><rect x="452" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.14"/><text x="470.5" y="186.5" class="mid v" style="font-size:10.5px">+0.4</text>
+      <rect x="492" y="172" width="37" height="21" rx="4" class="box"/><rect x="492" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.59"/><text x="510.5" y="186.5" class="mid w" style="font-size:10.5px">+1.5</text>
+      <rect x="532" y="172" width="37" height="21" rx="4" class="box"/><rect x="532" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.68"/><text x="550.5" y="186.5" class="mid w" style="font-size:10.5px">+1.8</text>
+      <rect x="572" y="172" width="37" height="21" rx="4" class="box"/><rect x="572" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.27"/><text x="590.5" y="186.5" class="mid v" style="font-size:10.5px">-0.7</text>
+      <text x="14" y="208" class="mid">⋮</text><text x="372.0" y="208" class="mid">⋮ rows 16 to 39 ⋮</text>
+      <text x="0" y="230" class="v">40</text><text x="44" y="230" class="v">morning</text>
+      <rect x="132" y="214" width="37" height="21" rx="4" class="box"/><rect x="132" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.29"/><text x="150.5" y="228.5" class="mid v" style="font-size:10.5px">+0.8</text>
+      <rect x="172" y="214" width="37" height="21" rx="4" class="box"/><rect x="172" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.22"/><text x="190.5" y="228.5" class="mid v" style="font-size:10.5px">-0.6</text>
+      <rect x="212" y="214" width="37" height="21" rx="4" class="box"/><rect x="212" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.22"/><text x="230.5" y="228.5" class="mid v" style="font-size:10.5px">+0.6</text>
+      <rect x="252" y="214" width="37" height="21" rx="4" class="box"/><rect x="252" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.13"/><text x="270.5" y="228.5" class="mid v" style="font-size:10.5px">-0.3</text>
+      <rect x="292" y="214" width="37" height="21" rx="4" class="box"/><rect x="292" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.13"/><text x="310.5" y="228.5" class="mid v" style="font-size:10.5px">-0.3</text>
+      <rect x="332" y="214" width="37" height="21" rx="4" class="box"/><rect x="332" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.13"/><text x="350.5" y="228.5" class="mid v" style="font-size:10.5px">+0.3</text>
+      <rect x="372" y="214" width="37" height="21" rx="4" class="box"/><rect x="372" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.07"/><text x="390.5" y="228.5" class="mid v" style="font-size:10.5px">+0.2</text>
+      <rect x="412" y="214" width="37" height="21" rx="4" class="box"/><rect x="412" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.40"/><text x="430.5" y="228.5" class="mid v" style="font-size:10.5px">-1.0</text>
+      <rect x="452" y="214" width="37" height="21" rx="4" class="box"/><rect x="452" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="470.5" y="228.5" class="mid v" style="font-size:10.5px">-0.2</text>
+      <rect x="492" y="214" width="37" height="21" rx="4" class="box"/><rect x="492" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.17"/><text x="510.5" y="228.5" class="mid v" style="font-size:10.5px">+0.4</text>
+      <rect x="532" y="214" width="37" height="21" rx="4" class="box"/><rect x="532" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.04"/><text x="550.5" y="228.5" class="mid v" style="font-size:10.5px">+0.1</text>
+      <rect x="572" y="214" width="37" height="21" rx="4" class="box"/><rect x="572" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.23"/><text x="590.5" y="228.5" class="mid v" style="font-size:10.5px">+0.6</text>
+      <text x="14" y="250" class="mid">⋮</text><text x="372.0" y="250" class="mid">⋮ rows 41 to 57 ⋮</text>
+      <text x="0" y="272" class="v">58</text><text x="44" y="272" class="v">tea</text>
+      <rect x="132" y="256" width="37" height="21" rx="4" class="box"/><rect x="132" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.69"/><text x="150.5" y="270.5" class="mid w" style="font-size:10.5px">-1.8</text>
+      <rect x="172" y="256" width="37" height="21" rx="4" class="box"/><rect x="172" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.38"/><text x="190.5" y="270.5" class="mid v" style="font-size:10.5px">-1.0</text>
+      <rect x="212" y="256" width="37" height="21" rx="4" class="box"/><rect x="212" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.15"/><text x="230.5" y="270.5" class="mid v" style="font-size:10.5px">-0.4</text>
+      <rect x="252" y="256" width="37" height="21" rx="4" class="box"/><rect x="252" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.17"/><text x="270.5" y="270.5" class="mid v" style="font-size:10.5px">+0.4</text>
+      <rect x="292" y="256" width="37" height="21" rx="4" class="box"/><rect x="292" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.48"/><text x="310.5" y="270.5" class="mid v" style="font-size:10.5px">+1.3</text>
+      <rect x="332" y="256" width="37" height="21" rx="4" class="box"/><rect x="332" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.65"/><text x="350.5" y="270.5" class="mid w" style="font-size:10.5px">+1.7</text>
+      <rect x="372" y="256" width="37" height="21" rx="4" class="box"/><rect x="372" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.10"/><text x="390.5" y="270.5" class="mid v" style="font-size:10.5px">-0.3</text>
+      <rect x="412" y="256" width="37" height="21" rx="4" class="box"/><rect x="412" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.15"/><text x="430.5" y="270.5" class="mid v" style="font-size:10.5px">+0.4</text>
+      <rect x="452" y="256" width="37" height="21" rx="4" class="box"/><rect x="452" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.04"/><text x="470.5" y="270.5" class="mid v" style="font-size:10.5px">-0.1</text>
+      <rect x="492" y="256" width="37" height="21" rx="4" class="box"/><rect x="492" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.94"/><text x="510.5" y="270.5" class="mid w" style="font-size:10.5px">-2.4</text>
+      <rect x="532" y="256" width="37" height="21" rx="4" class="box"/><rect x="532" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.27"/><text x="550.5" y="270.5" class="mid v" style="font-size:10.5px">-0.7</text>
+      <rect x="572" y="256" width="37" height="21" rx="4" class="box"/><rect x="572" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.30"/><text x="590.5" y="270.5" class="mid v" style="font-size:10.5px">+0.8</text>
+      <text x="0" y="296" class="v">59</text><text x="44" y="296" class="v">the</text>
+      <rect x="132" y="280" width="37" height="21" rx="4" class="box"/><rect x="132" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.35"/><text x="150.5" y="294.5" class="mid v" style="font-size:10.5px">+0.9</text>
+      <rect x="172" y="280" width="37" height="21" rx="4" class="box"/><rect x="172" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.85"/><text x="190.5" y="294.5" class="mid w" style="font-size:10.5px">+2.2</text>
+      <rect x="212" y="280" width="37" height="21" rx="4" class="box"/><rect x="212" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.02"/><text x="230.5" y="294.5" class="mid v" style="font-size:10.5px">-0.1</text>
+      <rect x="252" y="280" width="37" height="21" rx="4" class="box"/><rect x="252" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.50"/><text x="270.5" y="294.5" class="mid v" style="font-size:10.5px">+1.3</text>
+      <rect x="292" y="280" width="37" height="21" rx="4" class="box"/><rect x="292" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.83"/><text x="310.5" y="294.5" class="mid w" style="font-size:10.5px">-2.1</text>
+      <rect x="332" y="280" width="37" height="21" rx="4" class="box"/><rect x="332" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.37"/><text x="350.5" y="294.5" class="mid v" style="font-size:10.5px">-0.9</text>
+      <rect x="372" y="280" width="37" height="21" rx="4" class="box"/><rect x="372" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.68"/><text x="390.5" y="294.5" class="mid w" style="font-size:10.5px">+1.8</text>
+      <rect x="412" y="280" width="37" height="21" rx="4" class="box"/><rect x="412" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.63"/><text x="430.5" y="294.5" class="mid w" style="font-size:10.5px">+1.6</text>
+      <rect x="452" y="280" width="37" height="21" rx="4" class="box"/><rect x="452" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.72"/><text x="470.5" y="294.5" class="mid w" style="font-size:10.5px">-1.9</text>
+      <rect x="492" y="280" width="37" height="21" rx="4" class="box"/><rect x="492" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.68"/><text x="510.5" y="294.5" class="mid w" style="font-size:10.5px">+1.8</text>
+      <rect x="532" y="280" width="37" height="21" rx="4" class="box"/><rect x="532" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.63"/><text x="550.5" y="294.5" class="mid w" style="font-size:10.5px">-1.6</text>
+      <rect x="572" y="280" width="37" height="21" rx="4" class="box"/><rect x="572" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.09"/><text x="590.5" y="294.5" class="mid v" style="font-size:10.5px">-0.2</text>
+      <text x="14" y="316" class="mid">⋮</text><text x="372.0" y="316" class="mid">⋮ up to row 69 ⋮</text>
+      <text x="0" y="334" class="h">V = 70 rows</text><text x="96" y="334">(one per vocabulary entry)  ×  d = 12 columns  =  840 learned numbers</text>
+      <text x="0" y="364" class="h">Real size, drawn to scale:</text>
+      <rect x="0" y="376" width="600" height="12" rx="3" class="box o"/>
+      <text x="0" y="406">o200k_base at d = 4,096: 200,019 rows × 4,096 columns, 49 times longer than wide.</text>
+    </svg></div>
+    <figcaption>Rows from the table you train yourself in section 4 (real values, rounded). Blue is positive, orange negative, stronger colour means bigger. Reading the embedding of "cat" means reading row 10. Notice cat and dog, or tea and coffee, share colour patterns in several columns.</figcaption>
+  </figure>
+  <h3>How to read the table</h3>
+  <ul>
+    <li><strong>Rows are V.</strong> One row per vocabulary entry, labelled with its ID and its token: 8 is "bus", 9 "car", 10 "cat", 13 "coffee", and so on. The ⋮ lines mark rows left out to fit the picture; the full table has 70 rows.</li>
+    <li><strong>Columns are d.</strong> 12 numbered columns, so every token has 12 learned numbers. Blue cells are positive, orange cells negative, and a stronger colour means a bigger number.</li>
+    <li><strong>A lookup reads one row.</strong> The outlined row is "cat". Getting the embedding of "cat" means reading row 10, all 12 numbers, and nothing else.</li>
+    <li><strong>Meaning shows up as shared patterns.</strong> "cat" and "dog" have the same sign in 8 of the 12 columns, "tea" and "coffee" in 9. No single column means "animal"; the similarity is spread over many columns, which is what cosine similarity (section 3) measures.</li>
+    <li><strong>The real thing is long and thin.</strong> The orange strip is o200k_base at d = 4,096 drawn to scale: 200,019 rows × 4,096 columns, 49 times longer than wide. Same idea, just far more rows.</li>
+  </ul>
   <p>There is one useful way to see this read as maths. Multiplying a one-hot vector by the table picks out exactly one row, because every row is multiplied by 0 except the one multiplied by 1. So the lookup <em>is</em> a matrix multiplication, just done the cheap way. That is why the embedding table can be trained with the same gradient machinery as every other layer.</p>
   <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">lookup.py</span><button class="copy">Copy</button></div>
 <pre><code><span class="tk-k">import</span> numpy <span class="tk-k">as</span> np
@@ -126,6 +268,119 @@ rows 0 and 2 equal: True</pre></div></div>
     <li><code>E[token_id]</code> and <code>one_hot @ E</code> give the same four numbers. Real frameworks always do the first, because building a 200,019-long one-hot vector per token would waste memory and time.</li>
     <li>A 4-token input becomes a <span class="im">(4, 4)</span> matrix: one row per token, one column per dimension. For real models that is <span class="im">(n, d)</span>, the shape the transformer layers receive.</li>
     <li>Rows 0 and 2 are identical because both positions hold token 3. The lookup does not know where a token sits or what is around it. Position and context are added later (section 6 and the next lessons).</li>
+  </ul>
+  <p>If you know neural networks as nodes and connections, the same table is simply the <strong>weights of the first layer</strong>. The input layer has V nodes holding the one-hot vector, the next layer has d nodes, and the V × d weights between them are the embedding table.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 344" role="img" aria-label="The embedding table as the weights between a one-hot input layer and a 12-node layer, then an output layer">
+      <defs><marker id="ah21n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="90" y="14" class="mid h">Input: one-hot</text><text x="90" y="30" class="mid">V = 70 nodes</text>
+      <text x="300" y="14" class="mid h">Embedding</text><text x="300" y="30" class="mid">d = 12 nodes</text>
+      <text x="560" y="14" class="mid h">Output scores</text><text x="560" y="30" class="mid">V = 70 nodes</text>
+      <line x1="108" y1="56" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="56" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="56" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="56" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="92" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="92" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="92" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="92" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="128" x2="282" y2="74" style="stroke:var(--accent);stroke-width:2.2"/>
+      <line x1="108" y1="128" x2="282" y2="118" style="stroke:var(--accent);stroke-width:2.2"/>
+      <line x1="108" y1="128" x2="282" y2="162" style="stroke:var(--accent);stroke-width:2.2"/>
+      <line x1="108" y1="128" x2="282" y2="250" style="stroke:var(--accent);stroke-width:2.2"/>
+      <line x1="108" y1="164" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="164" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="164" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="164" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="200" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="200" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="200" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="200" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="272" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="272" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="272" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="108" y1="272" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="74" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="74" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="74" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="74" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="74" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="74" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="118" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="118" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="118" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="118" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="118" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="118" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="162" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="162" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="162" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="162" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="162" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="162" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="250" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="250" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="250" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="250" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="250" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
+      <line x1="318" y1="250" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
+      <circle cx="90" cy="56" r="16" class="box"/>
+      <text x="90" y="60" class="mid v">0</text>
+      <text x="0" y="60" style="text-anchor:start;font-size:11px"></text>
+      
+      <text x="66" y="60" style="text-anchor:end;font-size:11.5px" class="">bus</text>
+      <circle cx="560" cy="56" r="16" class="box"/><text x="584" y="60" style="font-size:11.5px">bus</text>
+      <circle cx="90" cy="92" r="16" class="box"/>
+      <text x="90" y="96" class="mid v">0</text>
+      <text x="0" y="96" style="text-anchor:start;font-size:11px"></text>
+      
+      <text x="66" y="96" style="text-anchor:end;font-size:11.5px" class="">car</text>
+      <circle cx="560" cy="92" r="16" class="box"/><text x="584" y="96" style="font-size:11.5px">car</text>
+      <circle cx="90" cy="128" r="16" class="box a"/>
+      <text x="90" y="132" class="mid w">1</text>
+      <text x="0" y="132" style="text-anchor:start;font-size:11px"></text>
+      
+      <text x="66" y="132" style="text-anchor:end;font-size:11.5px" class="h">cat</text>
+      <circle cx="560" cy="128" r="16" class="box"/><text x="584" y="132" style="font-size:11.5px">cat</text>
+      <circle cx="90" cy="164" r="16" class="box"/>
+      <text x="90" y="168" class="mid v">0</text>
+      <text x="0" y="168" style="text-anchor:start;font-size:11px"></text>
+      
+      <text x="66" y="168" style="text-anchor:end;font-size:11.5px" class="">coffee</text>
+      <circle cx="560" cy="164" r="16" class="box"/><text x="584" y="168" style="font-size:11.5px">coffee</text>
+      <circle cx="90" cy="200" r="16" class="box"/>
+      <text x="90" y="204" class="mid v">0</text>
+      <text x="0" y="204" style="text-anchor:start;font-size:11px"></text>
+      
+      <text x="66" y="204" style="text-anchor:end;font-size:11.5px" class="">dog</text>
+      <circle cx="560" cy="200" r="16" class="box"/><text x="584" y="204" style="font-size:11.5px">dog</text>
+      <text x="90" y="241" class="mid">⋮</text><text x="560" y="241" class="mid">⋮</text>
+      <circle cx="90" cy="272" r="16" class="box"/>
+      <text x="90" y="276" class="mid v">0</text>
+      <text x="0" y="276" style="text-anchor:start;font-size:11px"></text>
+      
+      <text x="66" y="276" style="text-anchor:end;font-size:11.5px" class="">the</text>
+      <circle cx="560" cy="272" r="16" class="box"/><text x="584" y="276" style="font-size:11.5px">the</text>
+      <circle cx="300" cy="74" r="18" class="box b"/><text x="300" y="78" class="mid w" style="font-size:11px">+1.91</text>
+      <text x="226" y="68" class="v" style="font-size:11px">+1.91</text>
+      <circle cx="300" cy="118" r="18" class="box b"/><text x="300" y="122" class="mid w" style="font-size:11px">-0.56</text>
+      <text x="226" y="112" class="v" style="font-size:11px">-0.56</text>
+      <circle cx="300" cy="162" r="18" class="box b"/><text x="300" y="166" class="mid w" style="font-size:11px">-0.12</text>
+      <text x="226" y="156" class="v" style="font-size:11px">-0.12</text>
+      <text x="300" y="211" class="mid">⋮</text>
+      <circle cx="300" cy="250" r="18" class="box b"/><text x="300" y="254" class="mid w" style="font-size:11px">-3.00</text>
+      <text x="226" y="244" class="v" style="font-size:11px">-3.00</text>
+      <text x="200" y="316" class="mid">weights = the embedding table</text><text x="200" y="332" class="mid">(70 × 12): the input "cat" uses row 10</text>
+      <text x="430" y="316" class="mid">weights = the output layer</text><text x="430" y="332" class="mid">(12 × 70): one score per word</text>
+    </svg></div>
+    <figcaption>The section 4 model drawn the way you know networks. Only the "cat" input is 1, so only its 12 weights (blue lines) reach the middle: the 12 embedding values are exactly row 10 of the table above. With no hidden layers in between this is the whole model; an LLM puts its transformer layers between the two halves.</figcaption>
+  </figure>
+  <h3>How to read the network</h3>
+  <ul>
+    <li><strong>Input layer: V nodes.</strong> One node per vocabulary entry, holding the one-hot vector. Only the "cat" node is 1; every other node is 0.</li>
+    <li><strong>Weights into the middle layer: the embedding table (70 × 12).</strong> Each input node has 12 outgoing weights, and those 12 weights are that token's row. Because every other input is 0, only cat's 12 connections (blue) carry anything.</li>
+    <li><strong>Middle layer: d = 12 nodes.</strong> The values that arrive (+1.91, −0.56, −0.12, … −3.00) are exactly row 10 of the table above. This is why "one-hot times the table" and "read row 10" give the same answer.</li>
+    <li><strong>Output side: a 12 × 70 layer.</strong> It turns the 12 numbers back into one score per vocabulary word, and softmax makes those scores probabilities for the next word. An LLM puts its transformer layers between these two halves.</li>
   </ul>
   <div class="point"><div class="point-n">!</div><div>
     <div class="point-t">A row number and a row are different things</div>

@@ -85,6 +85,32 @@
 <section class="sec" id="dl">
   <h2><span class="n">3</span>Deep learning</h2>
   <p>A branch of ML that uses <strong>neural networks with many layers</strong>. Each layer transforms its input; training adjusts the weights by backpropagation so outputs match the objective better. The key practical advantage is that the network <strong>learns its own features</strong> from raw input (pixels, audio, text) instead of relying on hand-engineered ones.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 196" role="img" aria-label="Classic ML uses hand-designed features; deep networks learn features layer by layer">
+      <defs><marker id="ah11d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">Classic ML: a person designs the features</text>
+      <rect x="0" y="26" width="100" height="40" rx="9" class="box "/><text x="50.0" y="50.0" class="mid v">Photo</text>
+      <path d="M102 46 L126 46" class="arr " marker-end="url(#ah11d)"/>
+      <rect x="128" y="26" width="170" height="40" rx="9" class="box o"/><text x="213.0" y="42.5" class="mid w">Hand-written features</text><text x="213.0" y="57.5" class="mid w">"has whiskers?", "colour"</text>
+      <path d="M300 46 L324 46" class="arr " marker-end="url(#ah11d)"/>
+      <rect x="326" y="26" width="110" height="40" rx="9" class="box "/><text x="381.0" y="50.0" class="mid v">Model</text>
+      <path d="M438 46 L462 46" class="arr " marker-end="url(#ah11d)"/>
+      <rect x="464" y="26" width="80" height="40" rx="9" class="box b"/><text x="504.0" y="50.0" class="mid w">"cat"</text>
+      <line x1="0" y1="88" x2="640" y2="88" class="grid"/>
+      <text x="0" y="110" class="h">Deep learning: each layer learns its own features from the raw pixels</text>
+      <rect x="0" y="124" width="84" height="40" rx="9" class="box "/><text x="42.0" y="148.0" class="mid v">Raw pixels</text>
+      <path d="M86 144 L104 144" class="arr " marker-end="url(#ah11d)"/>
+      <rect x="106" y="124" width="100" height="40" rx="9" class="box a"/><text x="156.0" y="140.5" class="mid w">Layer 1</text><text x="156.0" y="155.5" class="mid w">edges, colours</text>
+      <path d="M208 144 L226 144" class="arr " marker-end="url(#ah11d)"/>
+      <rect x="228" y="124" width="110" height="40" rx="9" class="box a"/><text x="283.0" y="140.5" class="mid w">Layer 2</text><text x="283.0" y="155.5" class="mid w">corners, textures</text>
+      <path d="M340 144 L358 144" class="arr " marker-end="url(#ah11d)"/>
+      <rect x="360" y="124" width="110" height="40" rx="9" class="box a"/><text x="415.0" y="140.5" class="mid w">Layer 3</text><text x="415.0" y="155.5" class="mid w">ears, eyes, fur</text>
+      <path d="M472 144 L490 144" class="arr " marker-end="url(#ah11d)"/>
+      <rect x="492" y="124" width="70" height="40" rx="9" class="box b"/><text x="527.0" y="148.0" class="mid w">"cat"</text>
+      <text x="106" y="184">nobody writes these: backpropagation shapes them so the final answer gets better</text>
+    </svg></div>
+    <figcaption>The layer contents describe what is typically found when image networks are inspected, simplified. The same idea applies to text: early layers pick up word pieces, later layers meaning.</figcaption>
+  </figure>
   <p>Deep learning powers image recognition, speech recognition and text generation. It is <em>not</em> limited to generative AI: most image classifiers are deep but discriminative.</p>
 </section>
 

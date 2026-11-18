@@ -134,246 +134,7 @@
     </svg></div>
     <figcaption>The two places the vocabulary size enters the model. Every extra vocabulary entry adds one row to the embedding table and one score to compute at every generation step.</figcaption>
   </figure>
-  <p>Here is what the table looks like with real data in it. These are rows from the small table you train yourself in lesson 2.2: 70 words, 12 numbers each.</p>
-  <figure class="fig">
-    <div class="sv"><svg viewBox="0 0 640 420" role="img" aria-label="An embedding table with token IDs as rows and 12 numeric columns">
-      <text x="0" y="14" class="h">ID</text><text x="44" y="14" class="h">token</text>
-      <text x="372.0" y="14" class="mid h">d = 12 columns: the embedding of each token</text>
-      <text x="150.5" y="32" class="mid" style="font-size:10.5px">1</text>
-      <text x="190.5" y="32" class="mid" style="font-size:10.5px">2</text>
-      <text x="230.5" y="32" class="mid" style="font-size:10.5px">3</text>
-      <text x="270.5" y="32" class="mid" style="font-size:10.5px">4</text>
-      <text x="310.5" y="32" class="mid" style="font-size:10.5px">5</text>
-      <text x="350.5" y="32" class="mid" style="font-size:10.5px">6</text>
-      <text x="390.5" y="32" class="mid" style="font-size:10.5px">7</text>
-      <text x="430.5" y="32" class="mid" style="font-size:10.5px">8</text>
-      <text x="470.5" y="32" class="mid" style="font-size:10.5px">9</text>
-      <text x="510.5" y="32" class="mid" style="font-size:10.5px">10</text>
-      <text x="550.5" y="32" class="mid" style="font-size:10.5px">11</text>
-      <text x="590.5" y="32" class="mid" style="font-size:10.5px">12</text>
-      <text x="0" y="56" class="v">8</text><text x="44" y="56" class="v">bus</text>
-      <rect x="132" y="40" width="37" height="21" rx="4" class="box"/><rect x="132" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.47"/><text x="150.5" y="54.5" class="mid v" style="font-size:10.5px">-1.2</text>
-      <rect x="172" y="40" width="37" height="21" rx="4" class="box"/><rect x="172" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.84"/><text x="190.5" y="54.5" class="mid w" style="font-size:10.5px">-2.2</text>
-      <rect x="212" y="40" width="37" height="21" rx="4" class="box"/><rect x="212" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.01"/><text x="230.5" y="54.5" class="mid v" style="font-size:10.5px">+0.0</text>
-      <rect x="252" y="40" width="37" height="21" rx="4" class="box"/><rect x="252" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.42"/><text x="270.5" y="54.5" class="mid v" style="font-size:10.5px">-1.1</text>
-      <rect x="292" y="40" width="37" height="21" rx="4" class="box"/><rect x="292" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.62"/><text x="310.5" y="54.5" class="mid w" style="font-size:10.5px">-1.6</text>
-      <rect x="332" y="40" width="37" height="21" rx="4" class="box"/><rect x="332" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.30"/><text x="350.5" y="54.5" class="mid v" style="font-size:10.5px">+0.8</text>
-      <rect x="372" y="40" width="37" height="21" rx="4" class="box"/><rect x="372" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.04"/><text x="390.5" y="54.5" class="mid v" style="font-size:10.5px">+0.1</text>
-      <rect x="412" y="40" width="37" height="21" rx="4" class="box"/><rect x="412" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.41"/><text x="430.5" y="54.5" class="mid v" style="font-size:10.5px">-1.1</text>
-      <rect x="452" y="40" width="37" height="21" rx="4" class="box"/><rect x="452" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.63"/><text x="470.5" y="54.5" class="mid w" style="font-size:10.5px">+1.6</text>
-      <rect x="492" y="40" width="37" height="21" rx="4" class="box"/><rect x="492" y="40" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.36"/><text x="510.5" y="54.5" class="mid v" style="font-size:10.5px">+0.9</text>
-      <rect x="532" y="40" width="37" height="21" rx="4" class="box"/><rect x="532" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.28"/><text x="550.5" y="54.5" class="mid v" style="font-size:10.5px">-0.7</text>
-      <rect x="572" y="40" width="37" height="21" rx="4" class="box"/><rect x="572" y="40" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.21"/><text x="590.5" y="54.5" class="mid v" style="font-size:10.5px">-0.6</text>
-      <text x="0" y="80" class="v">9</text><text x="44" y="80" class="v">car</text>
-      <rect x="132" y="64" width="37" height="21" rx="4" class="box"/><rect x="132" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.80"/><text x="150.5" y="78.5" class="mid w" style="font-size:10.5px">-2.1</text>
-      <rect x="172" y="64" width="37" height="21" rx="4" class="box"/><rect x="172" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.63"/><text x="190.5" y="78.5" class="mid w" style="font-size:10.5px">-1.6</text>
-      <rect x="212" y="64" width="37" height="21" rx="4" class="box"/><rect x="212" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.06"/><text x="230.5" y="78.5" class="mid v" style="font-size:10.5px">+0.2</text>
-      <rect x="252" y="64" width="37" height="21" rx="4" class="box"/><rect x="252" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.04"/><text x="270.5" y="78.5" class="mid v" style="font-size:10.5px">-0.1</text>
-      <rect x="292" y="64" width="37" height="21" rx="4" class="box"/><rect x="292" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.85"/><text x="310.5" y="78.5" class="mid w" style="font-size:10.5px">-2.2</text>
-      <rect x="332" y="64" width="37" height="21" rx="4" class="box"/><rect x="332" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.05"/><text x="350.5" y="78.5" class="mid v" style="font-size:10.5px">+0.1</text>
-      <rect x="372" y="64" width="37" height="21" rx="4" class="box"/><rect x="372" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.70"/><text x="390.5" y="78.5" class="mid w" style="font-size:10.5px">-1.8</text>
-      <rect x="412" y="64" width="37" height="21" rx="4" class="box"/><rect x="412" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="430.5" y="78.5" class="mid v" style="font-size:10.5px">-0.2</text>
-      <rect x="452" y="64" width="37" height="21" rx="4" class="box"/><rect x="452" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.55"/><text x="470.5" y="78.5" class="mid v" style="font-size:10.5px">+1.4</text>
-      <rect x="492" y="64" width="37" height="21" rx="4" class="box"/><rect x="492" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.07"/><text x="510.5" y="78.5" class="mid v" style="font-size:10.5px">-0.2</text>
-      <rect x="532" y="64" width="37" height="21" rx="4" class="box"/><rect x="532" y="64" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.24"/><text x="550.5" y="78.5" class="mid v" style="font-size:10.5px">+0.6</text>
-      <rect x="572" y="64" width="37" height="21" rx="4" class="box"/><rect x="572" y="64" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="590.5" y="78.5" class="mid v" style="font-size:10.5px">-0.2</text>
-      <text x="0" y="104" class="v">10</text><text x="44" y="104" class="h">cat</text>
-      <rect x="132" y="88" width="37" height="21" rx="4" class="box"/><rect x="132" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.73"/><text x="150.5" y="102.5" class="mid w" style="font-size:10.5px">+1.9</text>
-      <rect x="172" y="88" width="37" height="21" rx="4" class="box"/><rect x="172" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.22"/><text x="190.5" y="102.5" class="mid v" style="font-size:10.5px">-0.6</text>
-      <rect x="212" y="88" width="37" height="21" rx="4" class="box"/><rect x="212" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.05"/><text x="230.5" y="102.5" class="mid v" style="font-size:10.5px">-0.1</text>
-      <rect x="252" y="88" width="37" height="21" rx="4" class="box"/><rect x="252" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.41"/><text x="270.5" y="102.5" class="mid v" style="font-size:10.5px">+1.1</text>
-      <rect x="292" y="88" width="37" height="21" rx="4" class="box"/><rect x="292" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.08"/><text x="310.5" y="102.5" class="mid v" style="font-size:10.5px">+0.2</text>
-      <rect x="332" y="88" width="37" height="21" rx="4" class="box"/><rect x="332" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.69"/><text x="350.5" y="102.5" class="mid w" style="font-size:10.5px">+1.8</text>
-      <rect x="372" y="88" width="37" height="21" rx="4" class="box"/><rect x="372" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.52"/><text x="390.5" y="102.5" class="mid v" style="font-size:10.5px">+1.4</text>
-      <rect x="412" y="88" width="37" height="21" rx="4" class="box"/><rect x="412" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.23"/><text x="430.5" y="102.5" class="mid v" style="font-size:10.5px">-0.6</text>
-      <rect x="452" y="88" width="37" height="21" rx="4" class="box"/><rect x="452" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.07"/><text x="470.5" y="102.5" class="mid v" style="font-size:10.5px">+0.2</text>
-      <rect x="492" y="88" width="37" height="21" rx="4" class="box"/><rect x="492" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.16"/><text x="510.5" y="102.5" class="mid v" style="font-size:10.5px">-0.4</text>
-      <rect x="532" y="88" width="37" height="21" rx="4" class="box"/><rect x="532" y="88" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.45"/><text x="550.5" y="102.5" class="mid v" style="font-size:10.5px">+1.2</text>
-      <rect x="572" y="88" width="37" height="21" rx="4" class="box"/><rect x="572" y="88" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:1.00"/><text x="590.5" y="102.5" class="mid w" style="font-size:10.5px">-3.0</text>
-      <rect x="128" y="85" width="485" height="27" rx="7" style="fill:none;stroke:var(--accent);stroke-width:2"/>
-      <text x="14" y="124" class="mid">⋮</text><text x="372.0" y="124" class="mid">⋮ rows 11 to 12 ⋮</text>
-      <text x="0" y="146" class="v">13</text><text x="44" y="146" class="v">coffee</text>
-      <rect x="132" y="130" width="37" height="21" rx="4" class="box"/><rect x="132" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.48"/><text x="150.5" y="144.5" class="mid v" style="font-size:10.5px">-1.3</text>
-      <rect x="172" y="130" width="37" height="21" rx="4" class="box"/><rect x="172" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.07"/><text x="190.5" y="144.5" class="mid v" style="font-size:10.5px">+0.2</text>
-      <rect x="212" y="130" width="37" height="21" rx="4" class="box"/><rect x="212" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="230.5" y="144.5" class="mid v" style="font-size:10.5px">-0.2</text>
-      <rect x="252" y="130" width="37" height="21" rx="4" class="box"/><rect x="252" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.55"/><text x="270.5" y="144.5" class="mid v" style="font-size:10.5px">-1.4</text>
-      <rect x="292" y="130" width="37" height="21" rx="4" class="box"/><rect x="292" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.39"/><text x="310.5" y="144.5" class="mid v" style="font-size:10.5px">+1.0</text>
-      <rect x="332" y="130" width="37" height="21" rx="4" class="box"/><rect x="332" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.67"/><text x="350.5" y="144.5" class="mid w" style="font-size:10.5px">+1.7</text>
-      <rect x="372" y="130" width="37" height="21" rx="4" class="box"/><rect x="372" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.33"/><text x="390.5" y="144.5" class="mid v" style="font-size:10.5px">+0.9</text>
-      <rect x="412" y="130" width="37" height="21" rx="4" class="box"/><rect x="412" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.13"/><text x="430.5" y="144.5" class="mid v" style="font-size:10.5px">+0.3</text>
-      <rect x="452" y="130" width="37" height="21" rx="4" class="box"/><rect x="452" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.24"/><text x="470.5" y="144.5" class="mid v" style="font-size:10.5px">-0.6</text>
-      <rect x="492" y="130" width="37" height="21" rx="4" class="box"/><rect x="492" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:1.00"/><text x="510.5" y="144.5" class="mid w" style="font-size:10.5px">-2.6</text>
-      <rect x="532" y="130" width="37" height="21" rx="4" class="box"/><rect x="532" y="130" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.20"/><text x="550.5" y="144.5" class="mid v" style="font-size:10.5px">-0.5</text>
-      <rect x="572" y="130" width="37" height="21" rx="4" class="box"/><rect x="572" y="130" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.40"/><text x="590.5" y="144.5" class="mid v" style="font-size:10.5px">+1.0</text>
-      <text x="14" y="166" class="mid">⋮</text><text x="372.0" y="166" class="mid">⋮ row 14 ⋮</text>
-      <text x="0" y="188" class="v">15</text><text x="44" y="188" class="v">dog</text>
-      <rect x="132" y="172" width="37" height="21" rx="4" class="box"/><rect x="132" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.98"/><text x="150.5" y="186.5" class="mid w" style="font-size:10.5px">+2.6</text>
-      <rect x="172" y="172" width="37" height="21" rx="4" class="box"/><rect x="172" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.15"/><text x="190.5" y="186.5" class="mid v" style="font-size:10.5px">+0.4</text>
-      <rect x="212" y="172" width="37" height="21" rx="4" class="box"/><rect x="212" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.61"/><text x="230.5" y="186.5" class="mid w" style="font-size:10.5px">-1.6</text>
-      <rect x="252" y="172" width="37" height="21" rx="4" class="box"/><rect x="252" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.62"/><text x="270.5" y="186.5" class="mid w" style="font-size:10.5px">+1.6</text>
-      <rect x="292" y="172" width="37" height="21" rx="4" class="box"/><rect x="292" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.52"/><text x="310.5" y="186.5" class="mid v" style="font-size:10.5px">+1.4</text>
-      <rect x="332" y="172" width="37" height="21" rx="4" class="box"/><rect x="332" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.43"/><text x="350.5" y="186.5" class="mid v" style="font-size:10.5px">+1.1</text>
-      <rect x="372" y="172" width="37" height="21" rx="4" class="box"/><rect x="372" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.24"/><text x="390.5" y="186.5" class="mid v" style="font-size:10.5px">-0.6</text>
-      <rect x="412" y="172" width="37" height="21" rx="4" class="box"/><rect x="412" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.19"/><text x="430.5" y="186.5" class="mid v" style="font-size:10.5px">-0.5</text>
-      <rect x="452" y="172" width="37" height="21" rx="4" class="box"/><rect x="452" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.14"/><text x="470.5" y="186.5" class="mid v" style="font-size:10.5px">+0.4</text>
-      <rect x="492" y="172" width="37" height="21" rx="4" class="box"/><rect x="492" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.59"/><text x="510.5" y="186.5" class="mid w" style="font-size:10.5px">+1.5</text>
-      <rect x="532" y="172" width="37" height="21" rx="4" class="box"/><rect x="532" y="172" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.68"/><text x="550.5" y="186.5" class="mid w" style="font-size:10.5px">+1.8</text>
-      <rect x="572" y="172" width="37" height="21" rx="4" class="box"/><rect x="572" y="172" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.27"/><text x="590.5" y="186.5" class="mid v" style="font-size:10.5px">-0.7</text>
-      <text x="14" y="208" class="mid">⋮</text><text x="372.0" y="208" class="mid">⋮ rows 16 to 39 ⋮</text>
-      <text x="0" y="230" class="v">40</text><text x="44" y="230" class="v">morning</text>
-      <rect x="132" y="214" width="37" height="21" rx="4" class="box"/><rect x="132" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.29"/><text x="150.5" y="228.5" class="mid v" style="font-size:10.5px">+0.8</text>
-      <rect x="172" y="214" width="37" height="21" rx="4" class="box"/><rect x="172" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.22"/><text x="190.5" y="228.5" class="mid v" style="font-size:10.5px">-0.6</text>
-      <rect x="212" y="214" width="37" height="21" rx="4" class="box"/><rect x="212" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.22"/><text x="230.5" y="228.5" class="mid v" style="font-size:10.5px">+0.6</text>
-      <rect x="252" y="214" width="37" height="21" rx="4" class="box"/><rect x="252" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.13"/><text x="270.5" y="228.5" class="mid v" style="font-size:10.5px">-0.3</text>
-      <rect x="292" y="214" width="37" height="21" rx="4" class="box"/><rect x="292" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.13"/><text x="310.5" y="228.5" class="mid v" style="font-size:10.5px">-0.3</text>
-      <rect x="332" y="214" width="37" height="21" rx="4" class="box"/><rect x="332" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.13"/><text x="350.5" y="228.5" class="mid v" style="font-size:10.5px">+0.3</text>
-      <rect x="372" y="214" width="37" height="21" rx="4" class="box"/><rect x="372" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.07"/><text x="390.5" y="228.5" class="mid v" style="font-size:10.5px">+0.2</text>
-      <rect x="412" y="214" width="37" height="21" rx="4" class="box"/><rect x="412" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.40"/><text x="430.5" y="228.5" class="mid v" style="font-size:10.5px">-1.0</text>
-      <rect x="452" y="214" width="37" height="21" rx="4" class="box"/><rect x="452" y="214" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.08"/><text x="470.5" y="228.5" class="mid v" style="font-size:10.5px">-0.2</text>
-      <rect x="492" y="214" width="37" height="21" rx="4" class="box"/><rect x="492" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.17"/><text x="510.5" y="228.5" class="mid v" style="font-size:10.5px">+0.4</text>
-      <rect x="532" y="214" width="37" height="21" rx="4" class="box"/><rect x="532" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.04"/><text x="550.5" y="228.5" class="mid v" style="font-size:10.5px">+0.1</text>
-      <rect x="572" y="214" width="37" height="21" rx="4" class="box"/><rect x="572" y="214" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.23"/><text x="590.5" y="228.5" class="mid v" style="font-size:10.5px">+0.6</text>
-      <text x="14" y="250" class="mid">⋮</text><text x="372.0" y="250" class="mid">⋮ rows 41 to 57 ⋮</text>
-      <text x="0" y="272" class="v">58</text><text x="44" y="272" class="v">tea</text>
-      <rect x="132" y="256" width="37" height="21" rx="4" class="box"/><rect x="132" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.69"/><text x="150.5" y="270.5" class="mid w" style="font-size:10.5px">-1.8</text>
-      <rect x="172" y="256" width="37" height="21" rx="4" class="box"/><rect x="172" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.38"/><text x="190.5" y="270.5" class="mid v" style="font-size:10.5px">-1.0</text>
-      <rect x="212" y="256" width="37" height="21" rx="4" class="box"/><rect x="212" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.15"/><text x="230.5" y="270.5" class="mid v" style="font-size:10.5px">-0.4</text>
-      <rect x="252" y="256" width="37" height="21" rx="4" class="box"/><rect x="252" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.17"/><text x="270.5" y="270.5" class="mid v" style="font-size:10.5px">+0.4</text>
-      <rect x="292" y="256" width="37" height="21" rx="4" class="box"/><rect x="292" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.48"/><text x="310.5" y="270.5" class="mid v" style="font-size:10.5px">+1.3</text>
-      <rect x="332" y="256" width="37" height="21" rx="4" class="box"/><rect x="332" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.65"/><text x="350.5" y="270.5" class="mid w" style="font-size:10.5px">+1.7</text>
-      <rect x="372" y="256" width="37" height="21" rx="4" class="box"/><rect x="372" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.10"/><text x="390.5" y="270.5" class="mid v" style="font-size:10.5px">-0.3</text>
-      <rect x="412" y="256" width="37" height="21" rx="4" class="box"/><rect x="412" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.15"/><text x="430.5" y="270.5" class="mid v" style="font-size:10.5px">+0.4</text>
-      <rect x="452" y="256" width="37" height="21" rx="4" class="box"/><rect x="452" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.04"/><text x="470.5" y="270.5" class="mid v" style="font-size:10.5px">-0.1</text>
-      <rect x="492" y="256" width="37" height="21" rx="4" class="box"/><rect x="492" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.94"/><text x="510.5" y="270.5" class="mid w" style="font-size:10.5px">-2.4</text>
-      <rect x="532" y="256" width="37" height="21" rx="4" class="box"/><rect x="532" y="256" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.27"/><text x="550.5" y="270.5" class="mid v" style="font-size:10.5px">-0.7</text>
-      <rect x="572" y="256" width="37" height="21" rx="4" class="box"/><rect x="572" y="256" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.30"/><text x="590.5" y="270.5" class="mid v" style="font-size:10.5px">+0.8</text>
-      <text x="0" y="296" class="v">59</text><text x="44" y="296" class="v">the</text>
-      <rect x="132" y="280" width="37" height="21" rx="4" class="box"/><rect x="132" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.35"/><text x="150.5" y="294.5" class="mid v" style="font-size:10.5px">+0.9</text>
-      <rect x="172" y="280" width="37" height="21" rx="4" class="box"/><rect x="172" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.85"/><text x="190.5" y="294.5" class="mid w" style="font-size:10.5px">+2.2</text>
-      <rect x="212" y="280" width="37" height="21" rx="4" class="box"/><rect x="212" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.02"/><text x="230.5" y="294.5" class="mid v" style="font-size:10.5px">-0.1</text>
-      <rect x="252" y="280" width="37" height="21" rx="4" class="box"/><rect x="252" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.50"/><text x="270.5" y="294.5" class="mid v" style="font-size:10.5px">+1.3</text>
-      <rect x="292" y="280" width="37" height="21" rx="4" class="box"/><rect x="292" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.83"/><text x="310.5" y="294.5" class="mid w" style="font-size:10.5px">-2.1</text>
-      <rect x="332" y="280" width="37" height="21" rx="4" class="box"/><rect x="332" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.37"/><text x="350.5" y="294.5" class="mid v" style="font-size:10.5px">-0.9</text>
-      <rect x="372" y="280" width="37" height="21" rx="4" class="box"/><rect x="372" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.68"/><text x="390.5" y="294.5" class="mid w" style="font-size:10.5px">+1.8</text>
-      <rect x="412" y="280" width="37" height="21" rx="4" class="box"/><rect x="412" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.63"/><text x="430.5" y="294.5" class="mid w" style="font-size:10.5px">+1.6</text>
-      <rect x="452" y="280" width="37" height="21" rx="4" class="box"/><rect x="452" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.72"/><text x="470.5" y="294.5" class="mid w" style="font-size:10.5px">-1.9</text>
-      <rect x="492" y="280" width="37" height="21" rx="4" class="box"/><rect x="492" y="280" width="37" height="21" rx="4" style="fill:var(--accent);fill-opacity:0.68"/><text x="510.5" y="294.5" class="mid w" style="font-size:10.5px">+1.8</text>
-      <rect x="532" y="280" width="37" height="21" rx="4" class="box"/><rect x="532" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.63"/><text x="550.5" y="294.5" class="mid w" style="font-size:10.5px">-1.6</text>
-      <rect x="572" y="280" width="37" height="21" rx="4" class="box"/><rect x="572" y="280" width="37" height="21" rx="4" style="fill:var(--orange);fill-opacity:0.09"/><text x="590.5" y="294.5" class="mid v" style="font-size:10.5px">-0.2</text>
-      <text x="14" y="316" class="mid">⋮</text><text x="372.0" y="316" class="mid">⋮ up to row 69 ⋮</text>
-      <text x="0" y="334" class="h">V = 70 rows</text><text x="96" y="334">(one per vocabulary entry)  ×  d = 12 columns  =  840 learned numbers</text>
-      <text x="0" y="364" class="h">Real size, drawn to scale:</text>
-      <rect x="0" y="376" width="600" height="12" rx="3" class="box o"/>
-      <text x="0" y="406">o200k_base at d = 4,096: 200,019 rows × 4,096 columns, 49 times longer than wide.</text>
-    </svg></div>
-    <figcaption>Rows from the toy table trained in lesson 2.2 (real values, rounded). Blue is positive, orange negative, stronger colour means bigger. Reading the embedding of "cat" means reading row 10. Notice cat and dog, or tea and coffee, share colour patterns in several columns.</figcaption>
-  </figure>
-  <p>If you have seen neural networks drawn as nodes and connections, the same table is simply the <strong>weights of the first layer</strong>. The input layer has one node per vocabulary entry (V nodes) holding the one-hot vector, the next layer has d nodes, and the V × d weights between them are the embedding table. Because only one input node is 1, the d values that arrive are that token's row.</p>
-  <figure class="fig">
-    <div class="sv"><svg viewBox="0 0 640 344" role="img" aria-label="The embedding table as the weights between a one-hot input layer and a 12-node layer, then an output layer">
-      <defs><marker id="ah21n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
-      <text x="90" y="14" class="mid h">Input: one-hot</text><text x="90" y="30" class="mid">V = 70 nodes</text>
-      <text x="300" y="14" class="mid h">Embedding</text><text x="300" y="30" class="mid">d = 12 nodes</text>
-      <text x="560" y="14" class="mid h">Output scores</text><text x="560" y="30" class="mid">V = 70 nodes</text>
-      <line x1="108" y1="56" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="56" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="56" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="56" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="92" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="92" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="92" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="92" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="128" x2="282" y2="74" style="stroke:var(--accent);stroke-width:2.2"/>
-      <line x1="108" y1="128" x2="282" y2="118" style="stroke:var(--accent);stroke-width:2.2"/>
-      <line x1="108" y1="128" x2="282" y2="162" style="stroke:var(--accent);stroke-width:2.2"/>
-      <line x1="108" y1="128" x2="282" y2="250" style="stroke:var(--accent);stroke-width:2.2"/>
-      <line x1="108" y1="164" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="164" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="164" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="164" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="200" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="200" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="200" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="200" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="272" x2="282" y2="74" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="272" x2="282" y2="118" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="272" x2="282" y2="162" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="108" y1="272" x2="282" y2="250" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="74" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="74" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="74" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="74" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="74" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="74" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="118" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="118" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="118" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="118" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="118" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="118" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="162" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="162" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="162" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="162" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="162" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="162" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="250" x2="542" y2="56" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="250" x2="542" y2="92" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="250" x2="542" y2="128" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="250" x2="542" y2="164" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="250" x2="542" y2="200" style="stroke:var(--sep);stroke-width:1"/>
-      <line x1="318" y1="250" x2="542" y2="272" style="stroke:var(--sep);stroke-width:1"/>
-      <circle cx="90" cy="56" r="16" class="box"/>
-      <text x="90" y="60" class="mid v">0</text>
-      <text x="0" y="60" style="text-anchor:start;font-size:11px"></text>
-      
-      <text x="66" y="60" style="text-anchor:end;font-size:11.5px" class="">bus</text>
-      <circle cx="560" cy="56" r="16" class="box"/><text x="584" y="60" style="font-size:11.5px">bus</text>
-      <circle cx="90" cy="92" r="16" class="box"/>
-      <text x="90" y="96" class="mid v">0</text>
-      <text x="0" y="96" style="text-anchor:start;font-size:11px"></text>
-      
-      <text x="66" y="96" style="text-anchor:end;font-size:11.5px" class="">car</text>
-      <circle cx="560" cy="92" r="16" class="box"/><text x="584" y="96" style="font-size:11.5px">car</text>
-      <circle cx="90" cy="128" r="16" class="box a"/>
-      <text x="90" y="132" class="mid w">1</text>
-      <text x="0" y="132" style="text-anchor:start;font-size:11px"></text>
-      
-      <text x="66" y="132" style="text-anchor:end;font-size:11.5px" class="h">cat</text>
-      <circle cx="560" cy="128" r="16" class="box"/><text x="584" y="132" style="font-size:11.5px">cat</text>
-      <circle cx="90" cy="164" r="16" class="box"/>
-      <text x="90" y="168" class="mid v">0</text>
-      <text x="0" y="168" style="text-anchor:start;font-size:11px"></text>
-      
-      <text x="66" y="168" style="text-anchor:end;font-size:11.5px" class="">coffee</text>
-      <circle cx="560" cy="164" r="16" class="box"/><text x="584" y="168" style="font-size:11.5px">coffee</text>
-      <circle cx="90" cy="200" r="16" class="box"/>
-      <text x="90" y="204" class="mid v">0</text>
-      <text x="0" y="204" style="text-anchor:start;font-size:11px"></text>
-      
-      <text x="66" y="204" style="text-anchor:end;font-size:11.5px" class="">dog</text>
-      <circle cx="560" cy="200" r="16" class="box"/><text x="584" y="204" style="font-size:11.5px">dog</text>
-      <text x="90" y="241" class="mid">⋮</text><text x="560" y="241" class="mid">⋮</text>
-      <circle cx="90" cy="272" r="16" class="box"/>
-      <text x="90" y="276" class="mid v">0</text>
-      <text x="0" y="276" style="text-anchor:start;font-size:11px"></text>
-      
-      <text x="66" y="276" style="text-anchor:end;font-size:11.5px" class="">the</text>
-      <circle cx="560" cy="272" r="16" class="box"/><text x="584" y="276" style="font-size:11.5px">the</text>
-      <circle cx="300" cy="74" r="18" class="box b"/><text x="300" y="78" class="mid w" style="font-size:11px">+1.91</text>
-      <text x="226" y="68" class="v" style="font-size:11px">+1.91</text>
-      <circle cx="300" cy="118" r="18" class="box b"/><text x="300" y="122" class="mid w" style="font-size:11px">-0.56</text>
-      <text x="226" y="112" class="v" style="font-size:11px">-0.56</text>
-      <circle cx="300" cy="162" r="18" class="box b"/><text x="300" y="166" class="mid w" style="font-size:11px">-0.12</text>
-      <text x="226" y="156" class="v" style="font-size:11px">-0.12</text>
-      <text x="300" y="211" class="mid">⋮</text>
-      <circle cx="300" cy="250" r="18" class="box b"/><text x="300" y="254" class="mid w" style="font-size:11px">-3.00</text>
-      <text x="226" y="244" class="v" style="font-size:11px">-3.00</text>
-      <text x="200" y="316" class="mid">weights = the embedding table</text><text x="200" y="332" class="mid">(70 × 12): the input "cat" uses row 10</text>
-      <text x="430" y="316" class="mid">weights = the output layer</text><text x="430" y="332" class="mid">(12 × 70): one score per word</text>
-    </svg></div>
-    <figcaption>The model from lesson 2.2 drawn the way you know networks. Only the "cat" input is 1, so only its 12 weights (blue lines) reach the middle: the 12 embedding values are exactly row 10 of the table above. With no hidden layers in between this is the whole model; an LLM puts its transformer layers between the two halves.</figcaption>
-  </figure>
+  <p>Lesson 2.2 shows this table filled with real numbers, and the same table drawn as the first layer of a neural network.</p>
   <div class="math">200,019 × 4,096 = 819,277,824<span class="cap">o200k's real vocabulary size × an illustrative embedding size: about 0.8 billion parameters for the embedding table alone</span></div>
   <p>A bigger vocabulary gives shorter sequences (faster, more text per context window) but a bigger, more expensive model, and rare tokens get fewer training examples each. Recent tokenizers have grown (cl100k ≈ 100k entries → o200k ≈ 200k) partly to handle more languages efficiently; you will see the effect on Telugu in section 6.</p>
   <figure class="fig">
@@ -778,6 +539,39 @@ You are a helpful finance assistant.&lt;|end|&gt;
 What is overdue?&lt;|end|&gt;
 &lt;|start|&gt;assistant
 </code></pre></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 218" role="img" aria-label="Chat messages joined into one token sequence with special tokens">
+      <defs><marker id="ah21t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">What your code sends: a list of messages</text>
+      <rect x="0" y="24" width="300" height="40" rx="9" class="box "/><text x="150.0" y="48.0" class="mid v">system: "You are a helpful finance assistant."</text>
+      <rect x="320" y="24" width="200" height="40" rx="9" class="box "/><text x="420.0" y="48.0" class="mid v">user: "What is overdue?"</text>
+      <path d="M260 68 L260 92" class="arr " marker-end="url(#ah21t)"/>
+      <text x="270" y="86">the chat template joins them</text>
+      <text x="0" y="112" class="h">What the model reads: one flat sequence</text>
+      <rect x="0" y="122" width="79" height="26" rx="6" class="box o"/>
+      <text x="39" y="139" class="tk w">&lt;|start|&gt;</text>
+      <rect x="83.8" y="122" width="57" height="26" rx="6" class="box o"/>
+      <text x="112" y="139" class="tk w">system</text>
+      <rect x="146.0" y="122" width="273" height="26" rx="6" class="box "/>
+      <text x="283" y="139" class="tk ">You are a helpful finance assistant.</text>
+      <rect x="424.2" y="122" width="64" height="26" rx="6" class="box o"/>
+      <text x="456" y="139" class="tk w">&lt;|end|&gt;</text>
+      <rect x="493.6" y="122" width="79" height="26" rx="6" class="box o"/>
+      <text x="533" y="139" class="tk w">&lt;|start|&gt;</text>
+      <rect x="577.4" y="122" width="43" height="26" rx="6" class="box o"/>
+      <text x="599" y="139" class="tk w">user</text>
+      <rect x="0" y="156" width="129" height="26" rx="6" class="box "/>
+      <text x="65" y="173" class="tk ">What is overdue?</text>
+      <rect x="134.2" y="156" width="64" height="26" rx="6" class="box o"/>
+      <text x="166" y="173" class="tk w">&lt;|end|&gt;</text>
+      <rect x="203.6" y="156" width="79" height="26" rx="6" class="box o"/>
+      <text x="243" y="173" class="tk w">&lt;|start|&gt;</text>
+      <rect x="287.4" y="156" width="79" height="26" rx="6" class="box o"/>
+      <text x="327" y="173" class="tk w">assistant</text>
+      <text x="0" y="208">orange = special tokens and role names: they count against your token budget too</text>
+    </svg></div>
+    <figcaption>The same illustrative format as the box above. The model generates its reply after the final "assistant" marker and stops by emitting its end token.</figcaption>
+  </figure>
   <p>The exact markers differ for every model family; the shape above is only for illustration. Three practical consequences:</p>
   <ul>
     <li>The API usually reports a few <strong>more input tokens</strong> than your text alone, because the template's markers count too.</li>

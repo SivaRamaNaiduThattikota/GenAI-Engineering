@@ -182,6 +182,28 @@
       <p>It is simpler and cheaper to run, which is why it is popular for open-weight models and for companies doing their own preference tuning.</p>
     </div>
   </div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 196" role="img" aria-label="RLHF pipeline with a reward model and RL loop versus DPO with a single loss">
+      <defs><marker id="ah14r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">RLHF: two stages</text>
+      <rect x="0" y="26" width="120" height="40" rx="9" class="box "/><text x="60.0" y="42.5" class="mid v">Preference pairs</text><text x="60.0" y="57.5" class="mid v">(better, worse)</text>
+      <path d="M122 46 L146 46" class="arr " marker-end="url(#ah14r)"/>
+      <rect x="148" y="26" width="120" height="40" rx="9" class="box o"/><text x="208.0" y="42.5" class="mid w">Train a</text><text x="208.0" y="57.5" class="mid w">reward model</text>
+      <path d="M270 46 L294 46" class="arr " marker-end="url(#ah14r)"/>
+      <rect x="296" y="26" width="150" height="40" rx="9" class="box a"/><text x="371.0" y="42.5" class="mid w">Chat model writes,</text><text x="371.0" y="57.5" class="mid w">reward model scores</text>
+      <path d="M448 46 L472 46" class="arr " marker-end="url(#ah14r)"/>
+      <rect x="474" y="26" width="166" height="40" rx="9" class="box b"/><text x="557.0" y="42.5" class="mid w">Update chat model (RL)</text><text x="557.0" y="57.5" class="mid w">stay close to SFT</text>
+      <path d="M557 68 C557 96 371 96 371 70" class="arr dash" marker-end="url(#ah14r)"/>
+      <text x="464" y="104" class="mid">repeat many times</text>
+      <line x1="0" y1="122" x2="640" y2="122" class="grid"/>
+      <text x="0" y="146" class="h">DPO: one stage</text>
+      <rect x="0" y="156" width="120" height="40" rx="9" class="box "/><text x="60.0" y="172.5" class="mid v">Preference pairs</text><text x="60.0" y="187.5" class="mid v">(better, worse)</text>
+      <path d="M122 176 L146 176" class="arr " marker-end="url(#ah14r)"/>
+      <rect x="148" y="156" width="300" height="40" rx="9" class="box b"/><text x="298.0" y="172.5" class="mid w">One supervised loss: raise P(better)</text><text x="298.0" y="187.5" class="mid w">relative to P(worse), stay close to SFT</text>
+      <text x="464" y="172">no reward model,</text><text x="464" y="188">no generation loop</text>
+    </svg></div>
+    <figcaption>Both learn from the same preference pairs. RLHF learns a judge first and then trains against it; DPO folds both steps into one loss on the pairs.</figcaption>
+  </figure>
   <div class="tbl"><table>
     <thead><tr><th></th><th>RLHF</th><th>DPO</th></tr></thead>
     <tbody>

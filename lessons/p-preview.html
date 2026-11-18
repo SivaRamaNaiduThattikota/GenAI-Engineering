@@ -32,6 +32,26 @@
     <li>A spam classifier <strong>categorises</strong> an email into a fixed set of labels.</li>
     <li>A generative model <strong>writes</strong> an email from your instructions.</li>
   </ul>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 170" role="img" aria-label="A classifier picks a label; a generative model writes new text">
+      <defs><marker id="ahp1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">Classify: choose from a fixed list</text>
+      <rect x="0" y="26" width="130" height="40" rx="9" class="box "/><text x="65.0" y="50.0" class="mid v">An email</text>
+      <path d="M132 46 L160 46" class="arr " marker-end="url(#ahp1)"/>
+      <rect x="162" y="26" width="130" height="40" rx="9" class="box a"/><text x="227.0" y="50.0" class="mid w">Spam classifier</text>
+      <path d="M294 46 L322 46" class="arr " marker-end="url(#ahp1)"/>
+      <rect x="324" y="26" width="90" height="40" rx="9" class="box b"/><text x="369.0" y="50.0" class="mid w">spam</text>
+      <rect x="420" y="26" width="90" height="40" rx="9" class="box "/><text x="465.0" y="50.0" class="mid v">not spam</text>
+      <text x="520" y="42">the answer is always</text><text x="520" y="58">one of these labels</text>
+      <text x="0" y="104" class="h">Generate: produce something new</text>
+      <rect x="0" y="116" width="130" height="40" rx="9" class="box "/><text x="65.0" y="132.5" class="mid v">"Write a polite</text><text x="65.0" y="147.5" class="mid v">reminder email"</text>
+      <path d="M132 136 L160 136" class="arr " marker-end="url(#ahp1)"/>
+      <rect x="162" y="116" width="130" height="40" rx="9" class="box a"/><text x="227.0" y="140.0" class="mid w">Generative model</text>
+      <path d="M294 136 L322 136" class="arr " marker-end="url(#ahp1)"/>
+      <rect x="324" y="116" width="316" height="40" rx="9" class="box g"/><text x="482.0" y="132.5" class="mid w">Hi Priya, just a friendly reminder that…</text><text x="482.0" y="147.5" class="mid w">(text that did not exist before)</text>
+    </svg></div>
+    <figcaption>The difference is in the output. A classifier can only return one of its labels; a generative model writes new content, word by word, from your instruction. The email text is an illustration.</figcaption>
+  </figure>
   <div class="callout c-warn"><div class="ci">!</div><div><p><strong>A convincing answer can still be wrong.</strong> Fluency is what the model is trained for; factual accuracy is not guaranteed by it. Lesson 1.2 shows exactly why.</p></div></div>
   <details class="disc"><summary><span class="tag">Exercise</span><span class="q">Is an app that writes a birthday message generative AI? Why?</span><span class="chev"></span></summary>
     <div class="ans"><p><strong>Yes</strong>, if a model composes the message: it produces new text conditioned on an instruction (name, tone, relationship), instead of choosing a label.</p>

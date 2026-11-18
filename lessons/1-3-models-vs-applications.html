@@ -212,6 +212,49 @@ call 6: 12 messages sent, 232 input tokens, running total 664</pre></div></div>
     <li><strong>Order the request from stable to variable:</strong> fixed instructions and tool definitions first, then reference documents, then history, then the new message.</li>
     <li>Details differ by provider: some cache automatically above a minimum length, others need you to mark cache points. Check the pricing page of the API you use.</li>
   </ul>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 180" role="img" aria-label="Two requests sharing a cached prefix, and a third where an early change breaks the cache">
+      <text x="0" y="24" class="h" >Request 1</text>
+      <rect x="110" y="6" width="127" height="28" rx="6" class="box a"/>
+      <text x="173.5" y="24" class="mid w" >System + tools</text>
+      <rect x="240" y="6" width="97" height="28" rx="6" class="box a"/>
+      <text x="288.5" y="24" class="mid w" >Documents</text>
+      <rect x="340" y="6" width="87" height="28" rx="6" class="box a"/>
+      <text x="383.5" y="24" class="mid w" >History</text>
+      <rect x="430" y="6" width="61" height="28" rx="6" class="box a"/>
+      <text x="460.5" y="24" class="mid w" >Msg 1</text>
+      <text x="110" y="52" class="" >blue = processed, and the provider keeps it for a short time</text>
+      <text x="0" y="82" class="h" >Request 2</text>
+      <rect x="110" y="64" width="127" height="28" rx="6" class="box g"/>
+      <text x="173.5" y="82" class="mid w" >System + tools</text>
+      <rect x="240" y="64" width="97" height="28" rx="6" class="box g"/>
+      <text x="288.5" y="82" class="mid w" >Documents</text>
+      <rect x="340" y="64" width="87" height="28" rx="6" class="box g"/>
+      <text x="383.5" y="82" class="mid w" >History</text>
+      <rect x="430" y="64" width="61" height="28" rx="6" class="box g"/>
+      <text x="460.5" y="82" class="mid w" >Msg 1</text>
+      <rect x="494" y="64" width="61" height="28" rx="6" class="box b"/>
+      <text x="524.5" y="82" class="mid w" >Reply 1</text>
+      <rect x="558" y="64" width="61" height="28" rx="6" class="box b"/>
+      <text x="588.5" y="82" class="mid w" >Msg 2</text>
+      <text x="110" y="110" class="" >green = identical from the very first token: read from the cache, cheaper and faster</text>
+      <text x="0" y="140" class="h" >Request 2*</text>
+      <rect x="110" y="122" width="127" height="28" rx="6" class="box r"/>
+      <text x="173.5" y="140" class="mid w" >System 10:43</text>
+      <rect x="240" y="122" width="97" height="28" rx="6" class="box b"/>
+      <text x="288.5" y="140" class="mid w" >Documents</text>
+      <rect x="340" y="122" width="87" height="28" rx="6" class="box b"/>
+      <text x="383.5" y="140" class="mid w" >History</text>
+      <rect x="430" y="122" width="61" height="28" rx="6" class="box b"/>
+      <text x="460.5" y="140" class="mid w" >Msg 1</text>
+      <rect x="494" y="122" width="61" height="28" rx="6" class="box b"/>
+      <text x="524.5" y="140" class="mid w" >Reply 1</text>
+      <rect x="558" y="122" width="61" height="28" rx="6" class="box b"/>
+      <text x="588.5" y="140" class="mid w" >Msg 2</text>
+      <text x="110" y="168" class="" >* a timestamp at the very start changed, so nothing after it matches: no cache hit</text>
+    </svg></div>
+    <figcaption>The cache matches a prefix: identical tokens from the start. Put stable parts first and anything that changes (time, user name, the new message) as late as possible.</figcaption>
+  </figure>
   <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Industry note</div><p>Caching does not change what the model sees; it only changes what you pay and how long prefill takes. The model is still stateless. The provider is caching computation, not memory.</p></div></div>
 </section>
 
@@ -384,6 +427,70 @@ sampling, 5 runs:
    Your invoice is overdue
    The invoice is open
    This invoice remains late</pre></div></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 214" role="img" aria-label="Tree of the generated sentences: the greedy path and five sampled branches">
+      <text x="52" y="130" class="mid h">start</text>
+      <path d="M60 105 C80 105 50 60.0 76 60.0" class="arr a" style="fill:none"/>
+      <path d="M164 60.0 C184 60.0 170 45.0 196 45.0" class="arr a" style="fill:none"/>
+      <path d="M284 45.0 C304 45.0 300 45.0 326 45.0" class="arr a" style="fill:none"/>
+      <path d="M414 45.0 C434 45.0 430 30.0 456 30.0" class="arr a" style="fill:none"/>
+      <path d="M414 45.0 C434 45.0 430 60.0 456 60.0" class="arr " style="fill:none"/>
+      <path d="M164 60.0 C184 60.0 170 90.0 196 90.0" class="arr " style="fill:none"/>
+      <path d="M284 90.0 C304 90.0 300 90.0 326 90.0" class="arr " style="fill:none"/>
+      <path d="M414 90.0 C434 90.0 430 90.0 456 90.0" class="arr " style="fill:none"/>
+      <path d="M60 105 C80 105 50 135.0 76 135.0" class="arr " style="fill:none"/>
+      <path d="M164 135.0 C184 135.0 170 120.0 196 120.0" class="arr " style="fill:none"/>
+      <path d="M284 120.0 C304 120.0 300 120.0 326 120.0" class="arr " style="fill:none"/>
+      <path d="M414 120.0 C434 120.0 430 120.0 456 120.0" class="arr " style="fill:none"/>
+      <path d="M164 135.0 C184 135.0 170 150.0 196 150.0" class="arr " style="fill:none"/>
+      <path d="M284 150.0 C304 150.0 300 150.0 326 150.0" class="arr " style="fill:none"/>
+      <path d="M414 150.0 C434 150.0 430 150.0 456 150.0" class="arr " style="fill:none"/>
+      <path d="M60 105 C80 105 50 180.0 76 180.0" class="arr " style="fill:none"/>
+      <path d="M164 180.0 C184 180.0 170 180.0 196 180.0" class="arr " style="fill:none"/>
+      <path d="M284 180.0 C304 180.0 300 180.0 326 180.0" class="arr " style="fill:none"/>
+      <path d="M414 180.0 C434 180.0 430 180.0 456 180.0" class="arr " style="fill:none"/>
+      <rect x="76" y="47.0" width="88" height="26" rx="7" class="box a"/>
+      <text x="120" y="64.0" class="mid w" >The</text>
+      <rect x="196" y="32.0" width="88" height="26" rx="7" class="box a"/>
+      <text x="240" y="49.0" class="mid w" >invoice</text>
+      <rect x="326" y="32.0" width="88" height="26" rx="7" class="box a"/>
+      <text x="370" y="49.0" class="mid w" >is</text>
+      <rect x="456" y="17.0" width="88" height="26" rx="7" class="box a"/>
+      <text x="500" y="34.0" class="mid w" >overdue</text>
+      <rect x="456" y="47.0" width="88" height="26" rx="7" class="box "/>
+      <text x="500" y="64.0" class="mid v" >open</text>
+      <rect x="196" y="77.0" width="88" height="26" rx="7" class="box "/>
+      <text x="240" y="94.0" class="mid v" >payment</text>
+      <rect x="326" y="77.0" width="88" height="26" rx="7" class="box "/>
+      <text x="370" y="94.0" class="mid v" >is</text>
+      <rect x="456" y="77.0" width="88" height="26" rx="7" class="box "/>
+      <text x="500" y="94.0" class="mid v" >late</text>
+      <rect x="76" y="122.0" width="88" height="26" rx="7" class="box "/>
+      <text x="120" y="139.0" class="mid v" >Your</text>
+      <rect x="196" y="107.0" width="88" height="26" rx="7" class="box "/>
+      <text x="240" y="124.0" class="mid v" >payment</text>
+      <rect x="326" y="107.0" width="88" height="26" rx="7" class="box "/>
+      <text x="370" y="124.0" class="mid v" >remains</text>
+      <rect x="456" y="107.0" width="88" height="26" rx="7" class="box "/>
+      <text x="500" y="124.0" class="mid v" >overdue</text>
+      <rect x="196" y="137.0" width="88" height="26" rx="7" class="box "/>
+      <text x="240" y="154.0" class="mid v" >invoice</text>
+      <rect x="326" y="137.0" width="88" height="26" rx="7" class="box "/>
+      <text x="370" y="154.0" class="mid v" >is</text>
+      <rect x="456" y="137.0" width="88" height="26" rx="7" class="box "/>
+      <text x="500" y="154.0" class="mid v" >overdue</text>
+      <rect x="76" y="167.0" width="88" height="26" rx="7" class="box "/>
+      <text x="120" y="184.0" class="mid v" >This</text>
+      <rect x="196" y="167.0" width="88" height="26" rx="7" class="box "/>
+      <text x="240" y="184.0" class="mid v" >invoice</text>
+      <rect x="326" y="167.0" width="88" height="26" rx="7" class="box "/>
+      <text x="370" y="184.0" class="mid v" >remains</text>
+      <rect x="456" y="167.0" width="88" height="26" rx="7" class="box "/>
+      <text x="500" y="184.0" class="mid v" >late</text>
+      <circle cx="52" cy="105" r="8" class="box b"/>
+    </svg></div>
+    <figcaption>The greedy run (blue path) and the five sampled sentences from the real output, merged where they share words. One different early pick changes everything after it.</figcaption>
+  </figure>
   <ul>
     <li><code>table</code> maps the last token to its possible next tokens and their probabilities. A real LLM computes such a distribution with a neural network, over the whole vocabulary, from the whole context; the toy looks only at the last token.</li>
     <li><code>generate()</code> loops until it reaches a token with no entry in the table, which plays the role of the end-of-sequence token.</li>

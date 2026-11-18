@@ -187,6 +187,18 @@
   <h2><span class="n">+</span>Base models vs instruction-tuned models <span class="tag-extra">Extra</span></h2>
   <p>Pretraining alone gives a <strong>base model</strong>: an excellent text continuer that does not know it is supposed to answer you. Ask it <code>What is the capital of France?</code> and it may continue with more quiz questions, because that is what such a line often precedes on the web.</p>
   <p>Post-training produces an <strong>instruction-tuned</strong> (chat) model that treats your text as a request and answers it. Almost every API model you will call is this kind.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 150" role="img" aria-label="Same prompt: a base model continues it, an instruction-tuned model answers it">
+      <rect x="0" y="0" width="640" height="34" rx="9" class="box"/><text x="14" y="22" class="v">Prompt:  What is the capital of France?</text>
+      <text x="0" y="62" class="h">Base model (pretraining only)</text>
+      <rect x="0" y="72" width="310" height="66" rx="9" class="box o"/>
+      <text x="12" y="94" class="w">What is the capital of Spain?</text><text x="12" y="112" class="w">What is the capital of Italy?</text><text x="12" y="130" class="w">Quiz 4: European capitals…</text>
+      <text x="330" y="62" class="h">Instruction-tuned model (after post-training)</text>
+      <rect x="330" y="72" width="310" height="66" rx="9" class="box g"/>
+      <text x="342" y="100" class="w">The capital of France is Paris.</text>
+    </svg></div>
+    <figcaption>An illustration of typical behaviour. The base model continues the text the way a quiz page on the web would; the instruction-tuned model treats it as a question to answer.</figcaption>
+  </figure>
   <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">Why it matters at work</div><p>Open-weight model families are often released in both versions (e.g. a name ending in "-base" and one ending in "-instruct" or "-chat"). Pick the instruct version for applications; the base version is mainly a starting point for your own fine-tuning.</p></div></div>
 </section>
 
@@ -250,6 +262,65 @@ samples = rng.choice(tokens, size=<span class="tk-n">20</span>, p=probabilities)
 Samples: [' Paris', ' Paris', ' Lyon', ' Paris', ' Paris', ' Berlin', ' Paris', ' Paris', ' Paris', ' Paris',
           ' Paris', ' Lyon', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris', ' Paris']</pre></div></div>
 
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 178" role="img" aria-label="Greedy always picks Paris; 20 samples are mostly Paris with some Lyon and Berlin">
+      <text x="0" y="14" class="h">Greedy: 20 runs</text>
+      <rect x="182" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="205" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="228" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="251" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="274" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="297" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="320" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="343" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="366" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="389" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="412" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="435" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="458" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="481" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="504" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="527" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="550" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="573" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="596" y="2" width="19" height="18" rx="4" class="box a"/>
+      <rect x="619" y="2" width="19" height="18" rx="4" class="box a"/>
+      <text x="0" y="56" class="h">Sampling: 20 real draws</text>
+      <rect x="182" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="205" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="228" y="42" width="19" height="18" rx="4" class="box p"/>
+      <rect x="251" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="274" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="297" y="42" width="19" height="18" rx="4" class="box r"/>
+      <rect x="320" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="343" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="366" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="389" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="412" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="435" y="42" width="19" height="18" rx="4" class="box p"/>
+      <rect x="458" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="481" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="504" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="527" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="550" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="573" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="596" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="619" y="42" width="19" height="18" rx="4" class="box a"/>
+      <rect x="0" y="85" width="12" height="12" rx="3" class="box a"/>
+      <text x="18" y="96" class="v" >" Paris"</text>
+      <text x="182" y="96" class="" >drawn 17 of 20   ·   probability 0.85 → expected 17.0</text>
+      <rect x="0" y="105" width="12" height="12" rx="3" class="box p"/>
+      <text x="18" y="116" class="v" >" Lyon"</text>
+      <text x="182" y="116" class="" >drawn 2 of 20   ·   probability 0.08 → expected 1.6</text>
+      <rect x="0" y="125" width="12" height="12" rx="3" class="box r"/>
+      <text x="18" y="136" class="v" >" Berlin"</text>
+      <text x="182" y="136" class="" >drawn 1 of 20   ·   probability 0.05 → expected 1.0</text>
+      <rect x="0" y="145" width="12" height="12" rx="3" class="box box"/>
+      <text x="18" y="156" class="v" >"."</text>
+      <text x="182" y="156" class="" >drawn 0 of 20   ·   probability 0.02 → expected 0.4</text>
+    </svg></div>
+    <figcaption>Greedy picks the top token every time. Sampling draws in proportion to the probabilities, so " Paris" wins most draws but " Lyon" and " Berlin" sometimes appear, which is where both variety and mistakes come from.</figcaption>
+  </figure>
   <h3>Step 1 · Import NumPy</h3>
   <p>NumPy provides arrays, numerical operations and random sampling. Here it stores the candidates, finds the largest probability, and draws the samples.</p>
 
@@ -378,6 +449,31 @@ step_probs = [<span class="tk-n">0.9</span>, <span class="tk-n">0.7</span>, <spa
   </div>
   <p>Putting the two together gives a simple model of how long a response takes:</p>
   <div class="math">latency ≈ time to first token + (output tokens × time per output token)</div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 182" role="img" aria-label="Timeline: a prefill block, then output tokens one at a time">
+      <text x="0" y="14" class="h">One API call, on a time line</text>
+      <line x1="0" y1="118" x2="640" y2="118" class="ax"/>
+      <rect x="0" y="30" width="150" height="60" rx="9" class="box a"/><text x="75" y="56" class="mid w">Prefill</text><text x="75" y="74" class="mid w">all prompt tokens at once</text>
+      <rect x="168" y="46" width="33" height="28" rx="6" class="box b"/><text x="184.5" y="65" class="mid w" style="font-size:11px">t1</text>
+      <rect x="207" y="46" width="33" height="28" rx="6" class="box b"/><text x="223.5" y="65" class="mid w" style="font-size:11px">t2</text>
+      <rect x="246" y="46" width="33" height="28" rx="6" class="box b"/><text x="262.5" y="65" class="mid w" style="font-size:11px">t3</text>
+      <rect x="285" y="46" width="33" height="28" rx="6" class="box b"/><text x="301.5" y="65" class="mid w" style="font-size:11px">t4</text>
+      <rect x="324" y="46" width="33" height="28" rx="6" class="box b"/><text x="340.5" y="65" class="mid w" style="font-size:11px">t5</text>
+      <rect x="363" y="46" width="33" height="28" rx="6" class="box b"/><text x="379.5" y="65" class="mid w" style="font-size:11px">t6</text>
+      <rect x="402" y="46" width="33" height="28" rx="6" class="box b"/><text x="418.5" y="65" class="mid w" style="font-size:11px">t7</text>
+      <rect x="441" y="46" width="33" height="28" rx="6" class="box b"/><text x="457.5" y="65" class="mid w" style="font-size:11px">t8</text>
+      <rect x="480" y="46" width="33" height="28" rx="6" class="box b"/><text x="496.5" y="65" class="mid w" style="font-size:11px">t9</text>
+      <rect x="519" y="46" width="33" height="28" rx="6" class="box b"/><text x="535.5" y="65" class="mid w" style="font-size:11px">t10</text>
+      <rect x="558" y="46" width="33" height="28" rx="6" class="box b"/><text x="574.5" y="65" class="mid w" style="font-size:11px">t11</text>
+      <rect x="597" y="46" width="33" height="28" rx="6" class="box b"/><text x="613.5" y="65" class="mid w" style="font-size:11px">t12</text>
+      <line x1="158" y1="24" x2="158" y2="124" style="stroke:var(--red);stroke-width:2;stroke-dasharray:4 3"/>
+      <text x="166" y="140" style="fill:var(--red)">← first token appears</text>
+      <text x="75" y="108" class="mid">time to first token</text>
+      <text x="402" y="102" class="mid">decode: one output token per full pass through the model</text>
+      <text x="0" y="170">More output tokens mean more decode steps; a longer prompt mostly makes the prefill block longer.</text>
+    </svg></div>
+    <figcaption>Illustrative proportions. Prefill handles the known prompt in parallel; decoding produces the answer one token at a time, which is why output length dominates total latency.</figcaption>
+  </figure>
   <ul>
     <li><strong>Long answers are slow answers.</strong> Asking for a concise reply or a compact JSON object is a real performance lever.</li>
     <li><strong>Streaming</strong> shows tokens as they are produced. It does not reduce total time, but users see progress after the first token.</li>
