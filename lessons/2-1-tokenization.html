@@ -115,8 +115,62 @@
     <li><strong>The embedding table</strong> has one row per token: <span class="im">V × d</span> numbers, where <span class="im">d</span> is the embedding size.</li>
     <li><strong>The output layer</strong> produces one logit per token at every step, so softmax runs over all <span class="im">V</span> entries.</li>
   </ul>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 176" role="img" aria-label="Model diagram: embedding table with V rows, transformer layers, output layer with V scores, softmax over V">
+      <defs><marker id="ah21v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <rect x="0" y="50" width="96" height="40" rx="9" class="box "/><text x="48.0" y="74.0" class="mid v">token IDs</text>
+      <path d="M98 70 L122 70" class="arr " marker-end="url(#ah21v)"/>
+      <rect x="124" y="30" width="128" height="80" rx="9" class="box o"/><text x="188.0" y="66.5" class="mid w">Embedding table</text><text x="188.0" y="81.5" class="mid w">V rows × d</text>
+      <path d="M254 70 L278 70" class="arr " marker-end="url(#ah21v)"/>
+      <rect x="280" y="50" width="110" height="40" rx="9" class="box a"/><text x="335.0" y="66.5" class="mid w">Transformer</text><text x="335.0" y="81.5" class="mid w">layers</text>
+      <path d="M392 70 L416 70" class="arr " marker-end="url(#ah21v)"/>
+      <rect x="418" y="30" width="120" height="80" rx="9" class="box o"/><text x="478.0" y="66.5" class="mid w">Output layer</text><text x="478.0" y="81.5" class="mid w">d × V scores</text>
+      <path d="M540 70 L564 70" class="arr " marker-end="url(#ah21v)"/>
+      <rect x="566" y="50" width="74" height="40" rx="9" class="box b"/><text x="603.0" y="66.5" class="mid w">softmax</text><text x="603.0" y="81.5" class="mid w">over V</text>
+      <text x="188" y="134" class="mid v">V appears here …</text>
+      <text x="478" y="134" class="mid v">… and here</text>
+      <text x="335" y="18" class="mid">the middle does not depend on V</text>
+      <text x="0" y="166">Double the vocabulary and both orange boxes double in size; the transformer layers stay the same.</text>
+    </svg></div>
+    <figcaption>The two places the vocabulary size enters the model. Every extra vocabulary entry adds one row to the embedding table and one score to compute at every generation step.</figcaption>
+  </figure>
   <div class="math">200,019 × 4,096 = 819,277,824<span class="cap">o200k's real vocabulary size × an illustrative embedding size: about 0.8 billion parameters for the embedding table alone</span></div>
   <p>A bigger vocabulary gives shorter sequences (faster, more text per context window) but a bigger, more expensive model, and rare tokens get fewer training examples each. Recent tokenizers have grown (cl100k ≈ 100k entries → o200k ≈ 200k) partly to handle more languages efficiently; you will see the effect on Telugu in section 6.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 226" role="img" aria-label="Bar chart: embedding table size grows with vocabulary while the Telugu token count falls">
+      <text x="0" y="14" class="h">Embedding table at d = 4,096</text>
+      <text x="340" y="14" class="h">Tokens for the same sentence</text>
+      <text x="0" y="48" class="v">gpt2</text><text x="0" y="64">50,257 entries</text>
+      <rect x="100" y="36" width="47.7" height="22" rx="5" class="box o"/>
+      <text x="153.7" y="52" class="v">206M</text>
+      <text x="398" y="48" style="text-anchor:end">English</text>
+      <rect x="404" y="36" width="33.3" height="17" rx="4" class="box a"/>
+      <text x="443.3" y="49" class="v">11</text>
+      <text x="398" y="70" style="text-anchor:end">Telugu</text>
+      <rect x="404" y="58" width="200.0" height="17" rx="4" class="box b"/>
+      <text x="610.0" y="71" class="v">66</text>
+      <text x="0" y="104" class="v">cl100k_base</text><text x="0" y="120">100,277 entries</text>
+      <rect x="100" y="92" width="95.3" height="22" rx="5" class="box o"/>
+      <text x="201.3" y="108" class="v">411M</text>
+      <text x="398" y="104" style="text-anchor:end">English</text>
+      <rect x="404" y="92" width="33.3" height="17" rx="4" class="box a"/>
+      <text x="443.3" y="105" class="v">11</text>
+      <text x="398" y="126" style="text-anchor:end">Telugu</text>
+      <rect x="404" y="114" width="127.3" height="17" rx="4" class="box b"/>
+      <text x="537.3" y="127" class="v">42</text>
+      <text x="0" y="160" class="v">o200k_base</text><text x="0" y="176">200,019 entries</text>
+      <rect x="100" y="148" width="190.0" height="22" rx="5" class="box o"/>
+      <text x="296.0" y="164" class="v">819M</text>
+      <text x="398" y="160" style="text-anchor:end">English</text>
+      <rect x="404" y="148" width="33.3" height="17" rx="4" class="box a"/>
+      <text x="443.3" y="161" class="v">11</text>
+      <text x="398" y="182" style="text-anchor:end">Telugu</text>
+      <rect x="404" y="170" width="24.2" height="17" rx="4" class="box b"/>
+      <text x="434.2" y="183" class="v">8</text>
+      <text x="0" y="214">4× the vocabulary: the table grows 4×, Telugu falls from 66 tokens to 8, English stays at 11.</text>
+    </svg></div>
+    <figcaption>Real counts from tiktoken. English: "The quarterly sales report shows strong growth in every region." Telugu: "తెలుగు భాష చాలా అందమైనది" ("Telugu is a very beautiful language"). Table sizes are V × 4,096, an illustrative d.</figcaption>
+  </figure>
 </section>
 
 <section class="sec" id="bpe">
