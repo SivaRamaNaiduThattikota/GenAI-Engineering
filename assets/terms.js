@@ -86,4 +86,13 @@ const TERMS = [
   ['UTF-8', 'The common byte encoding for text: 1 byte for English letters, 2 to 4 bytes for most other characters.', 'l2-1'],
   ['Token-aware chunking', 'Splitting documents by measured token length instead of characters, so chunk sizes are predictable.', 'l2-1'],
   ['Token tax', 'Informal name for some languages needing many more tokens for the same content, raising cost and latency.', 'l2-1'],
+  ['Embedding', 'A learned vector of numbers that represents a token (or a text) so that things used alike get similar vectors.', 'l2-2'],
+  ['Embedding dimension', 'The length d of each embedding vector, from a few hundred to a few thousand numbers.', 'l2-2'],
+  ['One-hot vector', 'A vector as long as the vocabulary with a single 1 at one position. One-hot times the embedding table = one row.', 'l2-2'],
+  ['Dot product', 'Multiply two vectors position by position and add. Large when they point the same way; grows with length.', 'l2-2'],
+  ['Cosine similarity', 'Dot product divided by both lengths: compares direction only, from -1 to +1. The standard way to compare embeddings.', 'l2-2'],
+  ['Distributional hypothesis', 'Words that appear in similar contexts have similar meanings. Why next-token training makes related embeddings similar.', 'l2-2'],
+  ['Weight tying', 'Using the same matrix for the input embedding table and the output layer, as GPT-2 does.', 'l2-2'],
+  ['Contextual embedding', 'The vector at a position after the transformer layers, which reflects the surrounding text. Also called a hidden state.', 'l2-2'],
+  ['Text embedding', 'One vector for a whole sentence or chunk, made by an embedding model. What RAG stores and searches.', 'l2-2'],
 ];

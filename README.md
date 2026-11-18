@@ -14,6 +14,7 @@ Live site: https://sivaramanaiduthattikota.github.io/GenAI-Engineering/
 - 1.4 The model landscape and how models are made
 - 1.5 How language models got here, and how they are measured
 - 2.1 Tokens and tokenization
+- 2.2 Embeddings
 
 ## Running locally
 

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2.2 · Embeddings</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<script src="../assets/boot.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/glass.css">
+</head>
+<body data-id="l2-2" data-root="../">
+<div class="shell"><div class="main">
+<main class="content page">
+
+<section class="l-hero">
+  <div class="crumbs"><a href="../index.html">Course</a><span>›</span><span>Stage 2 · How LLMs work</span></div>
+  <h1>2.2 Embeddings</h1>
+  <p>A token ID is just a row number. An embedding is what sits in that row: a list of learned numbers that lets the model treat similar tokens in similar ways. This lesson builds the idea from scratch and trains real embeddings in NumPy.</p>
+  <div class="chips"><span class="chip">~45 min</span><span class="chip">Stage 2</span><span class="chip">Real training run</span><span class="chip">Python + NumPy</span></div>
+</section>
+
+<details class="toc" id="toc"></details>
+
+<section class="sec" id="problem">
+  <h2><span class="n">1</span>The problem: an ID carries no meaning</h2>
+  <p>After lesson 2.1, the text <code>" Paris"</code> has become the integer <code>12650</code>. The network does arithmetic, so the question is: what numbers do we actually feed it for that token? There are three candidates, and only the third works.</p>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Feed the ID itself as a number</div>
+    <p>The network would treat 12650 as a quantity. It would "think" token 12651 is almost the same as token 12650 and that token 25300 is twice as much of something. None of that is true: IDs were handed out by the tokenizer in merge order, so neighbouring IDs are unrelated pieces of text. Any pattern the network learned from the size of the number would be noise.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Feed a one-hot vector</div>
+    <p>A one-hot vector is a list as long as the vocabulary, all zeros except a single 1 at the token's position. It removes the fake ordering, but it has two problems. It is huge: 200,019 numbers for every token in o200k_base. And every pair of tokens is exactly as different as every other pair: " Paris" is as far from " London" as it is from " banana". The model would have to learn everything about each token separately, with no way to share what it learned about one city with another.</p></div></div>
+  <div class="point"><div class="point-n">3</div><div>
+    <div class="point-t">Feed a short list of learned numbers: an embedding</div>
+    <p>Give every token its own list of <span class="im">d</span> numbers (a few hundred to a few thousand), and let training choose them. Tokens that behave alike end up with similar lists, so whatever the model learns about " Paris" partly carries over to " London". This list is the token's <strong>embedding</strong>, and <span class="im">d</span> is the <strong>embedding dimension</strong>.</p></div></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 190" role="img" aria-label="Token ID, one-hot vector and embedding for the same token">
+      <text x="0" y="22" class="h">Token ID</text>
+      <rect x="150" y="6" width="70" height="26" rx="6" class="box b"/><text x="185" y="23" class="mid w">12650</text>
+      <text x="232" y="23">One integer. 12651 is not "almost Paris"; the order means nothing.</text>
+      <text x="0" y="76" class="h">One-hot vector</text>
+      <rect x="150" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="165" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="180" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="195" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="210" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="225" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="240" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="255" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="270" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="285" y="62" width="12" height="20" rx="3" class="box a"/>
+      <rect x="300" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="315" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="330" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="345" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="360" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="375" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="390" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="405" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="420" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="435" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="450" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="465" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="480" y="62" width="12" height="20" rx="3" class="box"/>
+      <rect x="495" y="62" width="12" height="20" rx="3" class="box"/>
+      <text x="512" y="77">… 200,019 long</text>
+      <text x="150" y="100">All zeros except a 1 at position 12650. Every pair of tokens is equally different.</text>
+      <text x="0" y="146" class="h">Embedding</text>
+      <rect x="150" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.9"/>
+      <rect x="180" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.25"/>
+      <rect x="210" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.6"/>
+      <rect x="240" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.1"/>
+      <rect x="270" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.75"/>
+      <rect x="300" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.4"/>
+      <rect x="330" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.15"/>
+      <rect x="360" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.55"/>
+      <rect x="390" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.85"/>
+      <rect x="420" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.3"/>
+      <rect x="450" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.65"/>
+      <rect x="480" y="128" width="26" height="28" rx="5" style="fill:var(--accent);fill-opacity:0.2"/>
+      <text x="516" y="147">d numbers</text>
+      <text x="150" y="176">A short list of learned numbers. Tokens used alike get similar lists.</text>
+    </svg></div>
+    <figcaption>Three ways to hand " Paris" to a network. The shading in the bottom row stands for learned values and is made up.</figcaption>
+  </figure>
+
+  <div class="callout c-key"><div class="ci">i</div><div><p><strong>Definition.</strong> An <strong>embedding</strong> is a vector (a fixed-length list of numbers) that represents an item, here a token, so that items used in similar ways have similar vectors. The numbers are parameters: they start random and are learned during training.</p></div></div>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">SQL / Power BI analogy</div><p>The token ID is the surrogate key. The embedding table is the dimension table it points to, except that its columns are not "Country" or "Population". They are <span class="im">d</span> unnamed numeric columns whose values were filled in by training, and two rows are "alike" when their numbers are alike.</p></div></div>
+</section>
+
+<section class="sec" id="lookup">
+  <h2><span class="n">2</span>The lookup: taking one row of the table</h2>
+  <p>All the embeddings live in one matrix, the <strong>embedding table</strong>, with one row per vocabulary entry and one column per dimension: shape <span class="im">(V, d)</span>. Turning a token into its embedding means reading row number <span class="im">id</span>. Nothing is computed; it is a read.</p>
+  <p>There is one useful way to see this read as maths. Multiplying a one-hot vector by the table picks out exactly one row, because every row is multiplied by 0 except the one multiplied by 1. So the lookup <em>is</em> a matrix multiplication, just done the cheap way. That is why the embedding table can be trained with the same gradient machinery as every other layer.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">lookup.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> numpy <span class="tk-k">as</span> np
+
+rng = np.random.default_rng(<span class="tk-n">0</span>)
+V, d = <span class="tk-n">6</span>, <span class="tk-n">4</span>                      <span class="tk-c"># tiny vocabulary, tiny vectors</span>
+E = rng.normal(size=(V, d)).<span class="tk-f">round</span>(<span class="tk-n">2</span>)
+
+token_id = <span class="tk-n">3</span>
+one_hot = np.zeros(V)
+one_hot[token_id] = <span class="tk-n">1</span>
+
+<span class="tk-f">print</span>(<span class="tk-s">"row 3:        "</span>, E[token_id])
+<span class="tk-f">print</span>(<span class="tk-s">"one-hot @ E:  "</span>, one_hot @ E)
+<span class="tk-f">print</span>(<span class="tk-s">"same numbers: "</span>, np.array_equal(E[token_id], one_hot @ E))
+
+ids = [<span class="tk-n">3</span>, <span class="tk-n">0</span>, <span class="tk-n">3</span>, <span class="tk-n">5</span>]               <span class="tk-c"># a 4-token input</span>
+X = E[ids]
+<span class="tk-f">print</span>(<span class="tk-s">"input shape:  "</span>, X.shape)
+<span class="tk-f">print</span>(<span class="tk-s">"rows 0 and 2 equal:"</span>, np.array_equal(X[<span class="tk-n">0</span>], X[<span class="tk-n">2</span>]))</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>row 3:         [-2.33 -0.22 -1.25 -0.73]
+one-hot @ E:   [-2.33 -0.22 -1.25 -0.73]
+same numbers:  True
+input shape:   (4, 4)
+rows 0 and 2 equal: True</pre></div></div>
+
+  <h3>Reading the output</h3>
+  <ul>
+    <li><code>E[token_id]</code> and <code>one_hot @ E</code> give the same four numbers. Real frameworks always do the first, because building a 200,019-long one-hot vector per token would waste memory and time.</li>
+    <li>A 4-token input becomes a <span class="im">(4, 4)</span> matrix: one row per token, one column per dimension. For real models that is <span class="im">(n, d)</span>, the shape the transformer layers receive.</li>
+    <li>Rows 0 and 2 are identical because both positions hold token 3. The lookup does not know where a token sits or what is around it. Position and context are added later (section 6 and the next lessons).</li>
+  </ul>
+  <div class="point"><div class="point-n">!</div><div>
+    <div class="point-t">A row number and a row are different things</div>
+    <p>Lesson 2.1 said token IDs carry no meaning. That is still true. The meaning lives in the <strong>row</strong> the ID points to, not in the ID. Swap the table for another model's table and the same ID points at completely different numbers.</p></div></div>
+</section>
+
+<section class="sec" id="similarity">
+  <h2><span class="n">3</span>Measuring "similar": dot product, cosine, distance</h2>
+  <p>"Similar tokens get similar vectors" needs a precise meaning of <em>similar</em>. Think of each embedding as an arrow from the origin. Two arrows can be compared by how long they are and by which way they point. Three measures are in everyday use:</p>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Dot product</div>
+    <p>Multiply the two vectors position by position and add the results: <span class="im">a · b = a₁b₁ + a₂b₂ + …</span>. It is large when the arrows point the same way, zero when they are at a right angle, negative when they point apart. But it also grows with length, so a long vector looks "more similar" to everything.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Cosine similarity</div>
+    <p>The dot product divided by both lengths. That removes length and keeps only direction, so the result always lies between −1 and +1: <strong>+1</strong> same direction, <strong>0</strong> unrelated (right angle), <strong>−1</strong> opposite. This is the standard measure for comparing embeddings.</p></div></div>
+  <div class="point"><div class="point-n">3</div><div>
+    <div class="point-t">Euclidean distance</div>
+    <p>The straight-line distance between the arrow tips. Small means close. It is intuitive, but like the dot product it is sensitive to length, as the run below shows.</p></div></div>
+  <div class="math">cos(<i>a</i>, <i>b</i>) = <i>a</i> · <i>b</i> / (‖<i>a</i>‖ ‖<i>b</i>‖)<span class="cap">‖<i>a</i>‖ = the length of <i>a</i> = the square root of the sum of its squared numbers</span></div>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">similarity.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> numpy <span class="tk-k">as</span> np
+
+a = np.array([<span class="tk-n">2.0</span>, <span class="tk-n">1.0</span>])
+b = np.array([<span class="tk-n">8.0</span>, <span class="tk-n">4.0</span>])         <span class="tk-c"># same direction as a, four times as long</span>
+c = np.array([<span class="tk-n">1.0</span>, -<span class="tk-n">2.0</span>])        <span class="tk-c"># at a right angle to a</span>
+
+
+<span class="tk-k">def</span> <span class="tk-f">cosine</span>(u, v):
+    <span class="tk-k">return</span> u @ v / (np.linalg.norm(u) * np.linalg.norm(v))
+
+
+<span class="tk-k">for</span> name, v <span class="tk-k">in</span> [(<span class="tk-s">"b"</span>, b), (<span class="tk-s">"c"</span>, c)]:
+    <span class="tk-f">print</span>(<span class="tk-k">f</span><span class="tk-s">"a vs {name}: dot={a @ v:5.1f}  cosine={cosine(a, v):+.2f}  distance={np.linalg.norm(a - v):.2f}"</span>)
+
+an, bn = a / np.linalg.norm(a), b / np.linalg.norm(b)
+<span class="tk-f">print</span>(<span class="tk-s">"after normalising, dot = cosine:"</span>, <span class="tk-f">round</span>(<span class="tk-f">float</span>(an @ bn), <span class="tk-n">2</span>))</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>a vs b: dot= 20.0  cosine=+1.00  distance=6.71
+a vs c: dot=  0.0  cosine=+0.00  distance=3.16
+after normalising, dot = cosine: 1.0</pre></div></div>
+
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 246" role="img" aria-label="Vectors a, b and c with their cosine similarities and distances">
+      <defs><marker id="ah22v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
+      <line x1="30" y1="170" x2="350" y2="170" class="ax"/>
+      <line x1="70" y1="240" x2="70" y2="10" class="ax"/>
+      <path d="M70 170 L130 140" class="arr a" style="stroke-width:2.4" marker-end="url(#ah22v)"/>
+      <text x="138" y="144" class="v">a (2, 1)</text>
+      <path d="M70 170 L310 50" class="arr a" style="stroke-width:2.4" marker-end="url(#ah22v)"/>
+      <text x="318" y="54" class="v">b (8, 4)</text>
+      <path d="M70 170 L100 230" class="arr a" style="stroke-width:2.4" marker-end="url(#ah22v)"/>
+      <text x="108" y="234" class="v">c (1, −2)</text>
+      <text x="400" y="50" class="h">a vs b</text><text x="400" y="68">cosine +1.00 · distance 6.71</text>
+      <text x="400" y="86">same direction, so "same meaning"</text>
+      <text x="400" y="136" class="h">a vs c</text><text x="400" y="154">cosine 0.00 · distance 3.16</text>
+      <text x="400" y="172">right angle, so "unrelated"</text>
+      <text x="400" y="216">Distance calls c the closer one. Cosine</text><text x="400" y="232">ignores length and compares direction.</text>
+    </svg></div>
+    <figcaption>The three vectors from similarity.py, drawn to scale. Euclidean distance is fooled by length; cosine similarity is not.</figcaption>
+  </figure>
+
+  <h3>Two details matter</h3>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Length can hide direction</div>
+    <p><code>b</code> points exactly the way <code>a</code> does, so cosine says they are identical (+1.00). Distance says the opposite: <code>c</code>, which is at a right angle and shares nothing with <code>a</code>, is closer (3.16 against 6.71). In embeddings, length often reflects things like how frequent a token is, not what it means, which is why cosine is the default.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Normalise once, then use the fast dot product</div>
+    <p>If every vector is scaled to length 1 first, the dot product <em>is</em> the cosine (the last line of the output). Vector databases and many embedding APIs rely on this: they store length-1 vectors and use plain dot products, which are faster. OpenAI's embedding endpoints, for example, already return vectors of length 1.</p></div></div>
+</section>
+
+<section class="sec" id="learning">
+  <h2><span class="n">4</span>How embeddings are learned</h2>
+  <p>Nobody writes the numbers in the table. They start as small random values, so at first every token is a random arrow and similarities are meaningless. Then the model is trained on next-token prediction (lesson 1.2), and the embedding rows are parameters like any others: after each batch, the gradient of the loss says how each <em>used</em> row should move to make the true next token more likely, and the row moves a little.</p>
+  <p>Why would that make related tokens similar? Because of what the model is asked to do. If "cat" and "dog" are both often followed by "chased", "drank" and "slept", the model can only predict well if their rows produce similar scores for those next words. The cheapest way to do that is to give them similar rows. This idea, that a word is characterised by the contexts it appears in, is called the <strong>distributional hypothesis</strong>; the linguist J. R. Firth put it as "you shall know a word by the company it keeps" (1957).</p>
+  <h3>Train embeddings yourself</h3>
+  <p>A tiny corpus of 30 sentences about pets, drinks and vehicles. Save it as <code>corpus.py</code>:</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">corpus.py</span><button class="copy">Copy</button></div>
+<pre><code>corpus = <span class="tk-s">"""
+the cat chased the mouse
+the dog chased the ball
+the cat drank some milk
+the dog drank some water
+the cat slept on the sofa
+the dog slept on the floor
+my cat is very lazy
+my dog is very loyal
+i drink tea every morning
+i drink coffee every morning
+she likes hot tea with milk
+he likes hot coffee with milk
+a cup of tea please
+a cup of coffee please
+we drove the car to work
+we took the bus to work
+the car stopped at the light
+the bus stopped at the station
+the car needs more fuel
+the bus needs more fuel
+the dog barked at the bus
+the cat climbed the old tree
+the dog fetched the ball again
+she drinks green tea at night
+strong coffee keeps me awake
+the bus was late again
+i parked the car outside
+the cat watched the birds
+the dog guarded the house
+"""</span>.split(<span class="tk-s">"\n"</span>)
+sentences = [s.split() <span class="tk-k">for</span> s <span class="tk-k">in</span> corpus <span class="tk-k">if</span> s.strip()]</code></pre></div>
+
+  <p>Now the smallest possible next-word model: look up the current word's row in <code>E</code>, multiply by an output matrix <code>W</code> to get one score (logit) per vocabulary word, apply softmax, and train with the cross-entropy loss from lesson 1.2. Only NumPy, with the gradients written out by hand.</p>
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">learn_embeddings.py</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-k">import</span> numpy <span class="tk-k">as</span> np
+
+<span class="tk-k">from</span> corpus <span class="tk-k">import</span> sentences  <span class="tk-c"># the 30 sentences above</span>
+vocab = <span class="tk-f">sorted</span>({w <span class="tk-k">for</span> s <span class="tk-k">in</span> sentences <span class="tk-k">for</span> w <span class="tk-k">in</span> s} | {<span class="tk-s">"&lt;end&gt;"</span>})
+ix = {w: i <span class="tk-k">for</span> i, w <span class="tk-k">in</span> <span class="tk-f">enumerate</span>(vocab)}
+V, d = <span class="tk-f">len</span>(vocab), <span class="tk-n">12</span>
+
+<span class="tk-c"># training pairs: (this word, the word that comes next)</span>
+pairs = [(ix[s[i]], ix[(s + [<span class="tk-s">"&lt;end&gt;"</span>])[i + <span class="tk-n">1</span>]]) <span class="tk-k">for</span> s <span class="tk-k">in</span> sentences <span class="tk-k">for</span> i <span class="tk-k">in</span> <span class="tk-f">range</span>(<span class="tk-f">len</span>(s))]
+x = np.array([p[<span class="tk-n">0</span>] <span class="tk-k">for</span> p <span class="tk-k">in</span> pairs])
+y = np.array([p[<span class="tk-n">1</span>] <span class="tk-k">for</span> p <span class="tk-k">in</span> pairs])
+
+rng = np.random.default_rng(<span class="tk-n">42</span>)
+E = rng.normal(scale=<span class="tk-n">0.1</span>, size=(V, d))  <span class="tk-c"># embedding table, starts as random noise</span>
+W = rng.normal(scale=<span class="tk-n">0.1</span>, size=(d, V))  <span class="tk-c"># output layer: vector -&gt; one score per word</span>
+
+
+<span class="tk-k">def</span> <span class="tk-f">cos</span>(a, b):
+    u, v = E[ix[a]], E[ix[b]]
+    <span class="tk-k">return</span> u @ v / (np.linalg.norm(u) * np.linalg.norm(v))
+
+
+<span class="tk-k">def</span> <span class="tk-f">report</span>(label):
+    <span class="tk-f">print</span>(label, <span class="tk-s">"  "</span>.join(<span class="tk-k">f</span><span class="tk-s">"{a}/{b} {cos(a, b):+.2f}"</span> <span class="tk-k">for</span> a, b <span class="tk-k">in</span>
+                           [(<span class="tk-s">"cat"</span>, <span class="tk-s">"dog"</span>), (<span class="tk-s">"tea"</span>, <span class="tk-s">"coffee"</span>), (<span class="tk-s">"car"</span>, <span class="tk-s">"bus"</span>), (<span class="tk-s">"cat"</span>, <span class="tk-s">"tea"</span>)]))
+
+
+report(<span class="tk-s">"before:"</span>)
+lr = <span class="tk-n">1.0</span>
+<span class="tk-k">for</span> step <span class="tk-k">in</span> <span class="tk-f">range</span>(<span class="tk-n">3001</span>):
+    h = E[x]                                   <span class="tk-c"># look up one row per training example</span>
+    logits = h @ W
+    logits -= logits.<span class="tk-f">max</span>(axis=<span class="tk-n">1</span>, keepdims=<span class="tk-k">True</span>)
+    p = np.exp(logits)
+    p /= p.<span class="tk-f">sum</span>(axis=<span class="tk-n">1</span>, keepdims=<span class="tk-k">True</span>)
+    loss = -np.log(p[np.arange(<span class="tk-f">len</span>(y)), y]).mean()
+    <span class="tk-k">if</span> step <span class="tk-k">in</span> (<span class="tk-n">0</span>, <span class="tk-n">3000</span>):
+        <span class="tk-f">print</span>(<span class="tk-k">f</span><span class="tk-s">"step {step}: loss {loss:.2f}"</span>)
+    g = p
+    g[np.arange(<span class="tk-f">len</span>(y)), y] -= <span class="tk-n">1</span>               <span class="tk-c"># gradient of the loss w.r.t. the logits</span>
+    g /= <span class="tk-f">len</span>(y)
+    gW = h.T @ g
+    gh = g @ W.T
+    W -= lr * gW
+    np.add.at(E, x, -lr * gh)                  <span class="tk-c"># only the rows that were used get updated</span>
+report(<span class="tk-s">"after: "</span>)
+
+
+<span class="tk-k">def</span> <span class="tk-f">nearest</span>(w, k=<span class="tk-n">3</span>):
+    v = E[ix[w]]
+    sims = E @ v / (np.linalg.norm(E, axis=<span class="tk-n">1</span>) * np.linalg.norm(v))
+    <span class="tk-k">return</span> [vocab[i] <span class="tk-k">for</span> i <span class="tk-k">in</span> np.argsort(-sims) <span class="tk-k">if</span> vocab[i] != w][:k]
+
+
+<span class="tk-k">for</span> w <span class="tk-k">in</span> [<span class="tk-s">"cat"</span>, <span class="tk-s">"tea"</span>, <span class="tk-s">"bus"</span>, <span class="tk-s">"morning"</span>]:
+    <span class="tk-f">print</span>(w, <span class="tk-s">"-&gt;"</span>, nearest(w))
+words = [<span class="tk-s">"cat"</span>, <span class="tk-s">"dog"</span>, <span class="tk-s">"tea"</span>, <span class="tk-s">"coffee"</span>, <span class="tk-s">"car"</span>, <span class="tk-s">"bus"</span>]
+<span class="tk-f">print</span>(<span class="tk-s">"matrix"</span>, [[<span class="tk-f">round</span>(<span class="tk-f">float</span>(cos(a, b)), <span class="tk-n">2</span>) <span class="tk-k">for</span> b <span class="tk-k">in</span> words] <span class="tk-k">for</span> a <span class="tk-k">in</span> words])</code></pre>
+    <div class="out"><span class="ol">Output · real run</span><pre>before: cat/dog +0.13  tea/coffee -0.20  car/bus -0.36  cat/tea +0.08
+step 0: loss 4.25
+step 3000: loss 0.85
+after:  cat/dog +0.55  tea/coffee +0.79  car/bus +0.69  cat/tea -0.10
+cat -&gt; ['dog', 'was', 'needs']
+tea -&gt; ['coffee', 'barked', 'stopped']
+bus -&gt; ['car', 'light', 'mouse']
+morning -&gt; ['floor', 'tree', 'lazy']
+matrix [[1.0, 0.55, -0.1, -0.12, -0.21, 0.01], [0.55, 1.0, -0.3, -0.44, -0.33, -0.29], [-0.1, -0.3, 1.0, 0.79, 0.17, 0.02], [-0.12, -0.44, 0.79, 1.0, -0.12, -0.09], [-0.21, -0.33, 0.17, -0.12, 1.0, 0.69], [0.01, -0.29, 0.02, -0.09, 0.69, 1.0]]</pre></div></div>
+
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 211" role="img" aria-label="Bar chart: similarity of cat/dog, tea/coffee and car/bus rises after training, cat/tea stays near zero">
+      <line x1="40" y1="120" x2="640" y2="120" class="ax"/>
+      <text x="34" y="34" style="text-anchor:end">+1</text><text x="34" y="124" style="text-anchor:end">0</text>
+      <line x1="40" y1="30" x2="640" y2="30" class="grid"/><line x1="40" y1="165.0" x2="640" y2="165.0" class="grid"/>
+      <text x="34" y="169.0" style="text-anchor:end">−0.5</text>
+      <rect x="80" y="108.3" width="36" height="11.7" rx="4" class="box "/>
+      <text x="98" y="102.3" class="mid v">+0.13</text>
+      <rect x="122" y="70.5" width="36" height="49.5" rx="4" class="box a"/>
+      <text x="140" y="64.5" class="mid v">+0.55</text>
+      <text x="119" y="199.0" class="mid h">cat / dog</text>
+      <rect x="225" y="120.0" width="36" height="18.0" rx="4" class="box "/>
+      <text x="243" y="152.0" class="mid v">-0.20</text>
+      <rect x="267" y="48.9" width="36" height="71.1" rx="4" class="box a"/>
+      <text x="285" y="42.9" class="mid v">+0.79</text>
+      <text x="264" y="199.0" class="mid h">tea / coffee</text>
+      <rect x="370" y="120.0" width="36" height="32.4" rx="4" class="box "/>
+      <text x="388" y="166.4" class="mid v">-0.36</text>
+      <rect x="412" y="57.9" width="36" height="62.1" rx="4" class="box a"/>
+      <text x="430" y="51.9" class="mid v">+0.69</text>
+      <text x="409" y="199.0" class="mid h">car / bus</text>
+      <rect x="515" y="112.8" width="36" height="7.2" rx="4" class="box "/>
+      <text x="533" y="106.8" class="mid v">+0.08</text>
+      <rect x="557" y="120.0" width="36" height="9.0" rx="4" class="box a"/>
+      <text x="575" y="143.0" class="mid v">-0.10</text>
+      <text x="554" y="199.0" class="mid h">cat / tea</text>
+      <rect x="420" y="6" width="12" height="12" rx="3" class="box"/><text x="438" y="16">before training</text>
+      <rect x="530" y="6" width="12" height="12" rx="3" class="box a"/><text x="548" y="16">after</text>
+    </svg></div>
+    <figcaption>Cosine similarity of word pairs from learn_embeddings.py, before and after training. Nobody told the model which words are related; next-word prediction pushed the rows together.</figcaption>
+  </figure>
+
+  <h3>Reading the output</h3>
+  <ul>
+    <li><strong>Before training</strong> the similarities are random (car/bus is even −0.36). The vectors carry no knowledge yet.</li>
+    <li><strong>The loss starts at 4.25</strong>, which is ln(70): with 70 vocabulary entries (69 words plus <code>&lt;end&gt;</code>), random guessing gives each word a 1-in-70 chance. It falls to 0.85 as the model learns what tends to come next.</li>
+    <li><strong>After training</strong> cat/dog, tea/coffee and car/bus all point roughly the same way (+0.55 to +0.79), while cat/tea stays near zero (−0.10). The categories were never given to the model. They came out of next-word prediction alone.</li>
+    <li><strong>Each word's nearest neighbour is right</strong> (cat → dog, tea → coffee, bus → car), but the next ones are noise ("was", "barked", "light"). Thirty sentences is far too little data for more.</li>
+    <li><strong>"morning" gets poor neighbours</strong> (floor, tree, lazy). It appears in only two sentences, so its row was updated only a few times. Real models have the same weakness for rare tokens, which is one of the costs of a very large vocabulary (lesson 2.1).</li>
+  </ul>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 238" role="img" aria-label="Similarity matrix of six words after training">
+      <text x="177.0" y="18" class="mid h">cat</text>
+      <text x="231.0" y="18" class="mid h">dog</text>
+      <text x="285.0" y="18" class="mid h">tea</text>
+      <text x="339.0" y="18" class="mid h">coffee</text>
+      <text x="393.0" y="18" class="mid h">car</text>
+      <text x="447.0" y="18" class="mid h">bus</text>
+      <text x="140" y="47" class="h" style="text-anchor:end">cat</text>
+      <rect x="150" y="26" width="51" height="31" rx="5" class="box"/>
+      <rect x="150" y="26" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:1.00"/>
+      <text x="175.5" y="46" class="mid w" style="font-size:11.5px">+1.00</text>
+      <rect x="204" y="26" width="51" height="31" rx="5" class="box"/>
+      <rect x="204" y="26" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.55"/>
+      <text x="229.5" y="46" class="mid w" style="font-size:11.5px">+0.55</text>
+      <rect x="258" y="26" width="51" height="31" rx="5" class="box"/>
+      <text x="283.5" y="46" class="mid v" style="font-size:11.5px">-0.10</text>
+      <rect x="312" y="26" width="51" height="31" rx="5" class="box"/>
+      <text x="337.5" y="46" class="mid v" style="font-size:11.5px">-0.12</text>
+      <rect x="366" y="26" width="51" height="31" rx="5" class="box"/>
+      <text x="391.5" y="46" class="mid v" style="font-size:11.5px">-0.21</text>
+      <rect x="420" y="26" width="51" height="31" rx="5" class="box"/>
+      <rect x="420" y="26" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.01"/>
+      <text x="445.5" y="46" class="mid v" style="font-size:11.5px">+0.01</text>
+      <text x="140" y="81" class="h" style="text-anchor:end">dog</text>
+      <rect x="150" y="60" width="51" height="31" rx="5" class="box"/>
+      <rect x="150" y="60" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.55"/>
+      <text x="175.5" y="80" class="mid w" style="font-size:11.5px">+0.55</text>
+      <rect x="204" y="60" width="51" height="31" rx="5" class="box"/>
+      <rect x="204" y="60" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:1.00"/>
+      <text x="229.5" y="80" class="mid w" style="font-size:11.5px">+1.00</text>
+      <rect x="258" y="60" width="51" height="31" rx="5" class="box"/>
+      <text x="283.5" y="80" class="mid v" style="font-size:11.5px">-0.30</text>
+      <rect x="312" y="60" width="51" height="31" rx="5" class="box"/>
+      <text x="337.5" y="80" class="mid v" style="font-size:11.5px">-0.44</text>
+      <rect x="366" y="60" width="51" height="31" rx="5" class="box"/>
+      <text x="391.5" y="80" class="mid v" style="font-size:11.5px">-0.33</text>
+      <rect x="420" y="60" width="51" height="31" rx="5" class="box"/>
+      <text x="445.5" y="80" class="mid v" style="font-size:11.5px">-0.29</text>
+      <text x="140" y="115" class="h" style="text-anchor:end">tea</text>
+      <rect x="150" y="94" width="51" height="31" rx="5" class="box"/>
+      <text x="175.5" y="114" class="mid v" style="font-size:11.5px">-0.10</text>
+      <rect x="204" y="94" width="51" height="31" rx="5" class="box"/>
+      <text x="229.5" y="114" class="mid v" style="font-size:11.5px">-0.30</text>
+      <rect x="258" y="94" width="51" height="31" rx="5" class="box"/>
+      <rect x="258" y="94" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:1.00"/>
+      <text x="283.5" y="114" class="mid w" style="font-size:11.5px">+1.00</text>
+      <rect x="312" y="94" width="51" height="31" rx="5" class="box"/>
+      <rect x="312" y="94" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.79"/>
+      <text x="337.5" y="114" class="mid w" style="font-size:11.5px">+0.79</text>
+      <rect x="366" y="94" width="51" height="31" rx="5" class="box"/>
+      <rect x="366" y="94" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.17"/>
+      <text x="391.5" y="114" class="mid v" style="font-size:11.5px">+0.17</text>
+      <rect x="420" y="94" width="51" height="31" rx="5" class="box"/>
+      <rect x="420" y="94" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.02"/>
+      <text x="445.5" y="114" class="mid v" style="font-size:11.5px">+0.02</text>
+      <text x="140" y="149" class="h" style="text-anchor:end">coffee</text>
+      <rect x="150" y="128" width="51" height="31" rx="5" class="box"/>
+      <text x="175.5" y="148" class="mid v" style="font-size:11.5px">-0.12</text>
+      <rect x="204" y="128" width="51" height="31" rx="5" class="box"/>
+      <text x="229.5" y="148" class="mid v" style="font-size:11.5px">-0.44</text>
+      <rect x="258" y="128" width="51" height="31" rx="5" class="box"/>
+      <rect x="258" y="128" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.79"/>
+      <text x="283.5" y="148" class="mid w" style="font-size:11.5px">+0.79</text>
+      <rect x="312" y="128" width="51" height="31" rx="5" class="box"/>
+      <rect x="312" y="128" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:1.00"/>
+      <text x="337.5" y="148" class="mid w" style="font-size:11.5px">+1.00</text>
+      <rect x="366" y="128" width="51" height="31" rx="5" class="box"/>
+      <text x="391.5" y="148" class="mid v" style="font-size:11.5px">-0.12</text>
+      <rect x="420" y="128" width="51" height="31" rx="5" class="box"/>
+      <text x="445.5" y="148" class="mid v" style="font-size:11.5px">-0.09</text>
+      <text x="140" y="183" class="h" style="text-anchor:end">car</text>
+      <rect x="150" y="162" width="51" height="31" rx="5" class="box"/>
+      <text x="175.5" y="182" class="mid v" style="font-size:11.5px">-0.21</text>
+      <rect x="204" y="162" width="51" height="31" rx="5" class="box"/>
+      <text x="229.5" y="182" class="mid v" style="font-size:11.5px">-0.33</text>
+      <rect x="258" y="162" width="51" height="31" rx="5" class="box"/>
+      <rect x="258" y="162" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.17"/>
+      <text x="283.5" y="182" class="mid v" style="font-size:11.5px">+0.17</text>
+      <rect x="312" y="162" width="51" height="31" rx="5" class="box"/>
+      <text x="337.5" y="182" class="mid v" style="font-size:11.5px">-0.12</text>
+      <rect x="366" y="162" width="51" height="31" rx="5" class="box"/>
+      <rect x="366" y="162" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:1.00"/>
+      <text x="391.5" y="182" class="mid w" style="font-size:11.5px">+1.00</text>
+      <rect x="420" y="162" width="51" height="31" rx="5" class="box"/>
+      <rect x="420" y="162" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.69"/>
+      <text x="445.5" y="182" class="mid w" style="font-size:11.5px">+0.69</text>
+      <text x="140" y="217" class="h" style="text-anchor:end">bus</text>
+      <rect x="150" y="196" width="51" height="31" rx="5" class="box"/>
+      <rect x="150" y="196" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.01"/>
+      <text x="175.5" y="216" class="mid v" style="font-size:11.5px">+0.01</text>
+      <rect x="204" y="196" width="51" height="31" rx="5" class="box"/>
+      <text x="229.5" y="216" class="mid v" style="font-size:11.5px">-0.29</text>
+      <rect x="258" y="196" width="51" height="31" rx="5" class="box"/>
+      <rect x="258" y="196" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.02"/>
+      <text x="283.5" y="216" class="mid v" style="font-size:11.5px">+0.02</text>
+      <rect x="312" y="196" width="51" height="31" rx="5" class="box"/>
+      <text x="337.5" y="216" class="mid v" style="font-size:11.5px">-0.09</text>
+      <rect x="366" y="196" width="51" height="31" rx="5" class="box"/>
+      <rect x="366" y="196" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:0.69"/>
+      <text x="391.5" y="216" class="mid w" style="font-size:11.5px">+0.69</text>
+      <rect x="420" y="196" width="51" height="31" rx="5" class="box"/>
+      <rect x="420" y="196" width="51" height="31" rx="5" style="fill:var(--accent);fill-opacity:1.00"/>
+      <text x="445.5" y="216" class="mid w" style="font-size:11.5px">+1.00</text>
+      <text x="490" y="70" class="h">Three bright blocks</text><text x="490" y="88">animals, drinks and</text><text x="490" y="104">vehicles each found</text><text x="490" y="120">their own direction.</text>
+    </svg></div>
+    <figcaption>All pairs after training (the "matrix" line of the output). Darker blue means more similar; zero or negative stays grey.</figcaption>
+  </figure>
+
+  <div class="callout c-ind"><div class="ci">★</div><div><div class="ct">From toy to real</div><p>Real LLMs do exactly this, at a different scale: a vocabulary of 100k to 200k tokens, <span class="im">d</span> in the thousands, trillions of training tokens, and a deep transformer between the lookup and the output layer instead of nothing. The embedding table is trained together with everything else, in the same loop.</p></div></div>
+  <div class="callout c-extra"><div class="ci">+</div><div><div class="ct">Extra · word2vec and the famous analogy</div>
+    <p>Before LLMs, embeddings were trained on their own. <strong>word2vec</strong> (Mikolov et al., 2013) trained a model like ours to predict nearby words and became famous for analogies: the vector for <em>king − man + woman</em> lands near <em>queen</em>.</p>
+    <p>Treat that with care. The published results exclude the three input words from the answers (otherwise the nearest vector is often "king" itself), and the trick works for some relations, such as capitals and verb tenses, far better than for others. It shows that some directions in the space line up with real relations, not that embeddings do reliable reasoning.</p></div></div>
+</section>
+
+<section class="sec" id="size">
+  <h2><span class="n">5</span>How big the table is</h2>
+  <p>The table holds <span class="im">V × d</span> parameters, and both numbers are large in real models:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Model</th><th>Vocabulary V</th><th>Dimension d</th><th>Table V × d</th></tr></thead>
+    <tbody>
+    <tr><td>GPT-2 small (2019)</td><td>50,257</td><td>768</td><td>38,597,376 (about 31% of its 124M parameters)</td></tr>
+    <tr><td>Llama 3 8B (2024)</td><td>128,256</td><td>4,096</td><td>525,336,576 (about 6.5% of 8B)</td></tr>
+    <tr><td>o200k vocabulary, d = 4,096 (illustrative)</td><td>200,019</td><td>4,096</td><td>819,277,824</td></tr>
+    </tbody></table></div>
+  <p>Two things follow. In small models the embedding table is a big share of all parameters, so the vocabulary size is a real design cost. And because the table stores numbers for every token, the same text costs more memory to represent in a model with a bigger <span class="im">d</span>, but each token's row can also hold more.</p>
+  <div class="point"><div class="point-n">!</div><div>
+    <div class="point-t">Choosing d is a trade-off, not "bigger is better"</div>
+    <p>A small <span class="im">d</span> forces unrelated tokens to share directions. When we tried <span class="im">d</span> = 2 with a counting method on this same corpus (not shown), "cat" and "car" came out identical (cosine 1.00): two numbers cannot separate three categories plus everything else. A larger <span class="im">d</span> gives room but costs memory, compute and data to fill. Model designers choose <span class="im">d</span> together with the depth and width of the whole network.</p></div></div>
+  <div class="callout c-extra"><div class="ci">+</div><div><div class="ct">Extra · weight tying</div>
+    <p>The output layer that turns a final vector into one score per token is also a <span class="im">(d, V)</span> matrix, as big as the embedding table. Some models, GPT-2 among them, use the same matrix for both jobs, which is called <strong>weight tying</strong>. It saves parameters and fits the intuition that "this vector means token X" should work in both directions. Many larger models keep two separate matrices instead.</p></div></div>
+</section>
+
+<section class="sec" id="contextual">
+  <h2><span class="n">6</span>Static rows, contextual meaning</h2>
+  <p>The table gives a token the same row in every sentence. "bank" in "river bank" and "bank" in "bank account" start from identical numbers. That is a <strong>static</strong> embedding: one vector per token, no matter the context.</p>
+  <p>The transformer layers that follow fix this. Each layer mixes information between positions (that is what attention does, the topic of the coming lessons), so after a few layers the vector at the position of "bank" reflects its neighbours. These context-dependent vectors are called <strong>contextual embeddings</strong> or hidden states.</p>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 180" role="img" aria-label="The same embedding row for bank becomes two different vectors after the transformer layers">
+      <defs><marker id="ah22c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <rect x="0" y="10" width="150" height="40" rx="9" class="box "/><text x="75.0" y="26.5" class="mid v">we sat on the</text><text x="75.0" y="41.5" class="mid v">river bank</text>
+      <rect x="0" y="100" width="150" height="40" rx="9" class="box "/><text x="75.0" y="116.5" class="mid v">I opened a</text><text x="75.0" y="131.5" class="mid v">bank account</text>
+      <path d="M152 30 L196 52" class="arr " marker-end="url(#ah22c)"/>
+      <path d="M152 120 L196 98" class="arr " marker-end="url(#ah22c)"/>
+      <rect x="198" y="55" width="110" height="40" rx="9" class="box o"/><text x="253.0" y="71.5" class="mid w">E[bank]</text><text x="253.0" y="86.5" class="mid w">one row</text>
+      <text x="253" y="128" class="mid">identical in both</text>
+      <path d="M310 64 L352 36" class="arr " marker-end="url(#ah22c)"/>
+      <path d="M310 86 L352 114" class="arr " marker-end="url(#ah22c)"/>
+      <rect x="354" y="10" width="110" height="40" rx="9" class="box a"/><text x="409.0" y="26.5" class="mid w">Transformer</text><text x="409.0" y="41.5" class="mid w">layers</text>
+      <rect x="354" y="100" width="110" height="40" rx="9" class="box a"/><text x="409.0" y="116.5" class="mid w">Transformer</text><text x="409.0" y="131.5" class="mid w">layers</text>
+      <path d="M466 30 L494 30" class="arr " marker-end="url(#ah22c)"/>
+      <path d="M466 120 L494 120" class="arr " marker-end="url(#ah22c)"/>
+      <rect x="496" y="10" width="144" height="40" rx="9" class="box b"/><text x="568.0" y="26.5" class="mid w">"bank" near</text><text x="568.0" y="41.5" class="mid w">shore, water</text>
+      <rect x="496" y="100" width="144" height="40" rx="9" class="box b"/><text x="568.0" y="116.5" class="mid w">"bank" near</text><text x="568.0" y="131.5" class="mid w">money, loan</text>
+      <text x="0" y="168">The lookup gives every "bank" the same start. The layers read the neighbours and move it.</text>
+    </svg></div>
+    <figcaption>The embedding table is static: one row per token, whatever the sentence. Meaning that depends on context is built afterwards, by the transformer layers.</figcaption>
+  </figure>
+
+  <div class="point"><div class="point-n">!</div><div>
+    <div class="point-t">Why this matters in practice</div>
+    <p>The raw rows of an LLM's embedding table are not a good search index. They know nothing about the sentence, and one word is often several tokens. When an application needs a vector that represents what a whole text means, it uses a model built for that job, which is the next section.</p></div></div>
+</section>
+
+<section class="sec" id="text-embeddings">
+  <h2><span class="n">7</span>Token embeddings vs text embeddings</h2>
+  <p>The word "embedding" is used for two different things, and mixing them up causes real confusion in RAG projects.</p>
+  <div class="point"><div class="point-n">1</div><div>
+    <div class="point-t">Token embeddings: one row per token, inside a model</div>
+    <p>What this lesson built. They are the first step inside every LLM, you never see them through an API, and they are not stored anywhere in your application.</p></div></div>
+  <div class="point"><div class="point-n">2</div><div>
+    <div class="point-t">Text embeddings: one vector per whole text, from an embedding model</div>
+    <p>An <strong>embedding model</strong> (usually an encoder, lesson 1.4) reads a whole sentence, paragraph or chunk through all its layers and returns <strong>one</strong> vector for it, often by averaging the contextual vectors of all positions. It is trained specifically so that texts with similar meaning get high cosine similarity, typically on pairs like a question and its answer. This is what RAG stores and searches.</p></div></div>
+  <figure class="fig">
+    <div class="sv"><svg viewBox="0 0 640 184" role="img" aria-label="Token embeddings are table rows inside an LLM; text embeddings are one vector per text from an embedding model">
+      <defs><marker id="ah22t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--label2)"/></marker></defs>
+      <text x="0" y="14" class="h">Token embedding: inside every LLM</text>
+      <rect x="0" y="26" width="110" height="40" rx="9" class="box "/><text x="55.0" y="50.0" class="mid v">one token ID</text>
+      <path d="M112 46 L140 46" class="arr " marker-end="url(#ah22t)"/>
+      <rect x="142" y="26" width="130" height="40" rx="9" class="box o"/><text x="207.0" y="50.0" class="mid w">table lookup</text>
+      <path d="M274 46 L302 46" class="arr " marker-end="url(#ah22t)"/>
+      <rect x="304" y="26" width="150" height="40" rx="9" class="box "/><text x="379.0" y="50.0" class="mid v">one vector per token</text>
+      <text x="470" y="42">a starting point for</text><text x="470" y="58">the layers, never stored</text>
+      <line x1="0" y1="92" x2="640" y2="92" class="grid"/>
+      <text x="0" y="116" class="h">Text embedding: a separate embedding model</text>
+      <rect x="0" y="128" width="110" height="40" rx="9" class="box "/><text x="55.0" y="144.5" class="mid v">whole text</text><text x="55.0" y="159.5" class="mid v">(a chunk)</text>
+      <path d="M112 148 L140 148" class="arr " marker-end="url(#ah22t)"/>
+      <rect x="142" y="128" width="130" height="40" rx="9" class="box a"/><text x="207.0" y="144.5" class="mid w">embedding model</text><text x="207.0" y="159.5" class="mid w">(all its layers)</text>
+      <path d="M274 148 L302 148" class="arr " marker-end="url(#ah22t)"/>
+      <rect x="304" y="128" width="150" height="40" rx="9" class="box b"/><text x="379.0" y="144.5" class="mid w">one vector</text><text x="379.0" y="159.5" class="mid w">for the whole text</text>
+      <path d="M456 148 L484 148" class="arr " marker-end="url(#ah22t)"/>
+      <rect x="486" y="128" width="154" height="40" rx="9" class="box g"/><text x="563.0" y="144.5" class="mid w">stored, searched</text><text x="563.0" y="159.5" class="mid w">by cosine</text>
+    </svg></div>
+    <figcaption>Same word, two different things. RAG search uses the bottom row: one vector per chunk, made by a model trained for that job.</figcaption>
+  </figure>
+
+  <div class="code"><div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="lbl">concept.py · not runnable yet</span><button class="copy">Copy</button></div>
+<pre><code><span class="tk-c"># concept only: every provider names this differently</span>
+chunks = [<span class="tk-s">"How to reset a password"</span>, <span class="tk-s">"Refund policy for annual plans"</span>, <span class="tk-s">"Changing your email address"</span>]
+chunk_vectors = embedding_model.embed(chunks)        <span class="tk-c"># shape (3, d), stored once</span>
+
+query_vector = embedding_model.embed([<span class="tk-s">"I forgot my password"</span>])[<span class="tk-n">0</span>]
+scores = chunk_vectors @ query_vector                <span class="tk-c"># cosine, if the vectors have length 1</span>
+best = chunks[scores.argmax()]</code></pre></div>
+
+  <p>Rules that save real projects:</p>
+  <ul>
+    <li><strong>Only compare vectors from the same model.</strong> Two embedding models produce unrelated spaces, even when the dimension matches. Changing the model means re-embedding every stored chunk.</li>
+    <li><strong>The dimension is fixed by the model.</strong> Your vector database index is created for that dimension.</li>
+    <li><strong>Similar is not the same as correct.</strong> A chunk can be close to the question and still not contain the answer. Retrieval quality is measured, not assumed; that is Stage 4.</li>
+  </ul>
+  <div class="callout c-sql"><div class="ci">≈</div><div><div class="ct">SQL / Power BI analogy</div><p>Keyword search is <code>WHERE text LIKE '%password%'</code>: it finds rows that share the exact word. Embedding search ranks rows by meaning, so "I forgot my password" can match a chunk titled "How to reset a password" even with few shared words. In practice teams often use both together.</p></div></div>
+</section>
+
+<section class="sec" id="check">
+  <h2><span class="n">?</span>Check yourself</h2>
+  <details class="disc"><summary><span class="tag q">Q1</span><span class="q">Why not feed the token ID straight into the network as a number?</span><span class="chev"></span></summary>
+    <div class="ans"><p>The network would treat the size of the ID as meaningful: 12651 would look "almost the same" as 12650. IDs are arbitrary row numbers, so that pattern would be noise. The ID is only used to pick a row.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q2</span><span class="q">In a 4-token input, the same token appears twice. Are its two rows after the lookup the same or different? And after the transformer layers?</span><span class="chev"></span></summary>
+    <div class="ans"><p>The same after the lookup (rows 0 and 2 in lookup.py). Usually different after the layers, because the layers mix in each position's neighbours and position. The lookup is static; the layers make the vectors contextual.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q3</span><span class="q">Vector b is a, doubled in length. What are their cosine similarity and their dot product compared to a with itself?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Cosine similarity is +1, exactly as for a with itself, because the direction is the same. The dot product doubles, because it grows with length. That is why cosine is used when only direction (meaning) should count.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q4</span><span class="q">In learn_embeddings.py nobody labelled cat and dog as animals. Why did their rows become similar?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Both are followed by the same words ("chased", "drank", "slept"). To predict those next words well, their rows must produce similar scores, and training moved them towards each other. Similar contexts lead to similar embeddings: the distributional hypothesis.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q5</span><span class="q">Your team switches from embedding model A to model B with the same dimension, and keeps the stored vectors from A. What happens?</span><span class="chev"></span></summary>
+    <div class="ans"><p>Searches return nonsense. A query embedded with B is compared against chunks embedded with A, and the two spaces are unrelated even though the vectors have the same length. Every chunk has to be re-embedded with B.</p></div></details>
+  <details class="disc"><summary><span class="tag q">Q6</span><span class="q">Why did "morning" get worse neighbours than "cat" in the training run, and what is the real-model version of this problem?</span><span class="chev"></span></summary>
+    <div class="ans"><p>"morning" appears in only two sentences, so its row was updated far less often and stayed close to its random start. In real models, rare tokens (and rare vocabulary entries in very large vocabularies) get fewer training examples and weaker embeddings.</p></div></details>
+</section>
+
+<section class="recap">
+  <h2>What to retain from this lesson</h2>
+  <p>An embedding is a learned vector per token, stored as one row of a <span class="im">(V, d)</span> table. The token ID only picks the row; the meaning is in the numbers, and those come from training.</p>
+  <ul>
+    <li>The lookup is a read of one row, mathematically the same as a one-hot vector times the table.</li>
+    <li>Cosine similarity compares direction and ignores length; with length-1 vectors it equals the dot product.</li>
+    <li>Rows start random and next-token training pulls tokens that appear in similar contexts together.</li>
+    <li>The table is static: the same token gets the same row everywhere. Transformer layers make it contextual.</li>
+    <li>Text embeddings for RAG are one vector per whole text from a dedicated embedding model. Only compare vectors from the same model.</li>
+  </ul>
+  <p style="margin-bottom:0">Next: <strong>attention</strong>. How the transformer layers let each position look at the others and turn these static rows into context-aware vectors.</p>
+</section>
+
+<div class="done-bar"><span class="msg" id="done-msg"></span><label class="switch"><input type="checkbox" id="done-toggle"><span class="track"></span>Completed</label></div>
+<nav class="pager" id="pager"></nav>
+
+</main>
+</div></div>
+<script src="../assets/app.js"></script>
+</body>
+</html>

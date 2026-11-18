@@ -38,8 +38,12 @@ const COURSE = [
     title: 'Tokens and tokenization',
     desc: 'How text becomes token IDs, how BPE learns a vocabulary, and what token counts mean for cost, context and accuracy.',
     keys: 'token tokenizer bpe byte pair encoding wordpiece unigram sentencepiece vocabulary token id embedding table utf-8 code point tiktoken special tokens chat template' },
-  { id: 'l2-2', stage: 2, num: '2.2', soon: true, title: 'Embeddings',
-    desc: 'How a token ID becomes a vector, how those vectors are learned, and token vs document embeddings.' },
+  { id: 'l2-2', stage: 2, num: '2.2', file: 'lessons/2-2-embeddings.html', mins: 45,
+    title: 'Embeddings',
+    desc: 'How a token ID becomes a learned vector, how similarity is measured, training real embeddings in NumPy, and token vs text embeddings.',
+    keys: 'embedding vector embedding table lookup one-hot dimension dot product cosine similarity euclidean distance normalise distributional hypothesis word2vec analogy weight tying static contextual text embedding embedding model rag' },
+  { id: 'l2-3', stage: 2, num: '2.3', soon: true, title: 'Attention',
+    desc: 'How each position looks at the others, and how static embeddings become context-aware vectors.' },
 ];
 
 (function () {
